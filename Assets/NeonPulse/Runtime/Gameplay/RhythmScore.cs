@@ -3,14 +3,6 @@ using UnityEngine;
 
 namespace NeonPulse
 {
-    /// <summary>Shared judgement timings used by gameplay and its visual cues.</summary>
-    public static class GameplayTiming
-    {
-        public const float HoldWindowLead = 0.45f;
-        public const float HoldInputGrace = 0.18f;
-        public const float HoldWindowTrail = 0.5f;
-    }
-
     public enum AccuracyGrade
     {
         Perfect,
@@ -44,10 +36,8 @@ namespace NeonPulse
     /// <summary>Owns accuracy grading, score and combo with no dependency on presentation.</summary>
     public sealed class RhythmScore
     {
-        public const float PerfectWindow = 0.08f;
-        public const float GreatWindow = 0.16f;
-        public const float GoodWindow = 0.28f;
-
+        private readonly RhythmSettings timing;
+        private readonly ScoreSettings scoreSettings;
         private int score;
         private int combo;
         private int maxCombo;
@@ -60,27 +50,35 @@ namespace NeonPulse
         public event Action<AccuracyGrade, GameplayAction> Judged;
 
         public ScoreSnapshot Snapshot => new ScoreSnapshot(score, combo, maxCombo, perfect, great, good, miss);
+        public float GoodWindow => timing.GoodWindow;
+
+        /// <summary>Creates a score service from editable timing and point configuration.</summary>
+        public RhythmScore(RhythmSettings rhythmSettings, ScoreSettings configuredScore)
+        {
+            timing = rhythmSettings ?? new RhythmSettings();
+            scoreSettings = configuredScore ?? new ScoreSettings();
+        }
 
         /// <summary>Grades a valid action based on its absolute timing error.</summary>
         public AccuracyGrade RegisterHit(float absoluteError, GameplayAction action)
         {
             AccuracyGrade grade;
-            if (absoluteError <= PerfectWindow)
+            if (absoluteError <= timing.PerfectWindow)
             {
                 grade = AccuracyGrade.Perfect;
-                score += 1000 + combo * 10;
+                score += scoreSettings.PerfectPoints + combo * scoreSettings.PerfectComboBonus;
                 perfect++;
             }
-            else if (absoluteError <= GreatWindow)
+            else if (absoluteError <= timing.GreatWindow)
             {
                 grade = AccuracyGrade.Great;
-                score += 750 + combo * 7;
+                score += scoreSettings.GreatPoints + combo * scoreSettings.GreatComboBonus;
                 great++;
             }
             else
             {
                 grade = AccuracyGrade.Good;
-                score += 500 + combo * 5;
+                score += scoreSettings.GoodPoints + combo * scoreSettings.GoodComboBonus;
                 good++;
             }
 

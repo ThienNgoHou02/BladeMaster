@@ -23,14 +23,27 @@ namespace NeonPulse
         private TextMeshProUGUI resultText;
         private Image progressFill;
         private float feedbackTimer;
+        private float comboPulseTimer;
+        private Color comboPulseColor = Color.white;
+        private int lastScoreValue;
         private bool nextActionReady;
         private GameplayAction lastNextAction;
         private bool hasNextAction;
         private int lastCountdownValue = -1;
+        private RhythmSettings timing;
+        private InputBindingSettings bindings;
+        private string restartLabel;
+        private bool showGuidance;
+        private bool isSlashMode;
 
         /// <summary>Creates all HUD objects and runtime font resources.</summary>
-        public void Build(RuntimeMaterialLibrary materials)
+        public void Build(RuntimeMaterialLibrary materials, NeonPulseGameConfig config)
         {
+            timing = config.Rhythm;
+            bindings = config.Input;
+            restartLabel = GetKeyLabel(bindings.Restart);
+            showGuidance = !config.AutoPlay;
+            isSlashMode = config.GameplayMode == CombatGameplayMode.Slash;
             Canvas canvas = gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 50;
@@ -46,21 +59,25 @@ namespace NeonPulse
             TextMeshProUGUI title = CreateText("Title", transform, "NEON PULSE FITNESS", 48f, TextAlignmentOptions.Center, materials.YellowColor);
             SetRect(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -44f), new Vector2(850f, 76f));
 
-            scoreText = CreateText("Score", transform, "ĐIỂM 000000", 38f, TextAlignmentOptions.TopLeft, Color.white);
-            SetRect(scoreText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(34f, -32f), new Vector2(480f, 65f));
+            scoreText = CreateText("Score", transform, "ĐIỂM 000000\nTRÚNG 0/0", 32f, TextAlignmentOptions.TopLeft, Color.white);
+            SetRect(scoreText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(38f, -48f), new Vector2(560f, 115f));
 
-            comboText = CreateText("Combo", transform, "0\nCOMBO", 62f, TextAlignmentOptions.TopRight, Color.white);
+            comboText = CreateText("Combo", transform, "0\nCOMBO\nMAX 0", 52f, TextAlignmentOptions.TopRight, Color.white);
             comboText.lineSpacing = -18f;
-            SetRect(comboText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-42f, -24f), new Vector2(350f, 150f));
+            SetRect(comboText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-42f, -50f), new Vector2(380f, 190f));
 
-            feedbackText = CreateText("Feedback", transform, string.Empty, 70f, TextAlignmentOptions.Center, materials.CyanColor);
+            feedbackText = CreateText("Feedback", transform, string.Empty, 58f, TextAlignmentOptions.Center, materials.CyanColor);
             feedbackText.fontStyle = FontStyles.Bold | FontStyles.Italic;
-            SetRect(feedbackText.rectTransform, new Vector2(0.5f, 0.76f), new Vector2(0.5f, 0.76f), Vector2.zero, new Vector2(850f, 105f));
+            feedbackText.lineSpacing = -12f;
+            SetRect(feedbackText.rectTransform, new Vector2(0.5f, 0.76f), new Vector2(0.5f, 0.76f), Vector2.zero, new Vector2(950f, 155f));
 
-            statusText = CreateText("Controls", transform,
-                "Q / ←  TAY TRÁI     E / →  TAY PHẢI     F  CẢ HAI TAY\nGIỮ A / D  NÉ     GIỮ S  CÚI     GIỮ SPACE  NHẢY     R  CHƠI LẠI",
-                25f, TextAlignmentOptions.Center, new Color(0.8f, 0.85f, 1f, 0.9f));
-            SetRect(statusText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(1450f, 92f));
+            if (showGuidance)
+            {
+                statusText = CreateText("Controls", transform,
+                    BuildControlGuide(),
+                    25f, TextAlignmentOptions.Center, new Color(0.8f, 0.85f, 1f, 0.9f));
+                SetRect(statusText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(1450f, 92f));
+            }
 
             CreateProgressBar(materials);
             CreateNextActionPanel(materials);
@@ -76,38 +93,46 @@ namespace NeonPulse
                 return;
             }
 
-            scoreText.SetText("ĐIỂM {0:000000}", snapshot.Score);
-            comboText.SetText("{0}\nCOMBO", snapshot.Combo);
+            int hitCount = snapshot.Perfect + snapshot.Great + snapshot.Good;
+            int totalCount = hitCount + snapshot.Miss;
+            float weightedHits = snapshot.Perfect + snapshot.Great * 0.75f + snapshot.Good * 0.5f;
+            float accuracy = totalCount > 0 ? weightedHits / totalCount * 100f : 100f;
+            scoreText.SetText("ĐIỂM {0:000000}\nTRÚNG {1}/{2}  •  {3:0}%", snapshot.Score, hitCount, totalCount, accuracy);
+            comboText.SetText("{0}\nCOMBO\nMAX {1}", snapshot.Combo, snapshot.MaxCombo);
+            lastScoreValue = snapshot.Score;
         }
 
         /// <summary>Shows short accuracy feedback using cached UI components.</summary>
-        public void ShowJudgement(AccuracyGrade grade, GameplayAction action, RuntimeMaterialLibrary materials)
+        public void ShowJudgement(AccuracyGrade grade, GameplayAction action, ScoreSnapshot snapshot, RuntimeMaterialLibrary materials)
         {
             if (feedbackText == null || materials == null)
             {
                 return;
             }
 
+            int gainedScore = Mathf.Max(0, snapshot.Score - lastScoreValue);
             switch (grade)
             {
                 case AccuracyGrade.Perfect:
-                    feedbackText.text = "CHÍNH XÁC";
+                    feedbackText.SetText("CHÍNH XÁC  +{0}\nCOMBO {1}", gainedScore, snapshot.Combo);
                     feedbackText.color = materials.YellowColor;
                     break;
                 case AccuracyGrade.Great:
-                    feedbackText.text = "RẤT TỐT";
+                    feedbackText.SetText("TRÚNG  +{0}\nCOMBO {1}", gainedScore, snapshot.Combo);
                     feedbackText.color = materials.CyanColor;
                     break;
                 case AccuracyGrade.Good:
-                    feedbackText.text = "TỐT";
+                    feedbackText.SetText("TRÚNG  +{0}\nCOMBO {1}", gainedScore, snapshot.Combo);
                     feedbackText.color = Color.white;
                     break;
                 default:
-                    feedbackText.text = "TRƯỢT";
+                    feedbackText.text = "TRƯỢT NHỊP\nCOMBO BỊ NGẮT";
                     feedbackText.color = new Color(1f, 0.12f, 0.22f, 1f);
                     break;
             }
 
+            comboPulseColor = feedbackText.color;
+            comboPulseTimer = 0.42f;
             feedbackText.alpha = 1f;
             feedbackText.rectTransform.localScale = Vector3.one * 1.18f;
             feedbackTimer = 0.65f;
@@ -131,6 +156,12 @@ namespace NeonPulse
         /// <summary>Shows the closest required action and fills toward its hit time.</summary>
         public void SetUpcomingAction(GameplayAction action, float secondsUntilHit, float approachDuration, RuntimeMaterialLibrary materials)
         {
+            if (!showGuidance)
+            {
+                HideUpcomingAction();
+                return;
+            }
+
             if (nextActionPanel == null || nextActionText == null || nextActionFill == null || materials == null)
             {
                 return;
@@ -138,8 +169,8 @@ namespace NeonPulse
 
             bool holdAction = RequiresHold(action);
             bool ready = holdAction
-                ? secondsUntilHit <= GameplayTiming.HoldWindowLead && secondsUntilHit >= -GameplayTiming.HoldWindowTrail - 0.02f
-                : Mathf.Abs(secondsUntilHit) <= RhythmScore.GoodWindow;
+                ? secondsUntilHit <= timing.HoldWindowLead && secondsUntilHit >= -timing.HoldWindowTrail - 0.02f
+                : Mathf.Abs(secondsUntilHit) <= timing.GoodWindow;
             if (!hasNextAction || lastNextAction != action || nextActionReady != ready)
             {
                 nextActionText.text = GetActionPrompt(action, ready);
@@ -157,6 +188,11 @@ namespace NeonPulse
         /// <summary>Confirms that an obstacle key is active and reminds the player not to release it.</summary>
         public void ShowHoldConfirmed(GameplayAction action, RuntimeMaterialLibrary materials)
         {
+            if (!showGuidance)
+            {
+                return;
+            }
+
             if (nextActionText == null || materials == null)
             {
                 return;
@@ -164,10 +200,10 @@ namespace NeonPulse
 
             switch (action)
             {
-                case GameplayAction.Duck: nextActionText.text = "ĐANG GIỮ S — ĐỪNG THẢ"; break;
-                case GameplayAction.Jump: nextActionText.text = "ĐANG GIỮ SPACE — ĐỪNG THẢ"; break;
-                case GameplayAction.DodgeLeft: nextActionText.text = "ĐANG GIỮ A — ĐỪNG THẢ"; break;
-                default: nextActionText.text = "ĐANG GIỮ D — ĐỪNG THẢ"; break;
+                case GameplayAction.Duck: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.Duck) + " — ĐỪNG THẢ"; break;
+                case GameplayAction.Jump: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.Jump) + " — ĐỪNG THẢ"; break;
+                case GameplayAction.DodgeLeft: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.DodgeLeft) + " — ĐỪNG THẢ"; break;
+                default: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.DodgeRight) + " — ĐỪNG THẢ"; break;
             }
 
             nextActionText.color = materials.YellowColor;
@@ -202,7 +238,7 @@ namespace NeonPulse
             }
 
             countdownPanel.SetActive(true);
-            int value = Mathf.Clamp(Mathf.CeilToInt(secondsUntilStart), 1, 3);
+            int value = Mathf.Max(1, Mathf.CeilToInt(secondsUntilStart));
             if (value != lastCountdownValue)
             {
                 countdownText.SetText("{0}", value);
@@ -229,7 +265,7 @@ namespace NeonPulse
 
             resultPanel.SetActive(true);
             resultText.SetText(
-                "HOÀN THÀNH BÀI TẬP\n\nĐIỂM  {0:000000}\nCOMBO CAO NHẤT  {1}\n\nCHÍNH XÁC  {2}     RẤT TỐT  {3}\nTỐT  {4}     TRƯỢT  {5}\n\nNHẤN R HOẶC ENTER ĐỂ CHƠI LẠI",
+                "HOÀN THÀNH BÀI TẬP\n\nĐIỂM  {0:000000}\nCOMBO CAO NHẤT  {1}\n\nCHÍNH XÁC  {2}     RẤT TỐT  {3}\nTỐT  {4}     TRƯỢT  {5}\n\nNHẤN " + restartLabel + " ĐỂ CHƠI LẠI",
                 snapshot.Score,
                 snapshot.MaxCombo,
                 snapshot.Perfect,
@@ -272,6 +308,19 @@ namespace NeonPulse
             {
                 float pulse = nextActionReady ? 1f + Mathf.Sin(Time.unscaledTime * 18f) * 0.045f : 1f;
                 nextActionPanel.transform.localScale = Vector3.one * pulse;
+            }
+
+            if (comboPulseTimer > 0f && comboText != null)
+            {
+                comboPulseTimer -= Time.unscaledDeltaTime;
+                float normalized = Mathf.Clamp01(comboPulseTimer / 0.42f);
+                comboText.rectTransform.localScale = Vector3.one * (1f + normalized * 0.16f);
+                comboText.color = Color.Lerp(Color.white, comboPulseColor, normalized);
+            }
+            else if (comboText != null)
+            {
+                comboText.rectTransform.localScale = Vector3.one;
+                comboText.color = Color.white;
             }
         }
 
@@ -410,39 +459,83 @@ namespace NeonPulse
             countdownText = CreateText("Countdown", countdownPanel.transform, "3", 120f, TextAlignmentOptions.Center, materials.YellowColor);
             SetRect(countdownText.rectTransform, new Vector2(0.5f, 0.75f), new Vector2(0.5f, 0.75f), Vector2.zero, new Vector2(300f, 150f));
 
-            TextMeshProUGUI guide = CreateText("Quick Guide", countdownPanel.transform,
-                "ĐẤM KHI VẬT THỂ VÀO CỔNG VÀNG\nGIỮ PHÍM CHO ĐẾN KHI CHƯỚNG NGẠI ĐI QUA\n\n<color=#00fff2>Q  TAY TRÁI</color>     <color=#ff08b8>E  TAY PHẢI</color>     <color=#ffd10d>F  CẢ HAI</color>\nGIỮ S  CÚI     GIỮ SPACE  NHẢY     GIỮ A / D  NÉ",
-                31f, TextAlignmentOptions.Center, Color.white);
-            guide.enableWordWrapping = true;
-            SetRect(guide.rectTransform, new Vector2(0.5f, 0.35f), new Vector2(0.5f, 0.35f), Vector2.zero, new Vector2(940f, 250f));
+            if (showGuidance)
+            {
+                TextMeshProUGUI guide = CreateText("Quick Guide", countdownPanel.transform,
+                    BuildTutorialGuide(),
+                    31f, TextAlignmentOptions.Center, Color.white);
+                guide.enableWordWrapping = true;
+                SetRect(guide.rectTransform, new Vector2(0.5f, 0.35f), new Vector2(0.5f, 0.35f), Vector2.zero, new Vector2(940f, 250f));
+            }
             countdownPanel.SetActive(false);
         }
 
-        private static string GetActionPrompt(GameplayAction action, bool ready)
+        private string GetActionPrompt(GameplayAction action, bool ready)
         {
+            string prefix = ready
+                ? isSlashMode ? "CHÉM NGAY   " : "ĐẤM NGAY   "
+                : "SẮP TỚI   ";
             if (ready)
             {
                 switch (action)
                 {
-                    case GameplayAction.LeftPunch: return "ĐÁNH NGAY   Q — TAY TRÁI";
-                    case GameplayAction.RightPunch: return "ĐÁNH NGAY   E — TAY PHẢI";
-                    case GameplayAction.BothPunch: return "ĐÁNH NGAY   F — CẢ HAI TAY";
-                    case GameplayAction.Duck: return "GIỮ NGAY   S — CÚI NGƯỜI";
-                    case GameplayAction.Jump: return "GIỮ NGAY   SPACE — NHẢY";
-                    case GameplayAction.DodgeLeft: return "GIỮ NGAY   A — NÉ TRÁI";
-                    default: return "GIỮ NGAY   D — NÉ PHẢI";
+                    case GameplayAction.Duck: return "GIỮ NGAY   " + GetKeyLabel(bindings.Duck) + " — CÚI NGƯỜI";
+                    case GameplayAction.Jump: return "GIỮ NGAY   " + GetKeyLabel(bindings.Jump) + " — NHẢY";
+                    case GameplayAction.DodgeLeft: return "GIỮ NGAY   " + GetKeyLabel(bindings.DodgeLeft) + " — NÉ TRÁI";
+                    case GameplayAction.DodgeRight: return "GIỮ NGAY   " + GetKeyLabel(bindings.DodgeRight) + " — NÉ PHẢI";
                 }
             }
 
             switch (action)
             {
-                case GameplayAction.LeftPunch: return "SẮP TỚI   Q — TAY TRÁI";
-                case GameplayAction.RightPunch: return "SẮP TỚI   E — TAY PHẢI";
-                case GameplayAction.BothPunch: return "SẮP TỚI   F — CẢ HAI TAY";
-                case GameplayAction.Duck: return "SẮP TỚI   S — CÚI NGƯỜI";
-                case GameplayAction.Jump: return "SẮP TỚI   SPACE — NHẢY";
-                case GameplayAction.DodgeLeft: return "SẮP TỚI   A — NÉ TRÁI";
-                default: return "SẮP TỚI   D — NÉ PHẢI";
+                case GameplayAction.LeftPunch: return prefix + GetKeyLabel(bindings.LeftPunch) + (isSlashMode ? " — KIẾM TRÁI" : " — TAY TRÁI");
+                case GameplayAction.RightPunch: return prefix + GetKeyLabel(bindings.RightPunch) + (isSlashMode ? " — KIẾM PHẢI" : " — TAY PHẢI");
+                case GameplayAction.BothPunch: return prefix + GetKeyLabel(bindings.BothPunch) + (isSlashMode ? " — HAI KIẾM" : " — CẢ HAI TAY");
+                case GameplayAction.Duck: return "SẮP TỚI   " + GetKeyLabel(bindings.Duck) + " — CÚI NGƯỜI";
+                case GameplayAction.Jump: return "SẮP TỚI   " + GetKeyLabel(bindings.Jump) + " — NHẢY";
+                case GameplayAction.DodgeLeft: return "SẮP TỚI   " + GetKeyLabel(bindings.DodgeLeft) + " — NÉ TRÁI";
+                default: return "SẮP TỚI   " + GetKeyLabel(bindings.DodgeRight) + " — NÉ PHẢI";
+            }
+        }
+
+        private string BuildControlGuide()
+        {
+            string leftLabel = isSlashMode ? "KIẾM TRÁI" : "TAY TRÁI";
+            string rightLabel = isSlashMode ? "KIẾM PHẢI" : "TAY PHẢI";
+            string bothLabel = isSlashMode ? "HAI KIẾM" : "CẢ HAI TAY";
+            return GetKeyLabel(bindings.LeftPunch) + " / " + GetKeyLabel(bindings.LeftPunchAlternative) + "  " + leftLabel + "     " +
+                   GetKeyLabel(bindings.RightPunch) + " / " + GetKeyLabel(bindings.RightPunchAlternative) + "  " + rightLabel + "     " +
+                   GetKeyLabel(bindings.BothPunch) + "  " + bothLabel + "\nGIỮ " +
+                   GetKeyLabel(bindings.DodgeLeft) + " / " + GetKeyLabel(bindings.DodgeRight) + "  NÉ     GIỮ " +
+                   GetKeyLabel(bindings.Duck) + "  CÚI     GIỮ " + GetKeyLabel(bindings.Jump) + "  NHẢY     " +
+                   restartLabel + "  CHƠI LẠI";
+        }
+
+        private string BuildTutorialGuide()
+        {
+            string actionGuide = isSlashMode ? "CHÉM KHỐI VUÔNG KHI VÀO CỔNG VÀNG" : "ĐẤM KHI VẬT THỂ VÀO CỔNG VÀNG";
+            string leftLabel = isSlashMode ? "KIẾM TRÁI" : "TAY TRÁI";
+            string rightLabel = isSlashMode ? "KIẾM PHẢI" : "TAY PHẢI";
+            string bothLabel = isSlashMode ? "HAI KIẾM" : "CẢ HAI";
+            return actionGuide + "\nGIỮ PHÍM CHO ĐẾN KHI CHƯỚNG NGẠI ĐI QUA\n\n<color=#00fff2>" +
+                   GetKeyLabel(bindings.LeftPunch) + "  " + leftLabel + "</color>     <color=#ff08b8>" +
+                   GetKeyLabel(bindings.RightPunch) + "  " + rightLabel + "</color>     <color=#ffd10d>" +
+                   GetKeyLabel(bindings.BothPunch) + "  " + bothLabel + "</color>\nGIỮ " + GetKeyLabel(bindings.Duck) +
+                   "  CÚI     GIỮ " + GetKeyLabel(bindings.Jump) + "  NHẢY     GIỮ " +
+                   GetKeyLabel(bindings.DodgeLeft) + " / " + GetKeyLabel(bindings.DodgeRight) + "  NÉ";
+        }
+
+        private static string GetKeyLabel(KeyCode key)
+        {
+            switch (key)
+            {
+                case KeyCode.Space: return "SPACE";
+                case KeyCode.Return: return "ENTER";
+                case KeyCode.LeftArrow: return "←";
+                case KeyCode.RightArrow: return "→";
+                case KeyCode.DownArrow: return "↓";
+                case KeyCode.UpArrow: return "↑";
+                default: return key.ToString().ToUpperInvariant();
             }
         }
 

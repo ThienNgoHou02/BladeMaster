@@ -47,22 +47,30 @@ namespace NeonPulse
     /// <summary>Desktop MVP input implementation using Unity's built-in input manager.</summary>
     public sealed class KeyboardInputProvider : IPlayerInputProvider
     {
+        private readonly InputBindingSettings bindings;
+
+        /// <summary>Creates a keyboard provider from the editable gameplay bindings.</summary>
+        public KeyboardInputProvider(InputBindingSettings inputBindings)
+        {
+            bindings = inputBindings ?? new InputBindingSettings();
+        }
+
         /// <summary>Reads keyboard edges without allocating managed memory.</summary>
         public PlayerInputFrame ReadInput()
         {
-            bool left = Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.LeftArrow);
-            bool right = Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.RightArrow);
-            bool explicitBoth = Input.GetKeyDown(KeyCode.F);
+            bool left = Input.GetKeyDown(bindings.LeftPunch) || Input.GetKeyDown(bindings.LeftPunchAlternative);
+            bool right = Input.GetKeyDown(bindings.RightPunch) || Input.GetKeyDown(bindings.RightPunchAlternative);
+            bool explicitBoth = Input.GetKeyDown(bindings.BothPunch);
 
             return new PlayerInputFrame(
                 left,
                 right,
                 explicitBoth || (left && right),
-                Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow),
-                Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.W),
-                Input.GetKey(KeyCode.A),
-                Input.GetKey(KeyCode.D),
-                Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Return));
+                Input.GetKey(bindings.Duck) || Input.GetKey(bindings.DuckAlternative),
+                Input.GetKey(bindings.Jump) || Input.GetKey(bindings.JumpAlternative),
+                Input.GetKey(bindings.DodgeLeft),
+                Input.GetKey(bindings.DodgeRight),
+                Input.GetKeyDown(bindings.Restart) || Input.GetKeyDown(bindings.RestartAlternative));
         }
     }
 }

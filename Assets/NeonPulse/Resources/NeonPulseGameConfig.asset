@@ -1,0 +1,169 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a178df4088b544ce957c32ec72bc88f8, type: 3}
+  m_Name: NeonPulseGameConfig
+  m_EditorClassIdentifier: 
+  gameplayMode: 1
+  autoPlay: 1
+  rhythm:
+    bpm: 105
+    songBeats: 64
+    travelBeats: 6
+    tileWaveStartBeat: 26
+    tileWaveEndBeat: 38
+    spawnZ: 50
+    hitZ: 1.5
+    despawnZ: -5
+    labelVisibleZ: 30
+    countdownDuration: 3
+    resultDelay: 0.6
+    perfectWindow: 0.08
+    greatWindow: 0.16
+    goodWindow: 0.28
+    holdWindowLead: 0.45
+    holdInputGrace: 0.18
+    holdWindowTrail: 0.5
+  scoring:
+    perfectPoints: 1000
+    greatPoints: 750
+    goodPoints: 500
+    perfectComboBonus: 10
+    greatComboBonus: 7
+    goodComboBonus: 5
+  input:
+    leftPunch: 113
+    leftPunchAlternative: 276
+    rightPunch: 101
+    rightPunchAlternative: 275
+    bothPunch: 102
+    duck: 115
+    duckAlternative: 274
+    jump: 32
+    jumpAlternative: 119
+    dodgeLeft: 97
+    dodgeRight: 100
+    restart: 114
+    restartAlternative: 13
+  cameraFeel:
+    standingHeight: 2.55
+    poseSmoothing: 18
+    dodgeDistance: 1.95
+    duckDistance: 0.95
+    jumpDistance: 0.9
+    punchDistance: 1.9
+    punchDuration: 0.24
+    punchShakeAmplitude: 0.045
+    punchShakeDuration: 0.12
+    bothPunchShakeAmplitude: 0.075
+    bothPunchShakeDuration: 0.15
+    failShakeAmplitude: 0.14
+    failShakeDuration: 0.32
+  visuals:
+    cyan: {r: 0.02, g: 1, b: 0.95, a: 1}
+    magenta: {r: 1, g: 0.03, b: 0.72, a: 1}
+    purple: {r: 0.48, g: 0.05, b: 1, a: 1}
+    yellow: {r: 1, g: 0.82, b: 0.05, a: 1}
+    obstacle: {r: 1, g: 0.06, b: 0.2, a: 1}
+    neonIntensity: 2.2
+    beatPulseIntensity: 1.4
+    targetGlowScale: 1.26
+    rhythmTileLength: 1.35
+    judgementLinePulseStrength: 0.28
+    hitParticleCount: 34
+    travellerPoolCapacity: 24
+    rhythmTilePoolCapacity: 24
+    hitVfxPoolCapacity: 8
+    audioVolume: 0.58
+  punchEvents:
+  - Beat: 4
+    Lane: 0
+    Action: 0
+  - Beat: 6
+    Lane: 3
+    Action: 1
+  - Beat: 9
+    Lane: 1
+    Action: 0
+  - Beat: 11
+    Lane: 2
+    Action: 1
+  - Beat: 14
+    Lane: 1
+    Action: 2
+  - Beat: 18
+    Lane: 0
+    Action: 0
+  - Beat: 45
+    Lane: 3
+    Action: 1
+  - Beat: 47
+    Lane: 1
+    Action: 0
+  - Beat: 50
+    Lane: 2
+    Action: 1
+  - Beat: 52
+    Lane: 1
+    Action: 2
+  - Beat: 58
+    Lane: 0
+    Action: 0
+  - Beat: 60
+    Lane: 3
+    Action: 1
+  obstacleEvents:
+  - Beat: 16
+    Lane: 0
+    Action: 3
+  - Beat: 49
+    Lane: 0
+    Action: 4
+  - Beat: 55
+    Lane: 0
+    Action: 6
+  rhythmTileEvents:
+  - Beat: 26
+    Lane: 1
+    Color: 0
+  - Beat: 26
+    Lane: 2
+    Color: 1
+  - Beat: 28
+    Lane: 1
+    Color: 0
+  - Beat: 28
+    Lane: 2
+    Color: 1
+  - Beat: 30
+    Lane: 1
+    Color: 0
+  - Beat: 30
+    Lane: 2
+    Color: 1
+  - Beat: 34
+    Lane: 1
+    Color: 0
+  - Beat: 34
+    Lane: 2
+    Color: 1
+  - Beat: 36
+    Lane: 1
+    Color: 0
+  - Beat: 36
+    Lane: 2
+    Color: 1
+  - Beat: 38
+    Lane: 1
+    Color: 0
+  - Beat: 38
+    Lane: 2
+    Color: 1

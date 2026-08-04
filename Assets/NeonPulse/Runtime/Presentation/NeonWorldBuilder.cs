@@ -7,16 +7,20 @@ namespace NeonPulse
     public static class NeonWorldBuilder
     {
         /// <summary>Creates the arena and returns the gameplay camera.</summary>
-        public static Camera Build(Transform parent, RuntimeMaterialLibrary materials)
+        public static Camera Build(
+            Transform parent,
+            RuntimeMaterialLibrary materials,
+            NeonPulseGameConfig config,
+            out JudgementLineFeedback judgementLineFeedback)
         {
             DisableSceneCamerasAndLights();
             ConfigureRenderSettings();
 
-            Camera camera = CreateCamera(parent);
+            Camera camera = CreateCamera(parent, config.CameraFeel.StandingHeight);
             CreateLighting(parent, materials);
             CreateTrack(parent, materials);
             CreateTunnel(parent, materials);
-            CreateHitLine(parent, materials);
+            judgementLineFeedback = CreateHitLine(parent, materials, config);
             return camera;
         }
 
@@ -50,11 +54,11 @@ namespace NeonPulse
             RenderSettings.ambientLight = new Color(0.05f, 0.015f, 0.09f, 1f);
         }
 
-        private static Camera CreateCamera(Transform parent)
+        private static Camera CreateCamera(Transform parent, float standingHeight)
         {
             GameObject cameraObject = new GameObject("Fixed First Person Camera");
             cameraObject.transform.SetParent(parent, false);
-            cameraObject.transform.position = new Vector3(0f, 2.35f, -5.8f);
+            cameraObject.transform.position = new Vector3(0f, standingHeight, -5.8f);
             cameraObject.transform.rotation = Quaternion.Euler(2.5f, 0f, 0f);
 
             Camera camera = cameraObject.AddComponent<Camera>();
@@ -136,14 +140,33 @@ namespace NeonPulse
             CreateCube(parent, "Right Horizon", new Vector3(5.3f, 2.8f, 30f), new Vector3(0.06f, 0.06f, 58f), materials.Magenta);
         }
 
-        private static void CreateHitLine(Transform parent, RuntimeMaterialLibrary materials)
+        private static JudgementLineFeedback CreateHitLine(Transform parent, RuntimeMaterialLibrary materials, NeonPulseGameConfig config)
         {
-            CreateCube(parent, "Hit Line", new Vector3(0f, 0.06f, 1.5f), new Vector3(7.4f, 0.07f, 0.18f), materials.Yellow);
-            CreateCube(parent, "Hit Portal Left", new Vector3(-3.85f, 2.05f, 1.5f), new Vector3(0.09f, 4.1f, 0.14f), materials.Cyan);
-            CreateCube(parent, "Hit Portal Right", new Vector3(3.85f, 2.05f, 1.5f), new Vector3(0.09f, 4.1f, 0.14f), materials.Magenta);
-            CreateCube(parent, "Hit Portal Top", new Vector3(0f, 4.1f, 1.5f), new Vector3(7.8f, 0.09f, 0.14f), materials.Yellow);
-            CreateCube(parent, "Left Hand Pad", new Vector3(-2.7f, 0.12f, 0.5f), new Vector3(1.65f, 0.08f, 1.4f), materials.Cyan);
-            CreateCube(parent, "Right Hand Pad", new Vector3(2.7f, 0.12f, 0.5f), new Vector3(1.65f, 0.08f, 1.4f), materials.Magenta);
+            float hitZ = config.Rhythm.HitZ;
+            CreateCube(parent, "Judgement Step Backplate", new Vector3(0f, 0.04f, hitZ), new Vector3(8.5f, 0.08f, 0.98f), materials.Dark);
+            GameObject glassStep = CreateCube(parent, "Judgement Step Glass", new Vector3(0f, 0.16f, hitZ), new Vector3(8.3f, 0.24f, 0.82f), materials.YellowGlow);
+            CreateCube(parent, "Judgement Step Top Glow", new Vector3(0f, 0.29f, hitZ + 0.02f), new Vector3(8.2f, 0.025f, 0.72f), materials.YellowGlow);
+            CreateCube(parent, "Judgement Step Front Edge", new Vector3(0f, 0.28f, hitZ - 0.4f), new Vector3(8.15f, 0.12f, 0.11f), materials.Yellow);
+            CreateCube(parent, "Judgement Zone Cyan", new Vector3(-2f, 0.32f, hitZ + 0.09f), new Vector3(3.85f, 0.035f, 0.3f), materials.Cyan);
+            CreateCube(parent, "Judgement Zone Magenta", new Vector3(2f, 0.32f, hitZ + 0.09f), new Vector3(3.85f, 0.035f, 0.3f), materials.Magenta);
+            GameObject core = CreateCube(parent, "Contact Line White", new Vector3(0f, 0.37f, hitZ), new Vector3(8.35f, 0.09f, 0.09f), materials.Footprint);
+            CreateCube(parent, "Contact Line Near Rim", new Vector3(0f, 0.34f, hitZ - 0.09f), new Vector3(8.25f, 0.04f, 0.04f), materials.Yellow);
+            CreateCube(parent, "Contact Line Far Rim", new Vector3(0f, 0.34f, hitZ + 0.09f), new Vector3(8.25f, 0.04f, 0.04f), materials.Yellow);
+            CreateCube(parent, "Hit Portal Left", new Vector3(-3.85f, 2.05f, hitZ), new Vector3(0.09f, 4.1f, 0.14f), materials.Cyan);
+            CreateCube(parent, "Hit Portal Right", new Vector3(3.85f, 2.05f, hitZ), new Vector3(0.09f, 4.1f, 0.14f), materials.Magenta);
+            CreateCube(parent, "Hit Portal Top", new Vector3(0f, 4.1f, hitZ), new Vector3(7.8f, 0.09f, 0.14f), materials.Yellow);
+
+            Transform[] pads = new Transform[4];
+            for (int lane = 0; lane < pads.Length; lane++)
+            {
+                float x = -2.7f + lane * 1.8f;
+                Material laneMaterial = lane < 2 ? materials.Cyan : materials.Magenta;
+                CreateCube(parent, "Receptor Base " + lane, new Vector3(x, 0.08f, hitZ - 0.78f), new Vector3(1.66f, 0.16f, 0.62f), materials.Dark);
+                GameObject pad = CreateCube(parent, "Receptor Pad " + lane, new Vector3(x, 0.2f, hitZ - 0.58f), new Vector3(1.58f, 0.1f, 0.18f), laneMaterial);
+                pads[lane] = pad.transform;
+            }
+
+            return new JudgementLineFeedback(core.transform, glassStep.transform, pads, config.Visuals.JudgementLinePulseStrength);
         }
 
         private static GameObject CreateCube(Transform parent, string objectName, Vector3 position, Vector3 scale, Material material)
@@ -170,13 +193,77 @@ namespace NeonPulse
         }
     }
 
+    /// <summary>Allocation-free pulse feedback for the foreground judgement line and four receptors.</summary>
+    public sealed class JudgementLineFeedback
+    {
+        private const float PulseDuration = 0.18f;
+
+        private readonly Transform lineCore;
+        private readonly Transform lineGlow;
+        private readonly Transform[] pads;
+        private readonly float[] padTimers;
+        private readonly Vector3[] restScales;
+        private readonly Vector3 lineCoreRestScale;
+        private readonly Vector3 lineGlowRestScale;
+        private readonly float pulseStrength;
+        private float lineTimer;
+
+        public JudgementLineFeedback(Transform core, Transform glow, Transform[] receptorPads, float configuredPulseStrength)
+        {
+            lineCore = core;
+            lineGlow = glow;
+            pads = receptorPads;
+            pulseStrength = Mathf.Max(0f, configuredPulseStrength);
+            lineCoreRestScale = lineCore.localScale;
+            lineGlowRestScale = lineGlow.localScale;
+            padTimers = new float[pads.Length];
+            restScales = new Vector3[pads.Length];
+            for (int index = 0; index < pads.Length; index++)
+            {
+                restScales[index] = pads[index].localScale;
+            }
+        }
+
+        /// <summary>Pulses the receptor closest to the successfully judged world X position.</summary>
+        public void Pulse(float worldX)
+        {
+            lineTimer = PulseDuration;
+            int lane = Mathf.Clamp(Mathf.RoundToInt((worldX + 2.7f) / 1.8f), 0, pads.Length - 1);
+            padTimers[lane] = PulseDuration;
+        }
+
+        /// <summary>Returns the line and pads to their cached rest scale without tween allocations.</summary>
+        public void Tick(float deltaTime)
+        {
+            lineTimer = Mathf.Max(0f, lineTimer - deltaTime);
+            float normalized = lineTimer / PulseDuration;
+            float lineScale = 1f + normalized * pulseStrength;
+            lineCore.localScale = new Vector3(
+                lineCoreRestScale.x,
+                lineCoreRestScale.y * lineScale,
+                lineCoreRestScale.z * (1f + normalized * 0.04f));
+            lineGlow.localScale = new Vector3(
+                lineGlowRestScale.x,
+                lineGlowRestScale.y * lineScale,
+                lineGlowRestScale.z * lineScale);
+
+            for (int index = 0; index < pads.Length; index++)
+            {
+                padTimers[index] = Mathf.Max(0f, padTimers[index] - deltaTime);
+                float padPulse = padTimers[index] / PulseDuration * pulseStrength;
+                Vector3 rest = restScales[index];
+                pads[index].localScale = new Vector3(rest.x * (1f + padPulse), rest.y * (1f + padPulse), rest.z * (1f + padPulse));
+            }
+        }
+    }
+
     /// <summary>Small reusable particle pool for successful and missed hits.</summary>
     public sealed class HitBurstPool
     {
         private readonly ParticleSystem[] systems;
         private int nextIndex;
 
-        public HitBurstPool(int capacity, Transform parent, Material particleMaterial)
+        public HitBurstPool(int capacity, Transform parent, Material particleMaterial, int burstCount)
         {
             int safeCapacity = Mathf.Max(4, capacity);
             systems = new ParticleSystem[safeCapacity];
@@ -194,16 +281,47 @@ namespace NeonPulse
                 main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.5f);
                 main.startSpeed = new ParticleSystem.MinMaxCurve(3f, 7f);
                 main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.22f);
-                main.maxParticles = 32;
+                main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+                int safeBurstCount = Mathf.Clamp(burstCount, 1, 128);
+                main.maxParticles = safeBurstCount;
                 main.simulationSpace = ParticleSystemSimulationSpace.World;
 
                 ParticleSystem.EmissionModule emission = system.emission;
                 emission.rateOverTime = 0f;
-                emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 22) });
+                emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)safeBurstCount) });
 
                 ParticleSystem.ShapeModule shape = system.shape;
                 shape.shapeType = ParticleSystemShapeType.Sphere;
-                shape.radius = 0.25f;
+                shape.radius = 0.3f;
+
+                Gradient fadeGradient = new Gradient();
+                fadeGradient.SetKeys(
+                    new[]
+                    {
+                        new GradientColorKey(Color.white, 0f),
+                        new GradientColorKey(new Color(0.7f, 0.85f, 1f), 1f)
+                    },
+                    new[]
+                    {
+                        new GradientAlphaKey(1f, 0f),
+                        new GradientAlphaKey(0.8f, 0.55f),
+                        new GradientAlphaKey(0f, 1f)
+                    });
+                ParticleSystem.ColorOverLifetimeModule colorOverLifetime = system.colorOverLifetime;
+                colorOverLifetime.enabled = true;
+                colorOverLifetime.color = new ParticleSystem.MinMaxGradient(fadeGradient);
+
+                ParticleSystem.SizeOverLifetimeModule sizeOverLifetime = system.sizeOverLifetime;
+                sizeOverLifetime.enabled = true;
+                sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f,
+                    new AnimationCurve(
+                        new Keyframe(0f, 0.25f),
+                        new Keyframe(0.18f, 1.2f),
+                        new Keyframe(1f, 0f)));
+
+                ParticleSystem.RotationOverLifetimeModule rotationOverLifetime = system.rotationOverLifetime;
+                rotationOverLifetime.enabled = true;
+                rotationOverLifetime.z = new ParticleSystem.MinMaxCurve(-4f, 4f);
 
                 ParticleSystemRenderer renderer = effectObject.GetComponent<ParticleSystemRenderer>();
                 renderer.renderMode = ParticleSystemRenderMode.Billboard;
