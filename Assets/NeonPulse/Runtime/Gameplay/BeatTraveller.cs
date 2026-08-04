@@ -1,0 +1,327 @@
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace NeonPulse
+{
+    /// <summary>A pooled note or obstacle whose Z position is derived from absolute song time.</summary>
+    public sealed class BeatTraveller : MonoBehaviour
+    {
+        private const float HitZ = 1.5f;
+        private const float DespawnZ = -5f;
+        private static readonly float[] LaneX = { -2.7f, -0.9f, 0.9f, 2.7f };
+
+        private readonly GameObject[] variants = new GameObject[7];
+        private GameplayAction action;
+        private float targetTime;
+        private float spawnTime;
+        private float spawnZ;
+        private bool initialized;
+        private TextMeshPro actionLabel;
+        private Transform actionLabelTransform;
+
+        public GameplayAction Action => action;
+        public float TargetTime => targetTime;
+        public bool IsActive { get; private set; }
+        public bool RequiresHold => IsObstacle(action);
+        public bool HoldEvaluationStarted { get; private set; }
+        public bool HoldInputConfirmed { get; private set; }
+
+        /// <summary>Builds all visual variants once so pooled reuse only toggles cached objects.</summary>
+        public void Initialize(RuntimeMaterialLibrary materials)
+        {
+            if (initialized || materials == null)
+            {
+                return;
+            }
+
+            variants[(int)GameplayAction.LeftPunch] = CreatePunchVariant("Left Punch", materials.Cyan);
+            variants[(int)GameplayAction.RightPunch] = CreatePunchVariant("Right Punch", materials.Magenta);
+            variants[(int)GameplayAction.BothPunch] = CreatePairVariant(materials.Cyan, materials.Magenta);
+            variants[(int)GameplayAction.Duck] = CreateBarVariant("Duck Gate", materials.Obstacle, new Vector3(7.8f, 1.15f, 0.75f), new Vector3(0f, 3.25f, 0f));
+            variants[(int)GameplayAction.Jump] = CreateBarVariant("Jump Gate", materials.Obstacle, new Vector3(7.8f, 1.05f, 0.75f), new Vector3(0f, 0.35f, 0f));
+            variants[(int)GameplayAction.DodgeLeft] = CreateDodgeVariant("Dodge Left", materials.Obstacle, true);
+            variants[(int)GameplayAction.DodgeRight] = CreateDodgeVariant("Dodge Right", materials.Obstacle, false);
+
+            for (int i = 0; i < variants.Length; i++)
+            {
+                variants[i].SetActive(false);
+            }
+
+            CreateActionLabel();
+            initialized = true;
+            gameObject.SetActive(false);
+        }
+
+        /// <summary>Activates this object for a chart event without allocating memory.</summary>
+        public void Spawn(BeatmapEvent chartEvent, float eventTime, float eventSpawnTime, float startZ)
+        {
+            action = chartEvent.Action;
+            targetTime = eventTime;
+            spawnTime = eventSpawnTime;
+            spawnZ = startZ;
+            HoldEvaluationStarted = false;
+            HoldInputConfirmed = false;
+
+            float x = IsObstacle(action) || action == GameplayAction.BothPunch
+                ? 0f
+                : LaneX[Mathf.Clamp(chartEvent.Lane, 0, 3)];
+            transform.SetPositionAndRotation(new Vector3(x, 0f, startZ), Quaternion.identity);
+            variants[(int)action].SetActive(true);
+            ConfigureActionLabel(action);
+            IsActive = true;
+            gameObject.SetActive(true);
+        }
+
+        /// <summary>Updates movement from absolute time, preventing cumulative rhythm drift.</summary>
+        public void Tick(float songTime)
+        {
+            float travelDuration = targetTime - spawnTime;
+            float normalized = travelDuration > 0.001f ? (songTime - spawnTime) / travelDuration : 1f;
+            float z = normalized <= 1f
+                ? Mathf.LerpUnclamped(spawnZ, HitZ, normalized)
+                : Mathf.LerpUnclamped(HitZ, DespawnZ, (songTime - targetTime) / 0.45f);
+
+            Vector3 position = transform.position;
+            position.z = z;
+            transform.position = position;
+
+            if (!IsObstacle(action))
+            {
+                transform.localRotation = Quaternion.Euler(0f, songTime * 80f, Mathf.Sin(songTime * 4f) * 8f);
+            }
+
+            if (actionLabelTransform != null)
+            {
+                actionLabelTransform.rotation = Quaternion.identity;
+                bool shouldShowLabel = z <= 30f && z >= -1f;
+                if (actionLabel.gameObject.activeSelf != shouldShowLabel)
+                {
+                    actionLabel.gameObject.SetActive(shouldShowLabel);
+                }
+            }
+        }
+
+        /// <summary>Marks the beginning of the continuous hold-validation window.</summary>
+        public void BeginHoldEvaluation()
+        {
+            HoldEvaluationStarted = true;
+        }
+
+        /// <summary>Marks that the correct obstacle key is held inside its activation grace period.</summary>
+        public void ConfirmHoldInput()
+        {
+            HoldInputConfirmed = true;
+        }
+
+        /// <summary>Deactivates the current visual before returning this object to its pool.</summary>
+        public void Despawn()
+        {
+            if (!initialized)
+            {
+                return;
+            }
+
+            variants[(int)action].SetActive(false);
+            if (actionLabel != null)
+            {
+                actionLabel.gameObject.SetActive(false);
+            }
+
+            IsActive = false;
+            HoldEvaluationStarted = false;
+            HoldInputConfirmed = false;
+            gameObject.SetActive(false);
+        }
+
+        private void CreateActionLabel()
+        {
+            GameObject labelObject = new GameObject("Action Prompt", typeof(RectTransform));
+            labelObject.transform.SetParent(transform, false);
+            actionLabelTransform = labelObject.transform;
+            actionLabel = labelObject.AddComponent<TextMeshPro>();
+
+            TMP_Settings settings = Resources.Load<TMP_Settings>("TMP Settings");
+            if (settings != null && TMP_Settings.defaultFontAsset != null)
+            {
+                actionLabel.font = TMP_Settings.defaultFontAsset;
+            }
+
+            actionLabel.fontSize = 5.2f;
+            actionLabel.fontStyle = FontStyles.Bold;
+            actionLabel.alignment = TextAlignmentOptions.Center;
+            actionLabel.enableWordWrapping = false;
+            actionLabel.outlineWidth = 0.18f;
+            actionLabel.outlineColor = new Color32(8, 2, 22, 255);
+            actionLabel.rectTransform.sizeDelta = new Vector2(18f, 7f);
+            actionLabelTransform.localScale = Vector3.one * 0.11f;
+            labelObject.SetActive(false);
+        }
+
+        private void ConfigureActionLabel(GameplayAction value)
+        {
+            if (actionLabel == null)
+            {
+                return;
+            }
+
+            switch (value)
+            {
+                case GameplayAction.LeftPunch:
+                    actionLabel.text = "Q\nTAY TRAI";
+                    actionLabel.color = new Color(0.02f, 1f, 0.95f, 1f);
+                    actionLabelTransform.localPosition = new Vector3(0f, 3.05f, -0.3f);
+                    break;
+                case GameplayAction.RightPunch:
+                    actionLabel.text = "E\nTAY PHAI";
+                    actionLabel.color = new Color(1f, 0.03f, 0.72f, 1f);
+                    actionLabelTransform.localPosition = new Vector3(0f, 3.05f, -0.3f);
+                    break;
+                case GameplayAction.BothPunch:
+                    actionLabel.text = "F\nCA HAI TAY";
+                    actionLabel.color = new Color(1f, 0.82f, 0.05f, 1f);
+                    actionLabelTransform.localPosition = new Vector3(0f, 3.05f, -0.3f);
+                    break;
+                case GameplayAction.Duck:
+                    actionLabel.text = "GIU S\nCUI NGUOI";
+                    actionLabel.color = Color.white;
+                    actionLabelTransform.localPosition = new Vector3(0f, 4.35f, -0.45f);
+                    break;
+                case GameplayAction.Jump:
+                    actionLabel.text = "GIU SPACE\nNHAY";
+                    actionLabel.color = new Color(1f, 0.82f, 0.05f, 1f);
+                    actionLabelTransform.localPosition = new Vector3(0f, 2.15f, -0.45f);
+                    break;
+                case GameplayAction.DodgeLeft:
+                    actionLabel.text = "GIU A   <<<\nNE TRAI";
+                    actionLabel.color = new Color(0.02f, 1f, 0.95f, 1f);
+                    actionLabelTransform.localPosition = new Vector3(-1.8f, 4.6f, -0.45f);
+                    break;
+                default:
+                    actionLabel.text = ">>>   GIU D\nNE PHAI";
+                    actionLabel.color = new Color(1f, 0.03f, 0.72f, 1f);
+                    actionLabelTransform.localPosition = new Vector3(1.8f, 4.6f, -0.45f);
+                    break;
+            }
+
+            actionLabel.gameObject.SetActive(true);
+        }
+
+        private GameObject CreatePunchVariant(string objectName, Material material)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(transform, false);
+            root.transform.localPosition = new Vector3(0f, 1.8f, 0f);
+
+            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Punch Orb", Vector3.zero, Vector3.one * 1.05f, material);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Punch Core", Vector3.zero, Vector3.one * 0.55f, material);
+
+            return root;
+        }
+
+        private GameObject CreatePairVariant(Material leftMaterial, Material rightMaterial)
+        {
+            GameObject root = new GameObject("Both Punch");
+            root.transform.SetParent(transform, false);
+            root.transform.localPosition = new Vector3(0f, 1.8f, 0f);
+            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Left Orb", new Vector3(-1.25f, 0f, 0f), Vector3.one * 0.9f, leftMaterial);
+            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Right Orb", new Vector3(1.25f, 0f, 0f), Vector3.one * 0.9f, rightMaterial);
+            return root;
+        }
+
+        private GameObject CreateBarVariant(string objectName, Material material, Vector3 scale, Vector3 localPosition)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(transform, false);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Gate", localPosition, scale, material);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Gate Accent", localPosition + new Vector3(0f, 0f, -0.45f), new Vector3(scale.x + 0.2f, 0.12f, 0.12f), material);
+            return root;
+        }
+
+        private GameObject CreateDodgeVariant(string objectName, Material material, bool openingOnLeft)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(transform, false);
+            float wallX = openingOnLeft ? 1.75f : -1.75f;
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Wall", new Vector3(wallX, 1.8f, 0f), new Vector3(4.5f, 4.2f, 0.65f), material);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Top", new Vector3(0f, 4.05f, 0f), new Vector3(8f, 0.25f, 0.65f), material);
+            return root;
+        }
+
+        private static GameObject CreatePrimitive(Transform parent, PrimitiveType type, string objectName, Vector3 localPosition, Vector3 localScale, Material material)
+        {
+            GameObject primitive = GameObject.CreatePrimitive(type);
+            primitive.name = objectName;
+            primitive.transform.SetParent(parent, false);
+            primitive.transform.localPosition = localPosition;
+            primitive.transform.localScale = localScale;
+
+            if (primitive.TryGetComponent(out Collider primitiveCollider))
+            {
+                Object.Destroy(primitiveCollider);
+            }
+
+            if (primitive.TryGetComponent(out Renderer primitiveRenderer))
+            {
+                primitiveRenderer.sharedMaterial = material;
+                primitiveRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                primitiveRenderer.receiveShadows = false;
+            }
+
+            return primitive;
+        }
+
+        private static bool IsObstacle(GameplayAction value)
+        {
+            return value == GameplayAction.Duck || value == GameplayAction.Jump ||
+                   value == GameplayAction.DodgeLeft || value == GameplayAction.DodgeRight;
+        }
+    }
+
+    /// <summary>Fixed-capacity pool for all travelling gameplay objects.</summary>
+    public sealed class BeatTravellerPool
+    {
+        private readonly Queue<BeatTraveller> available;
+        private readonly Transform root;
+
+        public BeatTravellerPool(int capacity, Transform parent, RuntimeMaterialLibrary materials)
+        {
+            int safeCapacity = Mathf.Max(8, capacity);
+            available = new Queue<BeatTraveller>(safeCapacity);
+            GameObject rootObject = new GameObject("Traveller Pool");
+            rootObject.transform.SetParent(parent, false);
+            root = rootObject.transform;
+
+            for (int i = 0; i < safeCapacity; i++)
+            {
+                GameObject pooledObject = new GameObject("Beat Traveller " + i);
+                pooledObject.transform.SetParent(root, false);
+                BeatTraveller traveller = pooledObject.AddComponent<BeatTraveller>();
+                traveller.Initialize(materials);
+                available.Enqueue(traveller);
+            }
+        }
+
+        public int AvailableCount => available.Count;
+
+        /// <summary>Gets an available object, or null if the authored density exceeds pool capacity.</summary>
+        public BeatTraveller Rent()
+        {
+            return available.Count > 0 ? available.Dequeue() : null;
+        }
+
+        /// <summary>Returns an object for reuse.</summary>
+        public void Return(BeatTraveller traveller)
+        {
+            if (traveller == null)
+            {
+                return;
+            }
+
+            traveller.Despawn();
+            traveller.transform.SetParent(root, false);
+            available.Enqueue(traveller);
+        }
+    }
+}
