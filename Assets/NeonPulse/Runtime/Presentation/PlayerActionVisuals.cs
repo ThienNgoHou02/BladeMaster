@@ -6,6 +6,8 @@ namespace NeonPulse
     /// <summary>First-person glove or sword feedback that makes keyboard actions immediately visible.</summary>
     public sealed class PlayerActionVisuals
     {
+        private const float SlashDurationMultiplier = 1.35f;
+
         private static readonly Vector3 LeftRestPosition = new Vector3(-0.92f, -0.67f, 1.45f);
         private static readonly Vector3 RightRestPosition = new Vector3(0.92f, -0.67f, 1.45f);
 
@@ -51,32 +53,32 @@ namespace NeonPulse
         }
 
         /// <summary>Starts cached procedural feedback for the requested action.</summary>
-        public void Trigger(GameplayAction action)
+        public void Trigger(GameplayAction action, float authoredSlashDirection = 0f)
         {
             switch (action)
             {
                 case GameplayAction.LeftPunch:
-                    leftPunchTimer = feel.PunchDuration;
+                    leftPunchTimer = GetAttackDuration();
                     if (usesSwords)
                     {
-                        leftSlashDirection = Random.value < 0.5f ? -1f : 1f;
+                        leftSlashDirection = ResolveSlashDirection(authoredSlashDirection);
                     }
                     StartShake(feel.PunchShakeAmplitude, feel.PunchShakeDuration);
                     break;
                 case GameplayAction.RightPunch:
-                    rightPunchTimer = feel.PunchDuration;
+                    rightPunchTimer = GetAttackDuration();
                     if (usesSwords)
                     {
-                        rightSlashDirection = Random.value < 0.5f ? -1f : 1f;
+                        rightSlashDirection = ResolveSlashDirection(authoredSlashDirection);
                     }
                     StartShake(feel.PunchShakeAmplitude, feel.PunchShakeDuration);
                     break;
                 case GameplayAction.BothPunch:
-                    leftPunchTimer = feel.PunchDuration;
-                    rightPunchTimer = feel.PunchDuration;
+                    leftPunchTimer = GetAttackDuration();
+                    rightPunchTimer = GetAttackDuration();
                     if (usesSwords)
                     {
-                        leftSlashDirection = Random.value < 0.5f ? -1f : 1f;
+                        leftSlashDirection = ResolveSlashDirection(authoredSlashDirection);
                         rightSlashDirection = -leftSlashDirection;
                     }
                     StartShake(feel.BothPunchShakeAmplitude, feel.BothPunchShakeDuration);
@@ -112,6 +114,12 @@ namespace NeonPulse
             StartShake(feel.FailShakeAmplitude, feel.FailShakeDuration);
         }
 
+        /// <summary>Plays a short, subtle camera impact when a rhythm tile reaches the line.</summary>
+        public void TriggerRhythmTileImpactShake()
+        {
+            StartShake(feel.RhythmTileShakeAmplitude, feel.RhythmTileShakeDuration);
+        }
+
         /// <summary>Updates glove positions without tweens, coroutines, or per-frame allocations.</summary>
         public void Tick(float deltaTime)
         {
@@ -131,10 +139,12 @@ namespace NeonPulse
             float rightThrust = CalculateThrust(rightPunchTimer);
             if (usesSwords)
             {
-                leftGlove.localPosition = LeftRestPosition + currentBodyOffset + CalculateSlashOffset(leftThrust, 0.12f);
-                rightGlove.localPosition = RightRestPosition + currentBodyOffset + CalculateSlashOffset(rightThrust, -0.12f);
-                leftGlove.localRotation = Quaternion.Euler(-16f, 10f, -18f + CalculateSlashAngle(leftPunchTimer, leftSlashDirection));
-                rightGlove.localRotation = Quaternion.Euler(-16f, -10f, 18f + CalculateSlashAngle(rightPunchTimer, rightSlashDirection));
+                float leftSlashAngle = CalculateSlashAngle(leftPunchTimer, leftSlashDirection);
+                float rightSlashAngle = CalculateSlashAngle(rightPunchTimer, rightSlashDirection);
+                leftGlove.localPosition = LeftRestPosition + currentBodyOffset + CalculateSlashOffset(leftThrust, 0.1f, leftSlashAngle);
+                rightGlove.localPosition = RightRestPosition + currentBodyOffset + CalculateSlashOffset(rightThrust, -0.1f, rightSlashAngle);
+                leftGlove.localRotation = Quaternion.Euler(-14f - leftThrust * 24f, 9f + leftSlashDirection * leftThrust * 7f, -14f + leftSlashAngle);
+                rightGlove.localRotation = Quaternion.Euler(-14f - rightThrust * 24f, -9f + rightSlashDirection * rightThrust * 7f, 14f + rightSlashAngle);
             }
             else
             {
@@ -223,27 +233,45 @@ namespace NeonPulse
             return new Vector3(inwardDirection * thrust, 0.22f * thrust, feel.PunchDistance * thrust);
         }
 
-        private Vector3 CalculateSlashOffset(float thrust, float inwardDirection)
+        private Vector3 CalculateSlashOffset(float thrust, float inwardDirection, float slashAngle)
         {
-            return new Vector3(inwardDirection * thrust, 0.12f * thrust, feel.PunchDistance * 0.48f * thrust);
+            float sweep = Mathf.Sin(slashAngle * Mathf.Deg2Rad) * 0.28f;
+            return new Vector3(inwardDirection * thrust + sweep, 0.1f * thrust, feel.PunchDistance * 0.42f * thrust);
         }
 
         private float CalculateSlashAngle(float timer, float direction)
         {
-            if (timer <= 0f || feel.PunchDuration <= 0f)
+            float duration = GetAttackDuration();
+            if (timer <= 0f || duration <= 0f)
             {
                 return 0f;
             }
 
-            float phase = 1f - timer / feel.PunchDuration;
-            if (phase < 0.72f)
+            float phase = 1f - timer / duration;
+            if (phase < 0.18f)
             {
-                float attackPhase = Mathf.SmoothStep(0f, 1f, phase / 0.72f);
-                return Mathf.Lerp(-72f, 68f, attackPhase) * direction;
+                float windUpPhase = Mathf.SmoothStep(0f, 1f, phase / 0.18f);
+                return Mathf.Lerp(0f, -56f, windUpPhase) * direction;
             }
 
-            float recoverPhase = Mathf.SmoothStep(0f, 1f, (phase - 0.72f) / 0.28f);
-            return Mathf.Lerp(68f, 0f, recoverPhase) * direction;
+            if (phase < 0.6f)
+            {
+                float attackPhase = Mathf.SmoothStep(0f, 1f, (phase - 0.18f) / 0.42f);
+                return Mathf.Lerp(-56f, 72f, attackPhase) * direction;
+            }
+
+            float recoverPhase = Mathf.SmoothStep(0f, 1f, (phase - 0.6f) / 0.4f);
+            return Mathf.Lerp(72f, 0f, recoverPhase) * direction;
+        }
+
+        private static float ResolveSlashDirection(float authoredDirection)
+        {
+            if (Mathf.Abs(authoredDirection) > 0.01f)
+            {
+                return Mathf.Sign(authoredDirection);
+            }
+
+            return Random.value < 0.5f ? -1f : 1f;
         }
 
         private float CalculateThrust(float timer)
@@ -253,8 +281,13 @@ namespace NeonPulse
                 return 0f;
             }
 
-            float phase = 1f - timer / feel.PunchDuration;
+            float phase = 1f - timer / GetAttackDuration();
             return Mathf.Sin(phase * Mathf.PI);
+        }
+
+        private float GetAttackDuration()
+        {
+            return usesSwords ? feel.PunchDuration * SlashDurationMultiplier : feel.PunchDuration;
         }
 
         private static Transform CreateGlove(string objectName, Transform parent, Vector3 localPosition, Material material)
@@ -274,12 +307,12 @@ namespace NeonPulse
         {
             GameObject root = new GameObject(objectName);
             root.transform.SetParent(hand, false);
-            root.transform.localPosition = new Vector3(0f, 0.18f, 0.12f);
+            root.transform.localPosition = new Vector3(0f, 0.08f, 0.1f);
 
-            CreatePart(root.transform, PrimitiveType.Cube, "Handle", new Vector3(0f, 0.35f, 0f), new Vector3(0.16f, 0.7f, 0.16f), handleMaterial);
-            CreatePart(root.transform, PrimitiveType.Cube, "Guard", new Vector3(0f, 0.72f, 0f), new Vector3(0.62f, 0.12f, 0.2f), bladeMaterial);
-            CreatePart(root.transform, PrimitiveType.Cube, "Blade Glow", new Vector3(0f, 1.72f, 0f), new Vector3(0.25f, 1.95f, 0.1f), glowMaterial);
-            CreatePart(root.transform, PrimitiveType.Cube, "Blade", new Vector3(0f, 1.72f, -0.06f), new Vector3(0.13f, 1.9f, 0.08f), bladeMaterial);
+            CreatePart(root.transform, PrimitiveType.Cube, "Handle", new Vector3(0f, 0.2f, 0f), new Vector3(0.12f, 0.4f, 0.12f), handleMaterial);
+            CreatePart(root.transform, PrimitiveType.Cube, "Guard", new Vector3(0f, 0.43f, 0f), new Vector3(0.42f, 0.08f, 0.14f), bladeMaterial);
+            CreatePart(root.transform, PrimitiveType.Cube, "Blade Glow", new Vector3(0f, 1.04f, 0f), new Vector3(0.16f, 1.18f, 0.07f), glowMaterial);
+            CreatePart(root.transform, PrimitiveType.Cube, "Blade", new Vector3(0f, 1.04f, -0.045f), new Vector3(0.08f, 1.14f, 0.05f), bladeMaterial);
         }
 
         private static void CreatePart(Transform parent, PrimitiveType type, string objectName, Vector3 localPosition, Vector3 localScale, Material material)

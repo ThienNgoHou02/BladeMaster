@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UI;
 
 namespace NeonPulse
 {
     /// <summary>Builds the fixed camera and original neon arena entirely from Unity primitives.</summary>
     public static class NeonWorldBuilder
     {
+        private const float BackgroundDistance = 85f;
+
         /// <summary>Creates the arena and returns the gameplay camera.</summary>
         public static Camera Build(
             Transform parent,
@@ -17,9 +20,9 @@ namespace NeonPulse
             ConfigureRenderSettings();
 
             Camera camera = CreateCamera(parent, config.CameraFeel.StandingHeight);
+            CreateBackground(camera, materials.Background);
             CreateLighting(parent, materials);
             CreateTrack(parent, materials);
-            CreateTunnel(parent, materials);
             judgementLineFeedback = CreateHitLine(parent, materials, config);
             return camera;
         }
@@ -104,6 +107,34 @@ namespace NeonPulse
             magenta.shadows = LightShadows.None;
         }
 
+        private static void CreateBackground(Camera camera, Material backgroundMaterial)
+        {
+            if (camera == null || backgroundMaterial == null)
+            {
+                return;
+            }
+
+            GameObject background = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            background.name = "Cyberpunk Background";
+            background.transform.SetParent(camera.transform, false);
+            background.transform.localPosition = new Vector3(0f, 0f, BackgroundDistance);
+
+            float height = 2f * BackgroundDistance * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            background.transform.localScale = new Vector3(height * camera.aspect, height, 1f) * 1.02f;
+
+            if (background.TryGetComponent(out Collider backgroundCollider))
+            {
+                Object.Destroy(backgroundCollider);
+            }
+
+            if (background.TryGetComponent(out Renderer backgroundRenderer))
+            {
+                backgroundRenderer.sharedMaterial = backgroundMaterial;
+                backgroundRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                backgroundRenderer.receiveShadows = false;
+            }
+        }
+
         private static void CreateTrack(Transform parent, RuntimeMaterialLibrary materials)
         {
             for (int lane = 0; lane < 4; lane++)
@@ -125,21 +156,6 @@ namespace NeonPulse
             }
         }
 
-        private static void CreateTunnel(Transform parent, RuntimeMaterialLibrary materials)
-        {
-            for (int index = 0; index < 11; index++)
-            {
-                float z = 3f + index * 5f;
-                Material material = index % 2 == 0 ? materials.Purple : materials.Magenta;
-                CreateCube(parent, "Tunnel Left", new Vector3(-5.3f, 2.8f, z), new Vector3(0.07f, 5.7f, 0.07f), material);
-                CreateCube(parent, "Tunnel Right", new Vector3(5.3f, 2.8f, z), new Vector3(0.07f, 5.7f, 0.07f), material);
-                CreateCube(parent, "Tunnel Top", new Vector3(0f, 5.6f, z), new Vector3(10.65f, 0.07f, 0.07f), material);
-            }
-
-            CreateCube(parent, "Left Horizon", new Vector3(-5.3f, 2.8f, 30f), new Vector3(0.06f, 0.06f, 58f), materials.Cyan);
-            CreateCube(parent, "Right Horizon", new Vector3(5.3f, 2.8f, 30f), new Vector3(0.06f, 0.06f, 58f), materials.Magenta);
-        }
-
         private static JudgementLineFeedback CreateHitLine(Transform parent, RuntimeMaterialLibrary materials, NeonPulseGameConfig config)
         {
             float hitZ = config.Rhythm.HitZ;
@@ -152,9 +168,6 @@ namespace NeonPulse
             GameObject core = CreateCube(parent, "Contact Line White", new Vector3(0f, 0.37f, hitZ), new Vector3(8.35f, 0.09f, 0.09f), materials.Footprint);
             CreateCube(parent, "Contact Line Near Rim", new Vector3(0f, 0.34f, hitZ - 0.09f), new Vector3(8.25f, 0.04f, 0.04f), materials.Yellow);
             CreateCube(parent, "Contact Line Far Rim", new Vector3(0f, 0.34f, hitZ + 0.09f), new Vector3(8.25f, 0.04f, 0.04f), materials.Yellow);
-            CreateCube(parent, "Hit Portal Left", new Vector3(-3.85f, 2.05f, hitZ), new Vector3(0.09f, 4.1f, 0.14f), materials.Cyan);
-            CreateCube(parent, "Hit Portal Right", new Vector3(3.85f, 2.05f, hitZ), new Vector3(0.09f, 4.1f, 0.14f), materials.Magenta);
-            CreateCube(parent, "Hit Portal Top", new Vector3(0f, 4.1f, hitZ), new Vector3(7.8f, 0.09f, 0.14f), materials.Yellow);
 
             Transform[] pads = new Transform[4];
             for (int lane = 0; lane < pads.Length; lane++)
@@ -341,6 +354,78 @@ namespace NeonPulse
             ParticleSystem.MainModule main = system.main;
             main.startColor = color;
             system.Play(true);
+        }
+    }
+
+    /// <summary>Reusable full-screen flash with no per-frame allocation.</summary>
+    public sealed class ScreenFlashFeedback
+    {
+        private const int SortingOrder = 40;
+
+        private readonly Image overlay;
+        private readonly float duration;
+        private readonly float intensity;
+        private Color flashColor;
+        private float currentIntensity;
+        private float remainingTime;
+
+        public ScreenFlashFeedback(Transform parent, float configuredDuration, float configuredIntensity)
+        {
+            duration = Mathf.Max(0.01f, configuredDuration);
+            intensity = Mathf.Clamp01(configuredIntensity);
+
+            GameObject canvasObject = new GameObject("Screen Flash Feedback");
+            canvasObject.transform.SetParent(parent, false);
+            Canvas canvas = canvasObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = SortingOrder;
+
+            GameObject overlayObject = new GameObject("Flash Overlay", typeof(RectTransform));
+            overlayObject.transform.SetParent(canvasObject.transform, false);
+            RectTransform rectTransform = (RectTransform)overlayObject.transform;
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+
+            overlay = overlayObject.AddComponent<Image>();
+            overlay.raycastTarget = false;
+            overlay.enabled = false;
+        }
+
+        /// <summary>Starts or refreshes the flash using the feedback color.</summary>
+        public void Play(Color color, float strengthMultiplier = 1f)
+        {
+            flashColor = color;
+            flashColor.a = 1f;
+            currentIntensity = intensity * Mathf.Clamp01(strengthMultiplier);
+            remainingTime = duration;
+            overlay.color = new Color(color.r, color.g, color.b, currentIntensity);
+            overlay.enabled = true;
+        }
+
+        public void Tick(float unscaledDeltaTime)
+        {
+            if (remainingTime <= 0f)
+            {
+                return;
+            }
+
+            remainingTime = Mathf.Max(0f, remainingTime - unscaledDeltaTime);
+            float normalized = remainingTime / duration;
+            float alpha = normalized * normalized * currentIntensity;
+            overlay.color = new Color(flashColor.r, flashColor.g, flashColor.b, alpha);
+            if (remainingTime <= 0f)
+            {
+                overlay.enabled = false;
+            }
+        }
+
+        public void Clear()
+        {
+            remainingTime = 0f;
+            currentIntensity = 0f;
+            overlay.enabled = false;
         }
     }
 }

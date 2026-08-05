@@ -30,6 +30,7 @@ namespace NeonPulse
 
         public GameplayAction Action => action;
         public float TargetTime => targetTime;
+        public float SlashDirection { get; private set; }
         public bool IsActive { get; private set; }
         public bool RequiresHold => IsObstacle(action);
         public bool HoldEvaluationStarted { get; private set; }
@@ -62,10 +63,10 @@ namespace NeonPulse
                 variants[(int)GameplayAction.RightPunch] = CreatePunchVariant("Right Punch", materials.Magenta, materials.MagentaGlow);
                 variants[(int)GameplayAction.BothPunch] = CreatePairVariant(materials.Cyan, materials.Magenta, materials.CyanGlow, materials.MagentaGlow);
             }
-            variants[(int)GameplayAction.Duck] = CreateBarVariant("Duck Gate", materials.Obstacle, new Vector3(7.8f, 1.15f, 0.75f), new Vector3(0f, 3.25f, 0f));
-            variants[(int)GameplayAction.Jump] = CreateBarVariant("Jump Gate", materials.Obstacle, new Vector3(7.8f, 1.05f, 0.75f), new Vector3(0f, 0.35f, 0f));
-            variants[(int)GameplayAction.DodgeLeft] = CreateDodgeVariant("Dodge Left", materials.Obstacle, materials.Cyan, true);
-            variants[(int)GameplayAction.DodgeRight] = CreateDodgeVariant("Dodge Right", materials.Obstacle, materials.Magenta, false);
+            variants[(int)GameplayAction.Duck] = CreateBarVariant("Duck Gate", materials.Obstacle, materials.ObstacleGlow, new Vector3(7.8f, 1.15f, 0.75f), new Vector3(0f, 3.25f, 0f));
+            variants[(int)GameplayAction.Jump] = CreateBarVariant("Jump Gate", materials.Obstacle, materials.ObstacleGlow, new Vector3(7.8f, 1.05f, 0.75f), new Vector3(0f, 0.35f, 0f));
+            variants[(int)GameplayAction.DodgeLeft] = CreateDodgeVariant("Dodge Left", materials.Obstacle, materials.ObstacleGlow, materials.Cyan, true);
+            variants[(int)GameplayAction.DodgeRight] = CreateDodgeVariant("Dodge Right", materials.Obstacle, materials.ObstacleGlow, materials.Magenta, false);
 
             for (int i = 0; i < variants.Length; i++)
             {
@@ -89,6 +90,7 @@ namespace NeonPulse
             spawnZ = startZ;
             HoldEvaluationStarted = false;
             HoldInputConfirmed = false;
+            SlashDirection = 0f;
 
             float x = IsObstacle(action) || action == GameplayAction.BothPunch
                 ? 0f
@@ -236,9 +238,9 @@ namespace NeonPulse
             root.transform.SetParent(transform, false);
             root.transform.localPosition = new Vector3(0f, 1.8f, 0f);
 
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Punch Orb", Vector3.zero, Vector3.one * 1.05f, material);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Punch Aura", Vector3.zero, Vector3.one * 1.05f * targetGlowScale, glowMaterial);
-            CreatePrimitive(root.transform, PrimitiveType.Cube, "Punch Core", Vector3.zero, Vector3.one * 0.55f, material);
+            Vector3 cubeScale = new Vector3(1.15f, 1.15f, 0.72f);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Punch Cube Aura", Vector3.zero, cubeScale * targetGlowScale, glowMaterial);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Punch Cube", new Vector3(0f, 0f, -0.06f), cubeScale, material);
 
             return root;
         }
@@ -248,10 +250,11 @@ namespace NeonPulse
             GameObject root = new GameObject("Both Punch");
             root.transform.SetParent(transform, false);
             root.transform.localPosition = new Vector3(0f, 1.8f, 0f);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Left Orb", new Vector3(-1.25f, 0f, 0f), Vector3.one * 0.9f, leftMaterial);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Right Orb", new Vector3(1.25f, 0f, 0f), Vector3.one * 0.9f, rightMaterial);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Left Aura", new Vector3(-1.25f, 0f, 0f), Vector3.one * 0.9f * targetGlowScale, leftGlow);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Right Aura", new Vector3(1.25f, 0f, 0f), Vector3.one * 0.9f * targetGlowScale, rightGlow);
+            Vector3 cubeScale = new Vector3(1f, 1f, 0.68f);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Left Cube Aura", new Vector3(-1.25f, 0f, 0f), cubeScale * targetGlowScale, leftGlow);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Right Cube Aura", new Vector3(1.25f, 0f, 0f), cubeScale * targetGlowScale, rightGlow);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Left Cube", new Vector3(-1.25f, 0f, -0.06f), cubeScale, leftMaterial);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Right Cube", new Vector3(1.25f, 0f, -0.06f), cubeScale, rightMaterial);
             return root;
         }
 
@@ -299,6 +302,7 @@ namespace NeonPulse
             }
 
             float primaryAngle = Random.value < 0.5f ? -45f : 45f;
+            SlashDirection = Mathf.Sign(primaryAngle);
             Transform primaryIndicator = action == GameplayAction.LeftPunch ? leftSlashIndicator : rightSlashIndicator;
             if (action == GameplayAction.BothPunch)
             {
@@ -316,16 +320,17 @@ namespace NeonPulse
             }
         }
 
-        private GameObject CreateBarVariant(string objectName, Material material, Vector3 scale, Vector3 localPosition)
+        private GameObject CreateBarVariant(string objectName, Material material, Material glowMaterial, Vector3 scale, Vector3 localPosition)
         {
             GameObject root = new GameObject(objectName);
             root.transform.SetParent(transform, false);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Gate Aura", localPosition, scale + new Vector3(0.28f, 0.2f, 0.14f), glowMaterial);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Gate", localPosition, scale, material);
-            CreatePrimitive(root.transform, PrimitiveType.Cube, "Gate Accent", localPosition + new Vector3(0f, 0f, -0.45f), new Vector3(scale.x + 0.2f, 0.12f, 0.12f), material);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Gate Accent", localPosition + new Vector3(0f, 0f, -0.45f), new Vector3(scale.x + 0.2f, 0.12f, 0.12f), glowMaterial);
             return root;
         }
 
-        private GameObject CreateDodgeVariant(string objectName, Material material, Material safeMaterial, bool openingOnLeft)
+        private GameObject CreateDodgeVariant(string objectName, Material material, Material glowMaterial, Material safeMaterial, bool openingOnLeft)
         {
             GameObject root = new GameObject(objectName);
             root.transform.SetParent(transform, false);
@@ -333,6 +338,8 @@ namespace NeonPulse
             float openingCenterX = openingOnLeft ? -2.1f : 2.1f;
             float openingBoundaryX = openingOnLeft ? -0.48f : 0.48f;
             float outerBoundaryX = openingOnLeft ? -3.82f : 3.82f;
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Wall Aura", new Vector3(wallX, 1.8f, 0.04f), new Vector3(4.72f, 4.42f, 0.78f), glowMaterial);
+            CreatePrimitive(root.transform, PrimitiveType.Cube, "Top Aura", new Vector3(0f, 4.05f, 0.04f), new Vector3(8.22f, 0.43f, 0.78f), glowMaterial);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Wall", new Vector3(wallX, 1.8f, 0f), new Vector3(4.5f, 4.2f, 0.65f), material);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Top", new Vector3(0f, 4.05f, 0f), new Vector3(8f, 0.25f, 0.65f), material);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Safe Opening Inner", new Vector3(openingBoundaryX, 1.85f, -0.38f), new Vector3(0.1f, 3.8f, 0.12f), safeMaterial);

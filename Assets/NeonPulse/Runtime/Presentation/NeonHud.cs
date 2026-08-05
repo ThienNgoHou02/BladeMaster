@@ -21,7 +21,6 @@ namespace NeonPulse
         private TextMeshProUGUI countdownText;
         private GameObject resultPanel;
         private TextMeshProUGUI resultText;
-        private Image progressFill;
         private float feedbackTimer;
         private float comboPulseTimer;
         private Color comboPulseColor = Color.white;
@@ -56,9 +55,6 @@ namespace NeonPulse
 
             CreateRuntimeFont();
 
-            TextMeshProUGUI title = CreateText("Title", transform, "NEON PULSE FITNESS", 48f, TextAlignmentOptions.Center, materials.YellowColor);
-            SetRect(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -44f), new Vector2(850f, 76f));
-
             scoreText = CreateText("Score", transform, "ĐIỂM 000000\nTRÚNG 0/0", 32f, TextAlignmentOptions.TopLeft, Color.white);
             SetRect(scoreText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(38f, -48f), new Vector2(560f, 115f));
 
@@ -79,7 +75,6 @@ namespace NeonPulse
                 SetRect(statusText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(1450f, 92f));
             }
 
-            CreateProgressBar(materials);
             CreateNextActionPanel(materials);
             CreateCountdownPanel(materials);
             CreateResultPanel(materials);
@@ -247,14 +242,6 @@ namespace NeonPulse
         }
 
         /// <summary>Updates song progress without string creation.</summary>
-        public void SetProgress(float normalized)
-        {
-            if (progressFill != null)
-            {
-                progressFill.fillAmount = Mathf.Clamp01(normalized);
-            }
-        }
-
         /// <summary>Shows the final run summary and restart hint.</summary>
         public void ShowResults(ScoreSnapshot snapshot)
         {
@@ -291,7 +278,6 @@ namespace NeonPulse
             }
 
             HideUpcomingAction();
-            SetProgress(0f);
         }
 
         private void Update()
@@ -375,31 +361,6 @@ namespace NeonPulse
             text.enableWordWrapping = false;
             text.overflowMode = TextOverflowModes.Overflow;
             return text;
-        }
-
-        private void CreateProgressBar(RuntimeMaterialLibrary materials)
-        {
-            GameObject background = new GameObject("Song Progress Background", typeof(RectTransform), typeof(Image));
-            background.transform.SetParent(transform, false);
-            Image backgroundImage = background.GetComponent<Image>();
-            backgroundImage.color = new Color(0.12f, 0.05f, 0.2f, 0.85f);
-            backgroundImage.raycastTarget = false;
-            SetRect(background.GetComponent<RectTransform>(), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -104f), new Vector2(720f, 10f));
-
-            GameObject fill = new GameObject("Song Progress Fill", typeof(RectTransform), typeof(Image));
-            fill.transform.SetParent(background.transform, false);
-            progressFill = fill.GetComponent<Image>();
-            progressFill.color = materials.CyanColor;
-            progressFill.type = Image.Type.Filled;
-            progressFill.fillMethod = Image.FillMethod.Horizontal;
-            progressFill.fillOrigin = 0;
-            progressFill.fillAmount = 0f;
-            progressFill.raycastTarget = false;
-            RectTransform rect = fill.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
         }
 
         private void CreateResultPanel(RuntimeMaterialLibrary materials)

@@ -19,14 +19,16 @@ namespace NeonPulse
         public Material Yellow { get; }
         public Material Dark { get; }
         public Material Obstacle { get; }
+        public Material ObstacleGlow { get; }
         public Material White { get; }
         public Material Footprint { get; }
+        public Material Background { get; }
         public Material CyanGlow { get; }
         public Material MagentaGlow { get; }
         public Material PurpleGlow { get; }
         public Material YellowGlow { get; }
 
-        public RuntimeMaterialLibrary(VisualSettings settings)
+        public RuntimeMaterialLibrary(VisualSettings settings, Texture backgroundTexture = null)
         {
             VisualSettings safeSettings = settings ?? new VisualSettings();
             CyanColor = safeSettings.Cyan;
@@ -42,8 +44,10 @@ namespace NeonPulse
             Yellow = CreateEmissive("Neon Yellow", YellowColor, neonIntensity * 1.1f);
             Dark = CreateEmissive("Track Black", new Color(0.006f, 0.008f, 0.02f, 1f), 0.02f);
             Obstacle = CreateEmissive("Obstacle Red", safeSettings.Obstacle, neonIntensity * 0.68f);
+            ObstacleGlow = CreateGlow("Obstacle Aura", safeSettings.Obstacle);
             White = CreateParticle("Feedback White");
             Footprint = CreateEmissive("Footprint White", Color.white, neonIntensity * 1.35f);
+            Background = CreateBackground("Gameplay Background", backgroundTexture);
             CyanGlow = CreateGlow("Cyan Aura", CyanColor);
             MagentaGlow = CreateGlow("Magenta Aura", MagentaColor);
             PurpleGlow = CreateGlow("Purple Aura", PurpleColor);
@@ -69,8 +73,10 @@ namespace NeonPulse
             DestroyMaterial(Yellow);
             DestroyMaterial(Dark);
             DestroyMaterial(Obstacle);
+            DestroyMaterial(ObstacleGlow);
             DestroyMaterial(White);
             DestroyMaterial(Footprint);
+            DestroyMaterial(Background);
             DestroyMaterial(CyanGlow);
             DestroyMaterial(MagentaGlow);
             DestroyMaterial(PurpleGlow);
@@ -129,6 +135,32 @@ namespace NeonPulse
                 name = materialName,
                 color = new Color(color.r, color.g, color.b, 0.48f)
             };
+        }
+
+        private static Material CreateBackground(string materialName, Texture texture)
+        {
+            if (texture == null)
+            {
+                return null;
+            }
+
+            Shader shader = Resources.Load<Shader>("NeonPulseBackground");
+            if (shader == null)
+            {
+                shader = Shader.Find("NeonPulse/Background");
+            }
+
+            if (shader == null)
+            {
+                shader = Shader.Find("Hidden/InternalErrorShader");
+            }
+
+            Material material = new Material(shader)
+            {
+                name = materialName
+            };
+            material.SetTexture("_MainTex", texture);
+            return material;
         }
 
         private static void SetEmission(Material material, Color color, float intensity)

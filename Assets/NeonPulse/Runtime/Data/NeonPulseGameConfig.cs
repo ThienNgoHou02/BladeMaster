@@ -124,6 +124,8 @@ namespace NeonPulse
         [SerializeField, Range(0.05f, 0.5f)] private float punchShakeDuration = 0.12f;
         [SerializeField, Range(0f, 0.3f)] private float bothPunchShakeAmplitude = 0.075f;
         [SerializeField, Range(0.05f, 0.5f)] private float bothPunchShakeDuration = 0.15f;
+        [SerializeField, Range(0f, 0.15f)] private float rhythmTileShakeAmplitude = 0.025f;
+        [SerializeField, Range(0.03f, 0.3f)] private float rhythmTileShakeDuration = 0.1f;
         [SerializeField, Range(0f, 0.4f)] private float failShakeAmplitude = 0.14f;
         [SerializeField, Range(0.05f, 1f)] private float failShakeDuration = 0.32f;
 
@@ -138,6 +140,8 @@ namespace NeonPulse
         public float PunchShakeDuration => punchShakeDuration;
         public float BothPunchShakeAmplitude => bothPunchShakeAmplitude;
         public float BothPunchShakeDuration => bothPunchShakeDuration;
+        public float RhythmTileShakeAmplitude => rhythmTileShakeAmplitude;
+        public float RhythmTileShakeDuration => rhythmTileShakeDuration;
         public float FailShakeAmplitude => failShakeAmplitude;
         public float FailShakeDuration => failShakeDuration;
     }
@@ -145,6 +149,7 @@ namespace NeonPulse
     [Serializable]
     public sealed class VisualSettings
     {
+        [SerializeField] private Texture2D backgroundTexture;
         [SerializeField] private Color cyan = new Color(0.02f, 1f, 0.95f, 1f);
         [SerializeField] private Color magenta = new Color(1f, 0.03f, 0.72f, 1f);
         [SerializeField] private Color purple = new Color(0.48f, 0.05f, 1f, 1f);
@@ -155,12 +160,15 @@ namespace NeonPulse
         [SerializeField, Range(1f, 1.8f)] private float targetGlowScale = 1.26f;
         [SerializeField, Range(0.6f, 2.5f)] private float rhythmTileLength = 1.35f;
         [SerializeField, Range(0.05f, 0.6f)] private float judgementLinePulseStrength = 0.28f;
+        [SerializeField, Range(0.05f, 0.4f)] private float screenFlashDuration = 0.12f;
+        [SerializeField, Range(0.05f, 0.5f)] private float screenFlashIntensity = 0.18f;
         [SerializeField, Range(8, 64)] private int hitParticleCount = 34;
         [SerializeField, Range(8, 64)] private int travellerPoolCapacity = 24;
         [SerializeField, Range(8, 64)] private int rhythmTilePoolCapacity = 24;
         [SerializeField, Range(4, 24)] private int hitVfxPoolCapacity = 8;
         [SerializeField, Range(0f, 1f)] private float audioVolume = 0.58f;
 
+        public Texture2D BackgroundTexture => backgroundTexture;
         public Color Cyan => cyan;
         public Color Magenta => magenta;
         public Color Purple => purple;
@@ -171,6 +179,8 @@ namespace NeonPulse
         public float TargetGlowScale => targetGlowScale;
         public float RhythmTileLength => rhythmTileLength;
         public float JudgementLinePulseStrength => judgementLinePulseStrength;
+        public float ScreenFlashDuration => screenFlashDuration;
+        public float ScreenFlashIntensity => screenFlashIntensity;
         public int HitParticleCount => hitParticleCount;
         public int TravellerPoolCapacity => travellerPoolCapacity;
         public int RhythmTilePoolCapacity => rhythmTilePoolCapacity;

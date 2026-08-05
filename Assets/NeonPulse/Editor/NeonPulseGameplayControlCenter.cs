@@ -264,11 +264,14 @@ namespace NeonPulse.EditorTools
             DrawField(cameraFeel, "punchShakeDuration", isSlashMode ? "Thời gian rung khi chém" : "Thời gian rung khi đấm");
             DrawField(cameraFeel, "bothPunchShakeAmplitude", isSlashMode ? "Độ rung khi chém hai kiếm" : "Độ rung khi đấm hai tay");
             DrawField(cameraFeel, "bothPunchShakeDuration", isSlashMode ? "Thời gian rung hai kiếm" : "Thời gian rung hai tay");
+            DrawField(cameraFeel, "rhythmTileShakeAmplitude", "Độ rung khi gạch chạm vạch");
+            DrawField(cameraFeel, "rhythmTileShakeDuration", "Thời gian rung khi gạch chạm vạch");
             DrawField(cameraFeel, "failShakeAmplitude", "Độ rung khi sai nhịp");
             DrawField(cameraFeel, "failShakeDuration", "Thời gian rung khi sai");
 
             DrawSection("MÀU, SHADER & VFX");
             SerializedProperty visuals = serializedConfig.FindProperty("visuals");
+            DrawField(visuals, "backgroundTexture", "Ảnh nền gameplay");
             DrawField(visuals, "cyan", "Màu tay trái");
             DrawField(visuals, "magenta", "Màu tay phải");
             DrawField(visuals, "purple", "Màu đường hầm");
@@ -279,6 +282,8 @@ namespace NeonPulse.EditorTools
             DrawField(visuals, "targetGlowScale", "Độ lớn viền sáng vật thể");
             DrawField(visuals, "rhythmTileLength", "Độ dài viên gạch bay");
             DrawField(visuals, "judgementLinePulseStrength", "Độ nảy của vạch khi trúng");
+            DrawField(visuals, "screenFlashDuration", "Thời gian lóe màn hình");
+            DrawField(visuals, "screenFlashIntensity", "Cường độ lóe màn hình");
             DrawField(visuals, "hitParticleCount", "Số hạt VFX khi trúng");
             DrawField(visuals, "audioVolume", "Âm lượng");
 

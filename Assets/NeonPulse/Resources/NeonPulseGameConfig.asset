@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a178df4088b544ce957c32ec72bc88f8, type: 3}
   m_Name: NeonPulseGameConfig
   m_EditorClassIdentifier: 
-  gameplayMode: 1
+  gameplayMode: 0
   autoPlay: 1
   rhythm:
-    bpm: 105
+    bpm: 125
     songBeats: 64
-    travelBeats: 6
+    travelBeats: 5
     tileWaveStartBeat: 26
     tileWaveEndBeat: 38
     spawnZ: 50
@@ -26,9 +26,9 @@ MonoBehaviour:
     labelVisibleZ: 30
     countdownDuration: 3
     resultDelay: 0.6
-    perfectWindow: 0.08
-    greatWindow: 0.16
-    goodWindow: 0.28
+    perfectWindow: 0.06
+    greatWindow: 0.12
+    goodWindow: 0.21
     holdWindowLead: 0.45
     holdInputGrace: 0.18
     holdWindowTrail: 0.5
@@ -65,19 +65,24 @@ MonoBehaviour:
     punchShakeDuration: 0.12
     bothPunchShakeAmplitude: 0.075
     bothPunchShakeDuration: 0.15
+    rhythmTileShakeAmplitude: 0.025
+    rhythmTileShakeDuration: 0.1
     failShakeAmplitude: 0.14
     failShakeDuration: 0.32
   visuals:
+    backgroundTexture: {fileID: 2800000, guid: e9b2bc231ffbb2a48a109cd0a786e10c, type: 3}
     cyan: {r: 0.02, g: 1, b: 0.95, a: 1}
     magenta: {r: 1, g: 0.03, b: 0.72, a: 1}
     purple: {r: 0.48, g: 0.05, b: 1, a: 1}
     yellow: {r: 1, g: 0.82, b: 0.05, a: 1}
     obstacle: {r: 1, g: 0.06, b: 0.2, a: 1}
-    neonIntensity: 2.2
+    neonIntensity: 3
     beatPulseIntensity: 1.4
     targetGlowScale: 1.26
     rhythmTileLength: 1.35
     judgementLinePulseStrength: 0.28
+    screenFlashDuration: 0.12
+    screenFlashIntensity: 0.18
     hitParticleCount: 34
     travellerPoolCapacity: 24
     rhythmTilePoolCapacity: 24

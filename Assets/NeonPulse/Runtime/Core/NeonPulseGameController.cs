@@ -19,6 +19,8 @@ namespace NeonPulse
         private BeatTravellerPool obstaclePool;
         private RhythmLaneTilePool rhythmTilePool;
         private HitBurstPool hitBursts;
+        private SlashDebrisPool slashDebris;
+        private ScreenFlashFeedback screenFlash;
         private PlayerActionVisuals playerVisuals;
         private JudgementLineFeedback judgementLineFeedback;
         private NeonHud hud;
@@ -40,7 +42,7 @@ namespace NeonPulse
             ConfigureApplication();
 
             config = NeonPulseGameConfig.LoadRuntime(out ownsConfig);
-            materials = new RuntimeMaterialLibrary(config.Visuals);
+            materials = new RuntimeMaterialLibrary(config.Visuals, config.Visuals.BackgroundTexture);
             inputProvider = new KeyboardInputProvider(config.Input);
             score = new RhythmScore(config.Rhythm, config.Scoring);
             score.Changed += OnScoreChanged;
@@ -54,6 +56,11 @@ namespace NeonPulse
             obstaclePool = new BeatTravellerPool(obstaclePoolCapacity, transform, materials, config, "Obstacle Door Pool");
             rhythmTilePool = new RhythmLaneTilePool(config.Visuals.RhythmTilePoolCapacity, transform, materials, config);
             hitBursts = new HitBurstPool(config.Visuals.HitVfxPoolCapacity, transform, materials.White, config.Visuals.HitParticleCount);
+            slashDebris = new SlashDebrisPool(config.Visuals.HitVfxPoolCapacity, transform, materials);
+            screenFlash = new ScreenFlashFeedback(
+                transform,
+                config.Visuals.ScreenFlashDuration,
+                config.Visuals.ScreenFlashIntensity);
 
             GameObject hudObject = new GameObject("Neon Pulse HUD");
             hudObject.transform.SetParent(transform, false);
@@ -86,6 +93,9 @@ namespace NeonPulse
                 return;
             }
 
+            slashDebris?.Tick(Time.deltaTime);
+            screenFlash?.Tick(Time.unscaledDeltaTime);
+
             if (runFinished)
             {
                 playerVisuals?.SetHeldInput(false, false, false, false);
@@ -114,7 +124,6 @@ namespace NeonPulse
             {
                 ProcessHeldObstacles(gameplayInput, songTime);
                 ProcessInput(gameplayInput, songTime);
-                hud.SetProgress(songTime / songDuration);
             }
 
             UpdateUpcomingCue(songTime);
@@ -155,6 +164,8 @@ namespace NeonPulse
         private void StartRun()
         {
             ReturnAllTravellers();
+            slashDebris?.Clear();
+            screenFlash?.Clear();
             nextPunchEventIndex = 0;
             nextObstacleEventIndex = 0;
             nextRhythmTileIndex = 0;
@@ -339,8 +350,8 @@ namespace NeonPulse
             if (input.BothPunch)
             {
                 hadInput = true;
-                playerVisuals?.Trigger(GameplayAction.BothPunch);
-                hitBoth = TryJudge(GameplayAction.BothPunch, songTime);
+                hitBoth = TryJudge(GameplayAction.BothPunch, songTime, out float slashDirection);
+                playerVisuals?.Trigger(GameplayAction.BothPunch, slashDirection);
                 anyHit |= hitBoth;
             }
 
@@ -349,15 +360,17 @@ namespace NeonPulse
                 if (input.LeftPunch)
                 {
                     hadInput = true;
-                    playerVisuals?.Trigger(GameplayAction.LeftPunch);
-                    anyHit |= TryJudge(GameplayAction.LeftPunch, songTime);
+                    bool hitLeft = TryJudge(GameplayAction.LeftPunch, songTime, out float slashDirection);
+                    playerVisuals?.Trigger(GameplayAction.LeftPunch, slashDirection);
+                    anyHit |= hitLeft;
                 }
 
                 if (input.RightPunch)
                 {
                     hadInput = true;
-                    playerVisuals?.Trigger(GameplayAction.RightPunch);
-                    anyHit |= TryJudge(GameplayAction.RightPunch, songTime);
+                    bool hitRight = TryJudge(GameplayAction.RightPunch, songTime, out float slashDirection);
+                    playerVisuals?.Trigger(GameplayAction.RightPunch, slashDirection);
+                    anyHit |= hitRight;
                 }
             }
 
@@ -519,8 +532,9 @@ namespace NeonPulse
             hud.SetUpcomingAction(closest.Action, closest.TargetTime - songTime, approachDuration, materials);
         }
 
-        private bool TryJudge(GameplayAction requestedAction, float songTime)
+        private bool TryJudge(GameplayAction requestedAction, float songTime, out float slashDirection)
         {
+            slashDirection = 0f;
             int candidateIndex = -1;
             float bestError = float.MaxValue;
 
@@ -549,6 +563,15 @@ namespace NeonPulse
 
             BeatTraveller candidate = activePunchTargets[candidateIndex];
             judgementPosition = CreateJudgementPosition(candidate);
+            slashDirection = candidate.SlashDirection;
+            if (config.GameplayMode == CombatGameplayMode.Slash)
+            {
+                slashDebris?.PlaySlash(judgementPosition, requestedAction, slashDirection);
+            }
+            else
+            {
+                slashDebris?.PlayPunch(judgementPosition, requestedAction);
+            }
             score.RegisterHit(config.AutoPlay ? 0f : bestError, requestedAction);
             activePunchTargets.RemoveAt(candidateIndex);
             punchTargetPool.Return(candidate);
@@ -565,7 +588,6 @@ namespace NeonPulse
             runFinished = true;
             ReturnAllTravellers();
             hud.HideUpcomingAction();
-            hud.SetProgress(1f);
             hud.ShowResults(score.Snapshot);
         }
 
@@ -624,12 +646,20 @@ namespace NeonPulse
             hitBursts.Play(judgementPosition, color);
             if (action == GameplayAction.RhythmTile)
             {
+                playerVisuals?.TriggerRhythmTileImpactShake();
+                screenFlash?.Play(color, 0.6f);
                 judgementLineFeedback?.Pulse(judgementPosition.x);
                 return;
             }
 
             if (grade != AccuracyGrade.Miss)
             {
+                if (action == GameplayAction.LeftPunch || action == GameplayAction.RightPunch ||
+                    action == GameplayAction.BothPunch)
+                {
+                    screenFlash?.Play(color);
+                }
+
                 judgementLineFeedback?.Pulse(judgementPosition.x);
                 hitBursts.Play(new Vector3(judgementPosition.x, JudgementStepSurfaceY, config.Rhythm.HitZ), color);
             }
@@ -662,7 +692,7 @@ namespace NeonPulse
 
         private Vector3 CreateJudgementPosition(BeatTraveller traveller)
         {
-            return new Vector3(traveller.transform.position.x, 1.7f, config.Rhythm.HitZ);
+            return new Vector3(traveller.transform.position.x, 1.8f, config.Rhythm.HitZ);
         }
 
         private static void ConfigureApplication()
