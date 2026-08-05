@@ -10,7 +10,8 @@ namespace NeonPulse
     {
         private static readonly float[] LaneX = { -2.7f, -0.9f, 0.9f, 2.7f };
 
-        private readonly GameObject[] variants = new GameObject[7];
+        private readonly GameObject[] punchVariants = new GameObject[7];
+        private readonly GameObject[] slashVariants = new GameObject[7];
         private GameplayAction action;
         private float targetTime;
         private float spawnTime;
@@ -20,7 +21,7 @@ namespace NeonPulse
         private float despawnZ;
         private float labelVisibleZ;
         private float targetGlowScale;
-        private bool isSlashMode;
+        private bool usesSlashVisual;
         private Transform leftSlashIndicator;
         private Transform rightSlashIndicator;
         private Transform bothLeftSlashIndicator;
@@ -30,7 +31,9 @@ namespace NeonPulse
 
         public GameplayAction Action => action;
         public float TargetTime => targetTime;
+        public float SpawnTime => spawnTime;
         public float SlashDirection { get; private set; }
+        public bool UsesSlashVisual => usesSlashVisual;
         public bool IsActive { get; private set; }
         public bool RequiresHold => IsObstacle(action);
         public bool HoldEvaluationStarted { get; private set; }
@@ -48,29 +51,32 @@ namespace NeonPulse
             despawnZ = config.Rhythm.DespawnZ;
             labelVisibleZ = config.Rhythm.LabelVisibleZ;
             targetGlowScale = config.Visuals.TargetGlowScale;
-            isSlashMode = config.GameplayMode == CombatGameplayMode.Slash;
+            punchVariants[(int)GameplayAction.LeftPunch] = CreatePunchVariant("Left Punch", materials.Cyan, materials.CyanGlow);
+            punchVariants[(int)GameplayAction.RightPunch] = CreatePunchVariant("Right Punch", materials.Magenta, materials.MagentaGlow);
+            punchVariants[(int)GameplayAction.BothPunch] = CreatePairVariant(materials.Cyan, materials.Magenta, materials.CyanGlow, materials.MagentaGlow);
+            slashVariants[(int)GameplayAction.LeftPunch] = CreateSlashVariant("Left Slash", materials.Cyan, materials.CyanGlow, out leftSlashIndicator);
+            slashVariants[(int)GameplayAction.RightPunch] = CreateSlashVariant("Right Slash", materials.Magenta, materials.MagentaGlow, out rightSlashIndicator);
+            slashVariants[(int)GameplayAction.BothPunch] = CreateSlashPairVariant(materials.Cyan, materials.Magenta, materials.CyanGlow, materials.MagentaGlow);
+            GameObject duck = CreateBarVariant("Duck Gate", materials.Obstacle, materials.ObstacleGlow, new Vector3(7.8f, 1.15f, 0.75f), new Vector3(0f, 3.25f, 0f));
+            GameObject jump = CreateBarVariant("Jump Gate", materials.Obstacle, materials.ObstacleGlow, new Vector3(7.8f, 1.05f, 0.75f), new Vector3(0f, 0.35f, 0f));
+            GameObject dodgeLeft = CreateDodgeVariant("Dodge Left", materials.Obstacle, materials.ObstacleGlow, materials.Cyan, true);
+            GameObject dodgeRight = CreateDodgeVariant("Dodge Right", materials.Obstacle, materials.ObstacleGlow, materials.Magenta, false);
+            punchVariants[(int)GameplayAction.Duck] = slashVariants[(int)GameplayAction.Duck] = duck;
+            punchVariants[(int)GameplayAction.Jump] = slashVariants[(int)GameplayAction.Jump] = jump;
+            punchVariants[(int)GameplayAction.DodgeLeft] = slashVariants[(int)GameplayAction.DodgeLeft] = dodgeLeft;
+            punchVariants[(int)GameplayAction.DodgeRight] = slashVariants[(int)GameplayAction.DodgeRight] = dodgeRight;
 
-            if (isSlashMode)
+            for (int i = 0; i < punchVariants.Length; i++)
             {
-                variants[(int)GameplayAction.LeftPunch] = CreateSlashVariant("Left Slash", materials.Cyan, materials.CyanGlow, out leftSlashIndicator);
-                variants[(int)GameplayAction.RightPunch] = CreateSlashVariant("Right Slash", materials.Magenta, materials.MagentaGlow, out rightSlashIndicator);
-                variants[(int)GameplayAction.BothPunch] = CreateSlashPairVariant(
-                    materials.Cyan, materials.Magenta, materials.CyanGlow, materials.MagentaGlow);
-            }
-            else
-            {
-                variants[(int)GameplayAction.LeftPunch] = CreatePunchVariant("Left Punch", materials.Cyan, materials.CyanGlow);
-                variants[(int)GameplayAction.RightPunch] = CreatePunchVariant("Right Punch", materials.Magenta, materials.MagentaGlow);
-                variants[(int)GameplayAction.BothPunch] = CreatePairVariant(materials.Cyan, materials.Magenta, materials.CyanGlow, materials.MagentaGlow);
-            }
-            variants[(int)GameplayAction.Duck] = CreateBarVariant("Duck Gate", materials.Obstacle, materials.ObstacleGlow, new Vector3(7.8f, 1.15f, 0.75f), new Vector3(0f, 3.25f, 0f));
-            variants[(int)GameplayAction.Jump] = CreateBarVariant("Jump Gate", materials.Obstacle, materials.ObstacleGlow, new Vector3(7.8f, 1.05f, 0.75f), new Vector3(0f, 0.35f, 0f));
-            variants[(int)GameplayAction.DodgeLeft] = CreateDodgeVariant("Dodge Left", materials.Obstacle, materials.ObstacleGlow, materials.Cyan, true);
-            variants[(int)GameplayAction.DodgeRight] = CreateDodgeVariant("Dodge Right", materials.Obstacle, materials.ObstacleGlow, materials.Magenta, false);
+                if (punchVariants[i] != null)
+                {
+                    punchVariants[i].SetActive(false);
+                }
 
-            for (int i = 0; i < variants.Length; i++)
-            {
-                variants[i].SetActive(false);
+                if (slashVariants[i] != null && slashVariants[i] != punchVariants[i])
+                {
+                    slashVariants[i].SetActive(false);
+                }
             }
 
             if (!config.AutoPlay)
@@ -82,7 +88,7 @@ namespace NeonPulse
         }
 
         /// <summary>Activates this object for a chart event without allocating memory.</summary>
-        public void Spawn(BeatmapEvent chartEvent, float eventTime, float eventSpawnTime, float startZ)
+        public void Spawn(BeatmapEvent chartEvent, float eventTime, float eventSpawnTime, float startZ, bool useSlashVisual)
         {
             action = chartEvent.Action;
             targetTime = eventTime;
@@ -91,13 +97,14 @@ namespace NeonPulse
             HoldEvaluationStarted = false;
             HoldInputConfirmed = false;
             SlashDirection = 0f;
+            usesSlashVisual = useSlashVisual && !IsObstacle(action);
 
             float x = IsObstacle(action) || action == GameplayAction.BothPunch
                 ? 0f
                 : LaneX[Mathf.Clamp(chartEvent.Lane, 0, 3)];
             transform.SetPositionAndRotation(new Vector3(x, 0f, startZ), Quaternion.identity);
             ConfigureSlashIndicators();
-            variants[(int)action].SetActive(true);
+            GetActiveVariant().SetActive(true);
             ConfigureActionLabel(action);
             IsActive = true;
             gameObject.SetActive(true);
@@ -147,7 +154,7 @@ namespace NeonPulse
                 return;
             }
 
-            variants[(int)action].SetActive(false);
+            GetActiveVariant().SetActive(false);
             if (actionLabel != null)
             {
                 actionLabel.gameObject.SetActive(false);
@@ -193,17 +200,17 @@ namespace NeonPulse
             switch (value)
             {
                 case GameplayAction.LeftPunch:
-                    actionLabel.text = isSlashMode ? "Q\nKIEM TRAI" : "Q\nTAY TRAI";
+                    actionLabel.text = usesSlashVisual ? "Q\nKIEM TRAI" : "Q\nTAY TRAI";
                     actionLabel.color = new Color(0.02f, 1f, 0.95f, 1f);
                     actionLabelTransform.localPosition = new Vector3(0f, 3.05f, -0.3f);
                     break;
                 case GameplayAction.RightPunch:
-                    actionLabel.text = isSlashMode ? "E\nKIEM PHAI" : "E\nTAY PHAI";
+                    actionLabel.text = usesSlashVisual ? "E\nKIEM PHAI" : "E\nTAY PHAI";
                     actionLabel.color = new Color(1f, 0.03f, 0.72f, 1f);
                     actionLabelTransform.localPosition = new Vector3(0f, 3.05f, -0.3f);
                     break;
                 case GameplayAction.BothPunch:
-                    actionLabel.text = isSlashMode ? "F\nHAI KIEM" : "F\nCA HAI TAY";
+                    actionLabel.text = usesSlashVisual ? "F\nHAI KIEM" : "F\nCA HAI TAY";
                     actionLabel.color = new Color(1f, 0.82f, 0.05f, 1f);
                     actionLabelTransform.localPosition = new Vector3(0f, 3.05f, -0.3f);
                     break;
@@ -296,7 +303,7 @@ namespace NeonPulse
 
         private void ConfigureSlashIndicators()
         {
-            if (!isSlashMode || IsObstacle(action))
+            if (!usesSlashVisual || IsObstacle(action))
             {
                 return;
             }
@@ -318,6 +325,11 @@ namespace NeonPulse
             {
                 bothRightSlashIndicator.localRotation = Quaternion.Euler(0f, 0f, -primaryAngle);
             }
+        }
+
+        private GameObject GetActiveVariant()
+        {
+            return usesSlashVisual ? slashVariants[(int)action] : punchVariants[(int)action];
         }
 
         private GameObject CreateBarVariant(string objectName, Material material, Material glowMaterial, Vector3 scale, Vector3 localPosition)

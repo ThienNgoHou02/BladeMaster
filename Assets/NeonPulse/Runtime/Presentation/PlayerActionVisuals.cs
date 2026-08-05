@@ -17,7 +17,10 @@ namespace NeonPulse
         private readonly Vector3 cameraRestPosition;
         private readonly Quaternion cameraRestRotation;
         private readonly CameraFeelSettings feel;
-        private readonly bool usesSwords;
+        private bool usesSwords;
+        private bool handsVisible = true;
+        private readonly GameObject leftSwordVisual;
+        private readonly GameObject rightSwordVisual;
         private float leftPunchTimer;
         private float rightPunchTimer;
         private float leftSlashDirection = 1f;
@@ -45,10 +48,48 @@ namespace NeonPulse
             cameraRestRotation = cameraTransform.localRotation;
             leftGlove = CreateGlove("Left Cyan Glove", cameraTransform, LeftRestPosition, materials.Cyan);
             rightGlove = CreateGlove("Right Magenta Glove", cameraTransform, RightRestPosition, materials.Magenta);
-            if (usesSwords)
+            leftSwordVisual = CreateSword(leftGlove, "Left Sword", materials.Cyan, materials.CyanGlow, materials.Dark);
+            rightSwordVisual = CreateSword(rightGlove, "Right Sword", materials.Magenta, materials.MagentaGlow, materials.Dark);
+            SetCombatMode(usesSwords ? CombatGameplayMode.Slash : CombatGameplayMode.Punch);
+        }
+
+        /// <summary>Switches the cached first-person visual when the active level phase changes.</summary>
+        public void SetCombatMode(CombatGameplayMode mode)
+        {
+            usesSwords = mode == CombatGameplayMode.Slash;
+            if (leftSwordVisual != null)
             {
-                CreateSword(leftGlove, "Left Sword", materials.Cyan, materials.CyanGlow, materials.Dark);
-                CreateSword(rightGlove, "Right Sword", materials.Magenta, materials.MagentaGlow, materials.Dark);
+                leftSwordVisual.SetActive(handsVisible && usesSwords);
+            }
+
+            if (rightSwordVisual != null)
+            {
+                rightSwordVisual.SetActive(handsVisible && usesSwords);
+            }
+        }
+
+        /// <summary>Hides first-person hands for footwork phases without destroying their cached hierarchy.</summary>
+        public void SetHandsVisible(bool visible)
+        {
+            if (handsVisible == visible)
+            {
+                return;
+            }
+
+            handsVisible = visible;
+            if (leftGlove != null)
+            {
+                leftGlove.gameObject.SetActive(visible);
+            }
+
+            if (rightGlove != null)
+            {
+                rightGlove.gameObject.SetActive(visible);
+            }
+
+            if (visible)
+            {
+                SetCombatMode(usesSwords ? CombatGameplayMode.Slash : CombatGameplayMode.Punch);
             }
         }
 
@@ -303,7 +344,7 @@ namespace NeonPulse
             return root.transform;
         }
 
-        private static void CreateSword(Transform hand, string objectName, Material bladeMaterial, Material glowMaterial, Material handleMaterial)
+        private static GameObject CreateSword(Transform hand, string objectName, Material bladeMaterial, Material glowMaterial, Material handleMaterial)
         {
             GameObject root = new GameObject(objectName);
             root.transform.SetParent(hand, false);
@@ -313,6 +354,7 @@ namespace NeonPulse
             CreatePart(root.transform, PrimitiveType.Cube, "Guard", new Vector3(0f, 0.43f, 0f), new Vector3(0.42f, 0.08f, 0.14f), bladeMaterial);
             CreatePart(root.transform, PrimitiveType.Cube, "Blade Glow", new Vector3(0f, 1.04f, 0f), new Vector3(0.16f, 1.18f, 0.07f), glowMaterial);
             CreatePart(root.transform, PrimitiveType.Cube, "Blade", new Vector3(0f, 1.04f, -0.045f), new Vector3(0.08f, 1.14f, 0.05f), bladeMaterial);
+            return root;
         }
 
         private static void CreatePart(Transform parent, PrimitiveType type, string objectName, Vector3 localPosition, Vector3 localScale, Material material)

@@ -16,8 +16,8 @@ MonoBehaviour:
   autoPlay: 1
   rhythm:
     bpm: 125
-    songBeats: 64
-    travelBeats: 5
+    songBeats: 256
+    travelBeats: 3
     tileWaveStartBeat: 26
     tileWaveEndBeat: 38
     spawnZ: 50
@@ -89,6 +89,7 @@ MonoBehaviour:
     rhythmTilePoolCapacity: 24
     hitVfxPoolCapacity: 8
     audioVolume: 0.58
+  levelDefinition: {fileID: 11400000, guid: 2d7cfbc800a303a4f8043ec826a10b68, type: 2}
   punchEvents:
   - Beat: 4
     Lane: 0

@@ -200,6 +200,7 @@ namespace NeonPulse
         [SerializeField] private InputBindingSettings input = new InputBindingSettings();
         [SerializeField] private CameraFeelSettings cameraFeel = new CameraFeelSettings();
         [SerializeField] private VisualSettings visuals = new VisualSettings();
+        [SerializeField] private NeonPulseLevelDefinition levelDefinition;
         [FormerlySerializedAs("beatmapEvents")]
         [SerializeField] private List<BeatmapEvent> punchEvents = new List<BeatmapEvent>(24);
         [SerializeField] private List<BeatmapEvent> obstacleEvents = new List<BeatmapEvent>(12);
@@ -212,6 +213,7 @@ namespace NeonPulse
         public InputBindingSettings Input => input;
         public CameraFeelSettings CameraFeel => cameraFeel;
         public VisualSettings Visuals => visuals;
+        public NeonPulseLevelDefinition LevelDefinition => levelDefinition;
         public IReadOnlyList<BeatmapEvent> PunchEvents => punchEvents;
         public IReadOnlyList<BeatmapEvent> ObstacleEvents => obstacleEvents;
         public IReadOnlyList<RhythmTileEvent> RhythmTileEvents => rhythmTileEvents;
@@ -295,6 +297,11 @@ namespace NeonPulse
         /// <summary>Checks the most common authoring mistakes and returns a Vietnamese status message.</summary>
         public bool ValidateConfiguration(out string message)
         {
+            if (levelDefinition != null)
+            {
+                return levelDefinition.ValidateDefinition(out message);
+            }
+
             if (rhythm.PerfectWindow > rhythm.GreatWindow || rhythm.GreatWindow > rhythm.GoodWindow)
             {
                 message = "Timing phải theo thứ tự Perfect ≤ Great ≤ Good.";

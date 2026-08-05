@@ -14,6 +14,10 @@ namespace NeonPulse
         private TextMeshProUGUI comboText;
         private TextMeshProUGUI feedbackText;
         private TextMeshProUGUI statusText;
+        private TextMeshProUGUI levelProgressText;
+        private TextMeshProUGUI phaseProgressText;
+        private Image levelProgressFill;
+        private Image phaseProgressFill;
         private GameObject nextActionPanel;
         private TextMeshProUGUI nextActionText;
         private Image nextActionFill;
@@ -34,6 +38,9 @@ namespace NeonPulse
         private string restartLabel;
         private bool showGuidance;
         private bool isSlashMode;
+        private int displayedPhaseIndex = -1;
+        private int displayedPhaseCount = -1;
+        private string displayedPhaseName;
 
         /// <summary>Creates all HUD objects and runtime font resources.</summary>
         public void Build(RuntimeMaterialLibrary materials, NeonPulseGameConfig config)
@@ -60,7 +67,7 @@ namespace NeonPulse
 
             comboText = CreateText("Combo", transform, "0\nCOMBO\nMAX 0", 52f, TextAlignmentOptions.TopRight, Color.white);
             comboText.lineSpacing = -18f;
-            SetRect(comboText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-42f, -50f), new Vector2(380f, 190f));
+            SetRect(comboText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-210f, -52f), new Vector2(380f, 190f));
 
             feedbackText = CreateText("Feedback", transform, string.Empty, 58f, TextAlignmentOptions.Center, materials.CyanColor);
             feedbackText.fontStyle = FontStyles.Bold | FontStyles.Italic;
@@ -76,6 +83,7 @@ namespace NeonPulse
             }
 
             CreateNextActionPanel(materials);
+            CreateLevelProgressPanel(materials);
             CreateCountdownPanel(materials);
             CreateResultPanel(materials);
         }
@@ -95,6 +103,43 @@ namespace NeonPulse
             scoreText.SetText("ĐIỂM {0:000000}\nTRÚNG {1}/{2}  •  {3:0}%", snapshot.Score, hitCount, totalCount, accuracy);
             comboText.SetText("{0}\nCOMBO\nMAX {1}", snapshot.Combo, snapshot.MaxCombo);
             lastScoreValue = snapshot.Score;
+        }
+
+        /// <summary>Updates level and phase progress without creating formatted strings each frame.</summary>
+        public void SetLevelProgress(int phaseIndex, int phaseCount, string phaseName, float levelProgress, float phaseProgress)
+        {
+            if (levelProgressText == null || phaseProgressText == null || levelProgressFill == null || phaseProgressFill == null)
+            {
+                return;
+            }
+
+            levelProgressText.SetText("LEVEL  {0:0}%", levelProgress * 100f);
+            if (displayedPhaseIndex != phaseIndex || displayedPhaseCount != phaseCount || displayedPhaseName != phaseName)
+            {
+                displayedPhaseIndex = phaseIndex;
+                displayedPhaseCount = phaseCount;
+                displayedPhaseName = phaseName;
+                phaseProgressText.text = "PHASE " + phaseIndex + "/" + phaseCount + "  •  " + phaseName;
+            }
+
+            levelProgressFill.fillAmount = levelProgress;
+            phaseProgressFill.fillAmount = phaseProgress;
+        }
+
+        /// <summary>Switches labels between punch and slash phases while keeping a single HUD instance.</summary>
+        public void SetActionMode(CombatGameplayMode mode)
+        {
+            bool useSlash = mode == CombatGameplayMode.Slash;
+            if (isSlashMode == useSlash)
+            {
+                return;
+            }
+
+            isSlashMode = useSlash;
+            if (statusText != null)
+            {
+                statusText.text = BuildControlGuide();
+            }
         }
 
         /// <summary>Shows short accuracy feedback using cached UI components.</summary>
@@ -406,6 +451,49 @@ namespace NeonPulse
             nextActionFill.raycastTarget = false;
             SetRect(fillObject.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 5f), new Vector2(620f, 9f));
             nextActionPanel.SetActive(false);
+        }
+
+        private void CreateLevelProgressPanel(RuntimeMaterialLibrary materials)
+        {
+            GameObject panel = new GameObject("Level Progress", typeof(RectTransform), typeof(Image));
+            panel.transform.SetParent(transform, false);
+            Image background = panel.GetComponent<Image>();
+            background.color = new Color(0.015f, 0.005f, 0.04f, 0.82f);
+            background.raycastTarget = false;
+            SetRect(panel.GetComponent<RectTransform>(), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -56f), new Vector2(760f, 96f));
+
+            levelProgressText = CreateText("Level Progress Value", panel.transform, "LEVEL  0%", 24f,
+                TextAlignmentOptions.Left, materials.YellowColor);
+            SetRect(levelProgressText.rectTransform, new Vector2(0f, 0.76f), new Vector2(0f, 0.76f),
+                new Vector2(18f, 0f), new Vector2(210f, 30f));
+
+            phaseProgressText = CreateText("Phase Progress Value", panel.transform, "PHASE 1/1", 21f,
+                TextAlignmentOptions.Right, Color.white);
+            SetRect(phaseProgressText.rectTransform, new Vector2(1f, 0.76f), new Vector2(1f, 0.76f),
+                new Vector2(-18f, 0f), new Vector2(440f, 30f));
+
+            GameObject bar = new GameObject("Level Progress Fill", typeof(RectTransform), typeof(Image));
+            bar.transform.SetParent(panel.transform, false);
+            levelProgressFill = bar.GetComponent<Image>();
+            levelProgressFill.type = Image.Type.Filled;
+            levelProgressFill.fillMethod = Image.FillMethod.Horizontal;
+            levelProgressFill.fillOrigin = 0;
+            levelProgressFill.color = materials.CyanColor;
+            levelProgressFill.raycastTarget = false;
+            SetRect(levelProgressFill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 31f), new Vector2(720f, 13f));
+
+            GameObject phaseBar = new GameObject("Phase Progress Fill", typeof(RectTransform), typeof(Image));
+            phaseBar.transform.SetParent(panel.transform, false);
+            phaseProgressFill = phaseBar.GetComponent<Image>();
+            phaseProgressFill.type = Image.Type.Filled;
+            phaseProgressFill.fillMethod = Image.FillMethod.Horizontal;
+            phaseProgressFill.fillOrigin = 0;
+            phaseProgressFill.color = materials.YellowColor;
+            phaseProgressFill.raycastTarget = false;
+            SetRect(phaseProgressFill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 12f), new Vector2(720f, 7f));
         }
 
         private void CreateCountdownPanel(RuntimeMaterialLibrary materials)

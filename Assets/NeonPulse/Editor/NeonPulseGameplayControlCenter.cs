@@ -10,20 +10,18 @@ namespace NeonPulse.EditorTools
     {
         private const string ConfigDirectory = "Assets/NeonPulse/Resources";
         private const string ConfigPath = ConfigDirectory + "/NeonPulseGameConfig.asset";
+        private const string LevelDirectory = "Assets/NeonPulse/Levels";
         private const string GameplayScenePath = "Assets/NeonPulse/Scenes/NeonPulseGameplay.unity";
 
         private static readonly string[] Tabs =
         {
-            "BẮT ĐẦU", "NHỊP ĐỘ", "ĐIỀU KHIỂN", "ĐIỂM SỐ", "CAMERA & VFX", "BEATMAP"
+            "LEVEL & PHASE", "NHỊP & ĐIỂM", "ĐIỀU KHIỂN", "HÌNH ẢNH & VFX"
         };
-
-        private static readonly string[] GameplayModeLabels = { "ĐẤM", "CHÉM" };
 
         private NeonPulseGameConfig config;
         private SerializedObject serializedConfig;
-        private ReorderableList punchEventList;
-        private ReorderableList obstacleEventList;
-        private ReorderableList rhythmTileEventList;
+        private SerializedObject serializedLevel;
+        private ReorderableList phaseList;
         private Vector2 scrollPosition;
         private int selectedTab;
         private GUIStyle titleStyle;
@@ -58,6 +56,7 @@ namespace NeonPulse.EditorTools
             }
 
             serializedConfig.UpdateIfRequiredOrScript();
+            SyncLevelEditor();
             DrawHeader();
             selectedTab = GUILayout.Toolbar(selectedTab, Tabs, GUILayout.Height(30f));
 
@@ -65,12 +64,10 @@ namespace NeonPulse.EditorTools
             EditorGUILayout.Space(10f);
             switch (selectedTab)
             {
-                case 0: DrawGettingStarted(); break;
-                case 1: DrawRhythm(); break;
+                case 0: DrawLevelAndPhases(); break;
+                case 1: DrawRhythm(); DrawScoring(); break;
                 case 2: DrawControls(); break;
-                case 3: DrawScoring(); break;
-                case 4: DrawCameraAndVisuals(); break;
-                case 5: DrawBeatmap(); break;
+                case 3: DrawCameraAndVisuals(); break;
             }
 
             EditorGUILayout.Space(16f);
@@ -79,6 +76,11 @@ namespace NeonPulse.EditorTools
             if (serializedConfig.ApplyModifiedProperties())
             {
                 EditorUtility.SetDirty(config);
+            }
+
+            if (serializedLevel != null && serializedLevel.ApplyModifiedProperties())
+            {
+                EditorUtility.SetDirty(serializedLevel.targetObject);
             }
         }
 
@@ -117,64 +119,42 @@ namespace NeonPulse.EditorTools
             EditorGUILayout.Space(8f);
         }
 
-        private void DrawGettingStarted()
+        private void DrawLevelAndPhases()
         {
-            DrawSection("LOẠI GAMEPLAY MÀN CHƠI");
-            SerializedProperty gameplayMode = serializedConfig.FindProperty("gameplayMode");
-            EditorGUILayout.LabelField("Gameplay chính", EditorStyles.boldLabel);
-            gameplayMode.enumValueIndex = GUILayout.Toolbar(
-                gameplayMode.enumValueIndex,
-                GameplayModeLabels,
-                GUILayout.Height(38f));
-            EditorGUILayout.HelpBox(
-                gameplayMode.enumValueIndex == (int)CombatGameplayMode.Slash
-                    ? "CHÉM: target đổi thành khối vuông có vạch chém ngẫu nhiên; player cầm kiếm và vung theo hướng ngẫu nhiên."
-                    : "ĐẤM: giữ nguyên target tròn và animation găng tay hiện tại.",
-                MessageType.Info);
-
-            DrawSection("CHẾ ĐỘ TỰ ĐỘNG");
-            SerializedProperty autoPlay = serializedConfig.FindProperty("autoPlay");
-            EditorGUILayout.PropertyField(autoPlay, new GUIContent(
-                "Tự động chơi",
-                "Tự đánh đúng nhịp, tự giữ né/nhảy/cúi và ẩn toàn bộ text hướng dẫn điều khiển."));
-            if (autoPlay.boolValue)
+            DrawSection("LEVEL CUSTOM ĐỂ CHƠI THỬ");
+            SerializedProperty levelProperty = serializedConfig.FindProperty("levelDefinition");
+            EditorGUILayout.PropertyField(levelProperty, new GUIContent("Level Definition"));
+            if (GUILayout.Button("TẠO LEVEL MẪU MỚI", GUILayout.Height(34f)))
             {
-                EditorGUILayout.HelpBox(
-                    "AUTO PLAY đang bật: game tự thao tác và ẩn hướng dẫn. Bạn vẫn có thể dùng phím Chơi lại.",
-                    MessageType.Info);
+                CreateLevelAsset();
+                return;
             }
 
-            DrawSection("1. CHỌN ĐỘ KHÓ NHANH");
-            EditorGUILayout.HelpBox("Nếu chưa biết chỉnh gì, hãy chọn DỄ rồi bấm CHƠI THỬ.", MessageType.None);
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("DỄ\nChậm, dễ trúng", GUILayout.Height(62f))) ApplyDifficultyPreset(90f, 7.5f, 0.11f, 0.21f, 0.36f);
-            if (GUILayout.Button("CHUẨN\nCân bằng", GUILayout.Height(62f))) ApplyDifficultyPreset(105f, 6f, 0.08f, 0.16f, 0.28f);
-            if (GUILayout.Button("KHÓ\nNhanh, chính xác", GUILayout.Height(62f))) ApplyDifficultyPreset(125f, 5f, 0.06f, 0.12f, 0.21f);
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space(18f);
-            DrawSection("2. QUY TRÌNH 3 BƯỚC");
-            EditorGUILayout.LabelField("① Chọn preset hoặc chỉnh các tab phía trên", EditorStyles.largeLabel);
-            EditorGUILayout.LabelField("② Bấm LƯU và KIỂM TRA", EditorStyles.largeLabel);
-            EditorGUILayout.LabelField("③ Bấm CHƠI THỬ", EditorStyles.largeLabel);
-
-            EditorGUILayout.Space(18f);
-            DrawSection("CÔNG CỤ AN TOÀN");
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Chọn file cấu hình"))
+            if (serializedLevel == null)
             {
-                Selection.activeObject = config;
-                EditorGUIUtility.PingObject(config);
+                EditorGUILayout.HelpBox("Kéo một file NeonPulseLevel vào ô trên hoặc tạo Level mẫu. Level gồm phase hành động, thời lượng và tốc độ bay.", MessageType.Info);
+                return;
             }
 
-            GUI.backgroundColor = new Color(1f, 0.75f, 0.3f);
-            if (GUILayout.Button("Khôi phục mặc định"))
-            {
-                ResetAllSettings();
-            }
+            EditorGUILayout.HelpBox("Tên phase được tự đặt theo Action. Mỗi lượt chơi tự random object, lane và hướng; bạn chỉ chỉnh thời lượng và tốc độ bay.", MessageType.Info);
+            serializedLevel.UpdateIfRequiredOrScript();
+            EditorGUILayout.PropertyField(serializedLevel.FindProperty("levelName"), new GUIContent("Tên Level"));
+            EditorGUILayout.PropertyField(serializedLevel.FindProperty("phaseTransitionRestSeconds"), new GUIContent("Nghỉ khi chuyển phase (giây)"));
+            EditorGUILayout.Space(6f);
+            phaseList.DoLayoutList();
 
-            GUI.backgroundColor = Color.white;
-            EditorGUILayout.EndHorizontal();
+            NeonPulseLevelDefinition level = serializedLevel.targetObject as NeonPulseLevelDefinition;
+            if (level != null && GUILayout.Button("KIỂM TRA LEVEL", GUILayout.Height(30f)))
+            {
+                if (level.ValidateDefinition(out string message))
+                {
+                    EditorUtility.DisplayDialog("Level hợp lệ", message, "OK");
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Level cần chỉnh", message, "OK");
+                }
+            }
         }
 
         private void DrawRhythm()
@@ -182,13 +162,8 @@ namespace NeonPulse.EditorTools
             DrawSection("TỐC ĐỘ BÀI CHƠI");
             SerializedProperty rhythm = serializedConfig.FindProperty("rhythm");
             DrawField(rhythm, "bpm", "Tốc độ nhạc (BPM)", "Số lớn hơn = game nhanh hơn.");
-            DrawField(rhythm, "songBeats", "Độ dài bài (số beat)", "Beatmap phải nằm trong khoảng này.");
-            DrawField(rhythm, "travelBeats", "Thời gian vật thể bay tới", "Số lớn hơn = nhìn thấy vật thể sớm hơn.");
-            DrawField(rhythm, "tileWaveStartBeat", "Beat bắt đầu đợt gạch", "Gạch chỉ xuất hiện trong khoảng đợt này.");
-            DrawField(rhythm, "tileWaveEndBeat", "Beat kết thúc đợt gạch", "Target tròn và tường sẽ không xuất hiện chồng với đợt gạch.");
             DrawField(rhythm, "countdownDuration", "Đếm ngược trước khi chơi");
             DrawField(rhythm, "resultDelay", "Chờ trước khi hiện kết quả");
-            DrawField(rhythm, "randomizeSpawnPattern", "Random vật thể mỗi lượt", "Giữ nguyên beat để khớp nhạc, nhưng random loại mục tiêu, lane và cửa né sau mỗi lần Restart.");
 
             DrawSection("VỊ TRÍ VẬT THỂ");
             DrawField(rhythm, "spawnZ", "Vị trí xuất hiện");
@@ -210,14 +185,13 @@ namespace NeonPulse.EditorTools
 
         private void DrawControls()
         {
-            bool isSlashMode = IsSlashMode();
-            DrawSection(isSlashMode ? "PHÍM CHÉM" : "PHÍM ĐẤM");
+            DrawSection("PHÍM ĐẤM / CHÉM");
             SerializedProperty input = serializedConfig.FindProperty("input");
-            DrawField(input, "leftPunch", isSlashMode ? "Chém kiếm trái" : "Đấm tay trái");
-            DrawField(input, "leftPunchAlternative", isSlashMode ? "Phím phụ kiếm trái" : "Phím phụ tay trái");
-            DrawField(input, "rightPunch", isSlashMode ? "Chém kiếm phải" : "Đấm tay phải");
-            DrawField(input, "rightPunchAlternative", isSlashMode ? "Phím phụ kiếm phải" : "Phím phụ tay phải");
-            DrawField(input, "bothPunch", isSlashMode ? "Chém hai kiếm" : "Đấm hai tay");
+            DrawField(input, "leftPunch", "Đấm / chém trái");
+            DrawField(input, "leftPunchAlternative", "Phím phụ trái");
+            DrawField(input, "rightPunch", "Đấm / chém phải");
+            DrawField(input, "rightPunchAlternative", "Phím phụ phải");
+            DrawField(input, "bothPunch", "Đấm / chém hai tay");
 
             DrawSection("PHÍM NÉ — PHẢI GIỮ ĐẾN KHI VẬT CẢN QUA");
             DrawField(input, "duck", "Cúi");
@@ -249,7 +223,6 @@ namespace NeonPulse.EditorTools
 
         private void DrawCameraAndVisuals()
         {
-            bool isSlashMode = IsSlashMode();
             DrawSection("CẢM GIÁC DI CHUYỂN");
             SerializedProperty cameraFeel = serializedConfig.FindProperty("cameraFeel");
             DrawField(cameraFeel, "standingHeight", "Độ cao đứng của player", "Tăng để nâng camera và toàn bộ góc nhìn player.");
@@ -257,14 +230,14 @@ namespace NeonPulse.EditorTools
             DrawField(cameraFeel, "dodgeDistance", "Khoảng cách né trái / phải");
             DrawField(cameraFeel, "duckDistance", "Khoảng cách cúi");
             DrawField(cameraFeel, "jumpDistance", "Khoảng cách nhảy");
-            DrawField(cameraFeel, "punchDistance", isSlashMode ? "Tầm vung kiếm" : "Tầm đấm găng tay");
-            DrawField(cameraFeel, "punchDuration", isSlashMode ? "Thời gian nhát chém" : "Thời gian cú đấm");
+            DrawField(cameraFeel, "punchDistance", "Tầm hành động tay");
+            DrawField(cameraFeel, "punchDuration", "Thời gian hành động tay");
 
             DrawSection("RUNG CAMERA");
-            DrawField(cameraFeel, "punchShakeAmplitude", isSlashMode ? "Độ rung khi chém" : "Độ rung khi đấm");
-            DrawField(cameraFeel, "punchShakeDuration", isSlashMode ? "Thời gian rung khi chém" : "Thời gian rung khi đấm");
-            DrawField(cameraFeel, "bothPunchShakeAmplitude", isSlashMode ? "Độ rung khi chém hai kiếm" : "Độ rung khi đấm hai tay");
-            DrawField(cameraFeel, "bothPunchShakeDuration", isSlashMode ? "Thời gian rung hai kiếm" : "Thời gian rung hai tay");
+            DrawField(cameraFeel, "punchShakeAmplitude", "Độ rung khi đấm / chém");
+            DrawField(cameraFeel, "punchShakeDuration", "Thời gian rung khi đấm / chém");
+            DrawField(cameraFeel, "bothPunchShakeAmplitude", "Độ rung khi dùng hai tay");
+            DrawField(cameraFeel, "bothPunchShakeDuration", "Thời gian rung hai tay");
             DrawField(cameraFeel, "rhythmTileShakeAmplitude", "Độ rung khi gạch chạm vạch");
             DrawField(cameraFeel, "rhythmTileShakeDuration", "Thời gian rung khi gạch chạm vạch");
             DrawField(cameraFeel, "failShakeAmplitude", "Độ rung khi sai nhịp");
@@ -295,145 +268,108 @@ namespace NeonPulse.EditorTools
             DrawField(visuals, "hitVfxPoolCapacity", "Số VFX dùng lại");
         }
 
-        private void DrawBeatmap()
+        private void SyncLevelEditor()
         {
-            bool isSlashMode = IsSlashMode();
-            DrawSection(isSlashMode
-                ? "1. KHỐI VUÔNG CHÉM / TARGET — NGOÀI ĐỢT GẠCH"
-                : "1. VÒNG ĐẤM / TARGET — NGOÀI ĐỢT GẠCH");
-            EditorGUILayout.HelpBox(
-                (isSlashMode
-                    ? "Slash dùng lại action LeftPunch, RightPunch, BothPunch để tương thích beatmap cũ; runtime sẽ hiển thị kiếm và khối vuông. "
-                    : "Chỉ dùng LeftPunch, RightPunch hoặc BothPunch. ") +
-                "Event chồng thời gian hiển thị với đợt gạch sẽ không spawn.",
-                MessageType.Info);
-            punchEventList.DoLayoutList();
-
-            DrawSection("2. CÁNH CỬA / CHƯỚNG NGẠI — NGOÀI ĐỢT GẠCH");
-            EditorGUILayout.HelpBox(
-                "Chỉ dùng Duck, Jump, DodgeLeft hoặc DodgeRight. Cửa có thể đi cùng target nhưng không chồng với đợt gạch.",
-                MessageType.Info);
-            obstacleEventList.DoLayoutList();
-
-            DrawSection("3. GẠCH NHỊP — THEO ĐỢT GIỮA MÀN");
-            EditorGUILayout.HelpBox(
-                "Mỗi lần spawn cần đúng 2 dòng cùng Beat. Runtime giữ hai gạch ngang hàng và chọn ngẫu nhiên lane trái 0/1, lane phải 2/3 để thay đổi khoảng cách.",
-                MessageType.Info);
-            rhythmTileEventList.DoLayoutList();
-
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("SẮP XẾP THEO BEAT", GUILayout.Height(32f)))
+            SerializedProperty levelProperty = serializedConfig.FindProperty("levelDefinition");
+            NeonPulseLevelDefinition selectedLevel = levelProperty != null
+                ? levelProperty.objectReferenceValue as NeonPulseLevelDefinition
+                : null;
+            if (selectedLevel == null)
             {
-                serializedConfig.ApplyModifiedProperties();
-                Undo.RecordObject(config, "Sort Neon Pulse Beatmap");
-                config.SortBeatmap();
-                EditorUtility.SetDirty(config);
-                serializedConfig.Update();
-            }
-
-            if (GUILayout.Button("KHÔI PHỤC BEATMAP MẪU", GUILayout.Height(32f)))
-            {
-                ResetBeatmap();
-            }
-
-            EditorGUILayout.EndHorizontal();
-        }
-
-        private void BuildBeatmapLists()
-        {
-            punchEventList = BuildGameplayEventList("punchEvents");
-            obstacleEventList = BuildGameplayEventList("obstacleEvents");
-            rhythmTileEventList = BuildRhythmTileEventList();
-        }
-
-        private ReorderableList BuildGameplayEventList(string propertyName)
-        {
-            SerializedProperty events = serializedConfig.FindProperty(propertyName);
-            ReorderableList list = new ReorderableList(serializedConfig, events, true, true, true, true);
-            list.drawHeaderCallback = rect =>
-            {
-                EditorGUI.LabelField(new Rect(rect.x + 18f, rect.y, 100f, rect.height), "BEAT");
-                EditorGUI.LabelField(new Rect(rect.x + 128f, rect.y, 80f, rect.height), "LANE 0–3");
-                EditorGUI.LabelField(new Rect(rect.x + 220f, rect.y, rect.width - 220f, rect.height), "HÀNH ĐỘNG");
-            };
-            list.drawElementCallback = (rect, index, active, focused) =>
-            {
-                SerializedProperty element = events.GetArrayElementAtIndex(index);
-                rect.y += 2f;
-                float lineHeight = EditorGUIUtility.singleLineHeight;
-                EditorGUI.PropertyField(new Rect(rect.x, rect.y, 100f, lineHeight), element.FindPropertyRelative("Beat"), GUIContent.none);
-                EditorGUI.PropertyField(new Rect(rect.x + 110f, rect.y, 80f, lineHeight), element.FindPropertyRelative("Lane"), GUIContent.none);
-                EditorGUI.PropertyField(new Rect(rect.x + 200f, rect.y, rect.width - 200f, lineHeight), element.FindPropertyRelative("Action"), GUIContent.none);
-            };
-            list.elementHeight = EditorGUIUtility.singleLineHeight + 6f;
-            return list;
-        }
-
-        private ReorderableList BuildRhythmTileEventList()
-        {
-            SerializedProperty events = serializedConfig.FindProperty("rhythmTileEvents");
-            ReorderableList list = new ReorderableList(serializedConfig, events, true, true, true, true);
-            list.drawHeaderCallback = rect =>
-            {
-                EditorGUI.LabelField(new Rect(rect.x + 18f, rect.y, 100f, rect.height), "BEAT");
-                EditorGUI.LabelField(new Rect(rect.x + 128f, rect.y, 80f, rect.height), "LANE 0–3");
-                EditorGUI.LabelField(new Rect(rect.x + 220f, rect.y, rect.width - 220f, rect.height), "MÀU GẠCH");
-            };
-            list.drawElementCallback = (rect, index, active, focused) =>
-            {
-                SerializedProperty element = events.GetArrayElementAtIndex(index);
-                rect.y += 2f;
-                float lineHeight = EditorGUIUtility.singleLineHeight;
-                EditorGUI.PropertyField(new Rect(rect.x, rect.y, 100f, lineHeight), element.FindPropertyRelative("Beat"), GUIContent.none);
-                EditorGUI.PropertyField(new Rect(rect.x + 110f, rect.y, 80f, lineHeight), element.FindPropertyRelative("Lane"), GUIContent.none);
-                EditorGUI.PropertyField(new Rect(rect.x + 200f, rect.y, rect.width - 200f, lineHeight), element.FindPropertyRelative("Color"), GUIContent.none);
-            };
-            list.elementHeight = EditorGUIUtility.singleLineHeight + 6f;
-            return list;
-        }
-
-        private void ApplyDifficultyPreset(float bpm, float travelBeats, float perfect, float great, float good)
-        {
-            Undo.RecordObject(config, "Apply Gameplay Difficulty");
-            SerializedProperty rhythm = serializedConfig.FindProperty("rhythm");
-            rhythm.FindPropertyRelative("bpm").floatValue = bpm;
-            rhythm.FindPropertyRelative("travelBeats").floatValue = travelBeats;
-            rhythm.FindPropertyRelative("perfectWindow").floatValue = perfect;
-            rhythm.FindPropertyRelative("greatWindow").floatValue = great;
-            rhythm.FindPropertyRelative("goodWindow").floatValue = good;
-            serializedConfig.ApplyModifiedProperties();
-            EditorUtility.SetDirty(config);
-            ShowNotification(new GUIContent("Đã áp dụng độ khó. Bấm CHƠI THỬ!"));
-        }
-
-        private void ResetAllSettings()
-        {
-            if (!EditorUtility.DisplayDialog("Khôi phục mặc định?", "Toàn bộ thông số và Beatmap hiện tại sẽ trở về bản mẫu.", "Khôi phục", "Hủy"))
-            {
+                serializedLevel = null;
                 return;
             }
 
-            Undo.RecordObject(config, "Reset Neon Pulse Configuration");
-            config.ResetToDefaults();
-            EditorUtility.SetDirty(config);
-            serializedConfig.Update();
-            BuildBeatmapLists();
-            SaveConfiguration(false);
+            if (serializedLevel == null || serializedLevel.targetObject != selectedLevel)
+            {
+                serializedLevel = new SerializedObject(selectedLevel);
+                BuildPhaseList();
+            }
         }
 
-        private void ResetBeatmap()
+        private void BuildPhaseList()
         {
-            if (!EditorUtility.DisplayDialog("Khôi phục Beatmap mẫu?", "Chỉ danh sách Beatmap sẽ được thay thế; các thông số khác được giữ nguyên.", "Khôi phục", "Hủy"))
+            SerializedProperty phases = serializedLevel.FindProperty("phases");
+            phaseList = new ReorderableList(serializedLevel, phases, true, true, true, true)
             {
-                return;
+                elementHeight = 92f
+            };
+            phaseList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "PHASE — action quyết định tên và gameplay");
+            phaseList.drawElementCallback = (rect, index, active, focused) =>
+            {
+                SerializedProperty phase = phases.GetArrayElementAtIndex(index);
+                SerializedProperty action = phase.FindPropertyRelative("action");
+                SerializedProperty duration = phase.FindPropertyRelative("durationSeconds");
+                SerializedProperty flySpeed = phase.FindPropertyRelative("flySpeed");
+                rect.y += 3f;
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), action,
+                    new GUIContent("Action"));
+
+                LevelPhaseAction phaseAction = (LevelPhaseAction)action.enumValueIndex;
+                GUIStyle nameStyle = new GUIStyle(EditorStyles.boldLabel) { normal = { textColor = new Color(0.2f, 0.95f, 0.85f) } };
+                EditorGUI.LabelField(new Rect(rect.x, rect.y + 23f, rect.width, EditorGUIUtility.singleLineHeight),
+                    NeonPulseLevelPhase.GetDisplayName(phaseAction), nameStyle);
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y + 45f, rect.width * 0.49f, EditorGUIUtility.singleLineHeight),
+                    duration, new GUIContent(GetDurationLabel(phaseAction)));
+                EditorGUI.PropertyField(new Rect(rect.x + rect.width * 0.51f, rect.y + 45f, rect.width * 0.49f, EditorGUIUtility.singleLineHeight),
+                    flySpeed, new GUIContent(GetSpeedLabel(phaseAction)));
+                EditorGUI.LabelField(new Rect(rect.x, rect.y + 67f, rect.width, EditorGUIUtility.singleLineHeight),
+                    GetPhaseDescription(phaseAction), EditorStyles.miniLabel);
+            };
+        }
+
+        private static string GetDurationLabel(LevelPhaseAction action)
+        {
+            switch (action)
+            {
+                case LevelPhaseAction.RhythmTiles: return "Thời gian dậm chân";
+                case LevelPhaseAction.PunchObjects: return "Thời gian đấm";
+                case LevelPhaseAction.SlashObjects: return "Thời gian chém";
+                default: return "Thời gian né";
+            }
+        }
+
+        private static string GetSpeedLabel(LevelPhaseAction action)
+        {
+            switch (action)
+            {
+                case LevelPhaseAction.RhythmTiles: return "Tốc độ gạch";
+                case LevelPhaseAction.PunchObjects: return "Tốc độ vật thể";
+                case LevelPhaseAction.SlashObjects: return "Tốc độ vật thể";
+                default: return "Tốc độ tường";
+            }
+        }
+
+        private static string GetPhaseDescription(LevelPhaseAction action)
+        {
+            switch (action)
+            {
+                case LevelPhaseAction.RhythmTiles: return "Hai tay được ẩn; gạch và lane được random.";
+                case LevelPhaseAction.PunchObjects: return "Random mục tiêu, tay đấm và lane.";
+                case LevelPhaseAction.SlashObjects: return "Random mục tiêu, hướng chém và lane.";
+                default: return "Random hướng né trái hoặc phải.";
+            }
+        }
+
+        private void CreateLevelAsset()
+        {
+            if (!AssetDatabase.IsValidFolder(LevelDirectory))
+            {
+                AssetDatabase.CreateFolder("Assets/NeonPulse", "Levels");
             }
 
+            NeonPulseLevelDefinition level = CreateInstance<NeonPulseLevelDefinition>();
+            string assetPath = AssetDatabase.GenerateUniqueAssetPath(LevelDirectory + "/NeonPulseLevel.asset");
+            AssetDatabase.CreateAsset(level, assetPath);
+            SerializedProperty levelProperty = serializedConfig.FindProperty("levelDefinition");
+            levelProperty.objectReferenceValue = level;
             serializedConfig.ApplyModifiedProperties();
-            Undo.RecordObject(config, "Reset Neon Pulse Beatmap");
-            config.ResetBeatmapToDefaults();
             EditorUtility.SetDirty(config);
-            serializedConfig.Update();
-            BuildBeatmapLists();
+            AssetDatabase.SaveAssets();
+            serializedLevel = new SerializedObject(level);
+            BuildPhaseList();
+            Selection.activeObject = level;
+            EditorGUIUtility.PingObject(level);
         }
 
         private void TogglePlayMode()
@@ -510,7 +446,6 @@ namespace NeonPulse.EditorTools
             }
 
             serializedConfig = new SerializedObject(config);
-            BuildBeatmapLists();
         }
 
         private void EnsureStyles()
@@ -542,12 +477,6 @@ namespace NeonPulse.EditorTools
             EditorGUILayout.Space(2f);
         }
 
-        private bool IsSlashMode()
-        {
-            SerializedProperty property = serializedConfig.FindProperty("gameplayMode");
-            return property != null && property.enumValueIndex == (int)CombatGameplayMode.Slash;
-        }
-
         private static void DrawField(SerializedProperty parent, string propertyName, string label, string tooltip = null)
         {
             SerializedProperty property = parent.FindPropertyRelative(propertyName);
@@ -571,6 +500,79 @@ namespace NeonPulse.EditorTools
 
             EditorGUILayout.Space(6f);
             DrawDefaultInspector();
+        }
+    }
+
+    [CustomEditor(typeof(NeonPulseLevelDefinition))]
+    public sealed class NeonPulseLevelDefinitionInspector : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            serializedObject.UpdateIfRequiredOrScript();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("levelName"), new GUIContent("Tên Level"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("phaseTransitionRestSeconds"),
+                new GUIContent("Nghỉ khi chuyển phase (giây)"));
+            EditorGUILayout.Space(8f);
+
+            SerializedProperty phases = serializedObject.FindProperty("phases");
+            for (int index = 0; index < phases.arraySize; index++)
+            {
+                SerializedProperty phase = phases.GetArrayElementAtIndex(index);
+                SerializedProperty action = phase.FindPropertyRelative("action");
+                SerializedProperty duration = phase.FindPropertyRelative("durationSeconds");
+                SerializedProperty speed = phase.FindPropertyRelative("flySpeed");
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.PropertyField(action, new GUIContent("Action"));
+                LevelPhaseAction phaseAction = (LevelPhaseAction)action.enumValueIndex;
+                EditorGUILayout.LabelField(NeonPulseLevelPhase.GetDisplayName(phaseAction), EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(duration, new GUIContent(GetDurationLabel(phaseAction)));
+                EditorGUILayout.PropertyField(speed, new GUIContent(GetSpeedLabel(phaseAction)));
+                if (GUILayout.Button("XÓA PHASE " + (index + 1)))
+                {
+                    phases.DeleteArrayElementAtIndex(index);
+                    EditorGUILayout.EndVertical();
+                    break;
+                }
+
+                EditorGUILayout.EndVertical();
+            }
+
+            if (GUILayout.Button("+ THÊM PHASE", GUILayout.Height(28f)))
+            {
+                phases.InsertArrayElementAtIndex(phases.arraySize);
+                SerializedProperty newPhase = phases.GetArrayElementAtIndex(phases.arraySize - 1);
+                newPhase.FindPropertyRelative("action").enumValueIndex = (int)LevelPhaseAction.PunchObjects;
+                newPhase.FindPropertyRelative("durationSeconds").floatValue = 12f;
+                newPhase.FindPropertyRelative("flySpeed").floatValue = 12f;
+            }
+
+            serializedObject.ApplyModifiedProperties();
+            EditorGUILayout.Space(8f);
+            if (GUILayout.Button("MỞ GAMEPLAY CONTROL CENTER"))
+            {
+                NeonPulseGameplayControlCenter.OpenWindow();
+            }
+        }
+
+        private static string GetDurationLabel(LevelPhaseAction action)
+        {
+            switch (action)
+            {
+                case LevelPhaseAction.RhythmTiles: return "Thời gian dậm chân";
+                case LevelPhaseAction.PunchObjects: return "Thời gian đấm";
+                case LevelPhaseAction.SlashObjects: return "Thời gian chém";
+                default: return "Thời gian né";
+            }
+        }
+
+        private static string GetSpeedLabel(LevelPhaseAction action)
+        {
+            switch (action)
+            {
+                case LevelPhaseAction.RhythmTiles: return "Tốc độ gạch";
+                case LevelPhaseAction.DodgeWalls: return "Tốc độ tường";
+                default: return "Tốc độ vật thể";
+            }
         }
     }
 }

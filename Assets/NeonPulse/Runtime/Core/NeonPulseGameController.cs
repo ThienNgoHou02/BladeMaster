@@ -20,6 +20,7 @@ namespace NeonPulse
         private RhythmLaneTilePool rhythmTilePool;
         private HitBurstPool hitBursts;
         private SlashDebrisPool slashDebris;
+        private RippleVfxPool impactRipples;
         private ScreenFlashFeedback screenFlash;
         private PlayerActionVisuals playerVisuals;
         private JudgementLineFeedback judgementLineFeedback;
@@ -29,6 +30,7 @@ namespace NeonPulse
         private AudioClip proceduralClip;
         private double dspStartTime;
         private float songDuration;
+        private NeonPulseLevelRunPlan runPlan;
         private int nextPunchEventIndex;
         private int nextObstacleEventIndex;
         private int nextRhythmTileIndex;
@@ -57,6 +59,7 @@ namespace NeonPulse
             rhythmTilePool = new RhythmLaneTilePool(config.Visuals.RhythmTilePoolCapacity, transform, materials, config);
             hitBursts = new HitBurstPool(config.Visuals.HitVfxPoolCapacity, transform, materials.White, config.Visuals.HitParticleCount);
             slashDebris = new SlashDebrisPool(config.Visuals.HitVfxPoolCapacity, transform, materials);
+            impactRipples = new RippleVfxPool(config.Visuals.HitVfxPoolCapacity, transform, materials);
             screenFlash = new ScreenFlashFeedback(
                 transform,
                 config.Visuals.ScreenFlashDuration,
@@ -72,9 +75,8 @@ namespace NeonPulse
             audioSource.loop = false;
             audioSource.volume = config.Visuals.AudioVolume;
             audioSource.spatialBlend = 0f;
-            proceduralClip = RhythmAudioSynth.Create(config.Rhythm.Bpm, config.Rhythm.SongBeats);
+            proceduralClip = RhythmAudioSynth.Create(config.Rhythm.Bpm, GetAudioBeatCount());
             audioSource.clip = proceduralClip;
-            songDuration = config.Rhythm.SongBeats * config.Rhythm.SecondsPerBeat;
 
             StartRun();
         }
@@ -94,6 +96,7 @@ namespace NeonPulse
             }
 
             slashDebris?.Tick(Time.deltaTime);
+            impactRipples?.Tick(Time.deltaTime);
             screenFlash?.Tick(Time.unscaledDeltaTime);
 
             if (runFinished)
@@ -128,6 +131,7 @@ namespace NeonPulse
 
             UpdateUpcomingCue(songTime);
             hud.SetCountdown(-songTime);
+            UpdateLevelProgress(songTime);
 
             if (songTime >= songDuration + config.Rhythm.ResultDelay)
             {
@@ -165,6 +169,7 @@ namespace NeonPulse
         {
             ReturnAllTravellers();
             slashDebris?.Clear();
+            impactRipples?.Clear();
             screenFlash?.Clear();
             nextPunchEventIndex = 0;
             nextObstacleEventIndex = 0;
@@ -175,6 +180,9 @@ namespace NeonPulse
             score.Reset();
             hud.ResetRun();
 
+            runPlan = NeonPulseLevelRunPlan.Build(config.LevelDefinition, config, ref spawnRandomState);
+            songDuration = runPlan.Duration;
+
             audioSource.Stop();
             audioSource.time = 0f;
             dspStartTime = AudioSettings.dspTime + config.Rhythm.CountdownDuration;
@@ -183,48 +191,26 @@ namespace NeonPulse
 
         private void SpawnDuePunchTargets(float songTime)
         {
-            nextPunchEventIndex = SpawnDueGameplayEvents(
-                config.PunchEvents,
-                nextPunchEventIndex,
-                punchTargetPool,
-                activePunchTargets,
-                songTime,
-                false,
-                "Punch Target Pool exhausted. Increase Traveller Pool Capacity.");
+            nextPunchEventIndex = SpawnDueGameplayEvents(runPlan.TargetEvents, nextPunchEventIndex, punchTargetPool,
+                activePunchTargets, songTime, "Punch Target Pool exhausted. Increase Traveller Pool Capacity.");
         }
 
         private void SpawnDueObstacles(float songTime)
         {
-            nextObstacleEventIndex = SpawnDueGameplayEvents(
-                config.ObstacleEvents,
-                nextObstacleEventIndex,
-                obstaclePool,
-                activeObstacles,
-                songTime,
-                true,
-                "Obstacle Door Pool exhausted. Increase Traveller Pool Capacity.");
+            nextObstacleEventIndex = SpawnDueGameplayEvents(runPlan.ObstacleEvents, nextObstacleEventIndex, obstaclePool,
+                activeObstacles, songTime, "Obstacle Door Pool exhausted. Increase Traveller Pool Capacity.");
         }
 
         private int SpawnDueGameplayEvents(
-            IReadOnlyList<BeatmapEvent> chart,
+            IReadOnlyList<PlannedGameplayEvent> chart,
             int nextIndex,
             BeatTravellerPool pool,
             List<BeatTraveller> activeList,
             float songTime,
-            bool isObstacle,
             string exhaustedWarning)
         {
-            float currentBeat = songTime / config.Rhythm.SecondsPerBeat;
-            float visibleThroughBeat = currentBeat + config.Rhythm.TravelBeats;
-            while (nextIndex < chart.Count && chart[nextIndex].Beat <= visibleThroughBeat)
+            while (nextIndex < chart.Count && chart[nextIndex].SpawnTime <= songTime)
             {
-                BeatmapEvent chartEvent = chart[nextIndex];
-                if (config.Rhythm.GameplayEventOverlapsTileWave(chartEvent.Beat))
-                {
-                    nextIndex++;
-                    continue;
-                }
-
                 BeatTraveller traveller = pool.Rent();
                 if (traveller == null)
                 {
@@ -232,16 +218,9 @@ namespace NeonPulse
                     return nextIndex;
                 }
 
-                if (config.Rhythm.RandomizeSpawnPattern)
-                {
-                    chartEvent = isObstacle
-                        ? RandomizeObstacleEvent(chartEvent)
-                        : RandomizePunchEvent(chartEvent);
-                }
-
-                float targetTime = chartEvent.Beat * config.Rhythm.SecondsPerBeat;
-                float spawnTime = targetTime - config.Rhythm.TravelBeats * config.Rhythm.SecondsPerBeat;
-                traveller.Spawn(chartEvent, targetTime, spawnTime, config.Rhythm.SpawnZ);
+                PlannedGameplayEvent plannedEvent = chart[nextIndex];
+                traveller.Spawn(plannedEvent.Event, plannedEvent.TargetTime, plannedEvent.SpawnTime,
+                    config.Rhythm.SpawnZ, plannedEvent.UseSlashVisual);
                 traveller.Tick(songTime);
                 activeList.Add(traveller);
                 nextIndex++;
@@ -252,24 +231,15 @@ namespace NeonPulse
 
         private void SpawnDueRhythmTiles(float songTime)
         {
-            IReadOnlyList<RhythmTileEvent> chart = config.RhythmTileEvents;
-            float currentBeat = songTime / config.Rhythm.SecondsPerBeat;
-            float visibleThroughBeat = currentBeat + config.Rhythm.TravelBeats;
-            while (nextRhythmTileIndex < chart.Count && chart[nextRhythmTileIndex].Beat <= visibleThroughBeat)
+            IReadOnlyList<PlannedRhythmTileEvent> chart = runPlan.RhythmTileEvents;
+            while (nextRhythmTileIndex < chart.Count && chart[nextRhythmTileIndex].SpawnTime <= songTime)
             {
                 int secondTileIndex = nextRhythmTileIndex + 1;
-                RhythmTileEvent firstTile = chart[nextRhythmTileIndex];
-                if (secondTileIndex >= chart.Count || !Mathf.Approximately(firstTile.Beat, chart[secondTileIndex].Beat))
+                if (secondTileIndex >= chart.Count ||
+                    !Mathf.Approximately(chart[nextRhythmTileIndex].TargetTime, chart[secondTileIndex].TargetTime))
                 {
                     Debug.LogWarning("Rhythm tiles must be authored as left/right pairs on the same beat.");
                     nextRhythmTileIndex++;
-                    continue;
-                }
-
-                RhythmTileEvent secondTile = chart[secondTileIndex];
-                if (!config.Rhythm.ContainsTileBeat(firstTile.Beat) || !config.Rhythm.ContainsTileBeat(secondTile.Beat))
-                {
-                    nextRhythmTileIndex += 2;
                     continue;
                 }
 
@@ -279,66 +249,16 @@ namespace NeonPulse
                     return;
                 }
 
-                if (config.Rhythm.RandomizeSpawnPattern)
-                {
-                    firstTile.Lane = NextRandomInt(0, 2);
-                    secondTile.Lane = NextRandomInt(2, 4);
-                }
-
-                SpawnRhythmTile(firstTile, songTime);
-                SpawnRhythmTile(secondTile, songTime);
+                SpawnRhythmTile(chart[nextRhythmTileIndex], songTime);
+                SpawnRhythmTile(chart[secondTileIndex], songTime);
                 nextRhythmTileIndex += 2;
             }
         }
 
-        private BeatmapEvent RandomizePunchEvent(BeatmapEvent source)
-        {
-            source.Action = (GameplayAction)NextRandomInt(
-                (int)GameplayAction.LeftPunch,
-                (int)GameplayAction.BothPunch + 1);
-
-            switch (source.Action)
-            {
-                case GameplayAction.LeftPunch:
-                    source.Lane = NextRandomInt(0, 2);
-                    break;
-                case GameplayAction.RightPunch:
-                    source.Lane = NextRandomInt(2, 4);
-                    break;
-                default:
-                    source.Lane = NextRandomInt(1, 3);
-                    break;
-            }
-
-            return source;
-        }
-
-        private BeatmapEvent RandomizeObstacleEvent(BeatmapEvent source)
-        {
-            source.Action = (GameplayAction)NextRandomInt(
-                (int)GameplayAction.Duck,
-                (int)GameplayAction.DodgeRight + 1);
-            source.Lane = NextRandomInt(0, 4);
-            return source;
-        }
-
-        private int NextRandomInt(int minimumInclusive, int maximumExclusive)
-        {
-            uint value = spawnRandomState;
-            value ^= value << 13;
-            value ^= value >> 17;
-            value ^= value << 5;
-            spawnRandomState = value;
-            uint range = (uint)Mathf.Max(1, maximumExclusive - minimumInclusive);
-            return minimumInclusive + (int)(value % range);
-        }
-
-        private void SpawnRhythmTile(RhythmTileEvent tileEvent, float songTime)
+        private void SpawnRhythmTile(PlannedRhythmTileEvent tileEvent, float songTime)
         {
             RhythmLaneTile rhythmTile = rhythmTilePool.Rent();
-            float targetTime = tileEvent.Beat * config.Rhythm.SecondsPerBeat;
-            float spawnTime = targetTime - config.Rhythm.TravelBeats * config.Rhythm.SecondsPerBeat;
-            rhythmTile.Spawn(tileEvent, targetTime, spawnTime, config.Rhythm.SpawnZ);
+            rhythmTile.Spawn(tileEvent.Event, tileEvent.TargetTime, tileEvent.SpawnTime, config.Rhythm.SpawnZ);
             rhythmTile.Tick(songTime);
             activeRhythmTiles.Add(rhythmTile);
         }
@@ -574,8 +494,11 @@ namespace NeonPulse
                 return;
             }
 
-            float approachDuration = config.Rhythm.TravelBeats * config.Rhythm.SecondsPerBeat;
-            hud.SetUpcomingAction(closest.Action, closest.TargetTime - songTime, approachDuration, materials);
+            playerVisuals?.SetCombatMode(closest.UsesSlashVisual ? CombatGameplayMode.Slash : CombatGameplayMode.Punch);
+            playerVisuals?.SetHandsVisible(true);
+            hud.SetActionMode(closest.UsesSlashVisual ? CombatGameplayMode.Slash : CombatGameplayMode.Punch);
+            hud.SetUpcomingAction(closest.Action, closest.TargetTime - songTime,
+                Mathf.Max(0.01f, closest.TargetTime - closest.SpawnTime), materials);
         }
 
         private bool TryJudge(GameplayAction requestedAction, float songTime, out float slashDirection)
@@ -610,7 +533,9 @@ namespace NeonPulse
             BeatTraveller candidate = activePunchTargets[candidateIndex];
             judgementPosition = CreateJudgementPosition(candidate);
             slashDirection = candidate.SlashDirection;
-            if (config.GameplayMode == CombatGameplayMode.Slash)
+            playerVisuals?.SetCombatMode(candidate.UsesSlashVisual ? CombatGameplayMode.Slash : CombatGameplayMode.Punch);
+            playerVisuals?.SetHandsVisible(true);
+            if (candidate.UsesSlashVisual)
             {
                 slashDebris?.PlaySlash(judgementPosition, requestedAction, slashDirection);
             }
@@ -675,6 +600,56 @@ namespace NeonPulse
             hud?.SetScore(snapshot);
         }
 
+        private void UpdateLevelProgress(float songTime)
+        {
+            if (runPlan == null || runPlan.PhaseCount == 0)
+            {
+                return;
+            }
+
+            if (runPlan.TryGetPhase(songTime, out NeonPulseLevelPhase phase, out float phaseProgress))
+            {
+                CombatGameplayMode mode = phase.Action == LevelPhaseAction.SlashObjects
+                    ? CombatGameplayMode.Slash
+                    : CombatGameplayMode.Punch;
+                playerVisuals?.SetHandsVisible(phase.Action != LevelPhaseAction.RhythmTiles);
+                playerVisuals?.SetCombatMode(mode);
+                hud.SetActionMode(mode);
+                hud.SetLevelProgress(runPlan.GetPhaseIndex(songTime) + 1, runPlan.PhaseCount, phase.DisplayName,
+                    Mathf.Clamp01(songTime / Mathf.Max(0.01f, songDuration)), phaseProgress);
+                return;
+            }
+
+            hud.SetLevelProgress(runPlan.PhaseCount, runPlan.PhaseCount, "Nghỉ chuyển phase",
+                Mathf.Clamp01(songTime / Mathf.Max(0.01f, songDuration)), 0f);
+        }
+
+        private int GetAudioBeatCount()
+        {
+            NeonPulseLevelDefinition level = config != null ? config.LevelDefinition : null;
+            if (level == null)
+            {
+                return config != null ? config.Rhythm.SongBeats : 64;
+            }
+
+            float duration = 0f;
+            for (int index = 0; index < level.Phases.Count; index++)
+            {
+                NeonPulseLevelPhase phase = level.Phases[index];
+                if (phase != null)
+                {
+                    duration += phase.DurationSeconds;
+                }
+
+                if (index < level.Phases.Count - 1)
+                {
+                    duration += level.PhaseTransitionRestSeconds;
+                }
+            }
+
+            return Mathf.Max(4, Mathf.CeilToInt(duration / config.Rhythm.SecondsPerBeat));
+        }
+
         private void OnJudged(AccuracyGrade grade, GameplayAction action)
         {
             hud?.ShowJudgement(grade, action, score.Snapshot, materials);
@@ -692,6 +667,7 @@ namespace NeonPulse
             hitBursts.Play(judgementPosition, color);
             if (action == GameplayAction.RhythmTile)
             {
+                impactRipples?.Play(judgementPosition, color, true);
                 playerVisuals?.TriggerRhythmTileImpactShake();
                 screenFlash?.Play(color, 0.6f);
                 judgementLineFeedback?.Pulse(judgementPosition.x);
@@ -700,6 +676,7 @@ namespace NeonPulse
 
             if (grade != AccuracyGrade.Miss)
             {
+                impactRipples?.Play(judgementPosition, color, false);
                 if (action == GameplayAction.LeftPunch || action == GameplayAction.RightPunch ||
                     action == GameplayAction.BothPunch)
                 {
