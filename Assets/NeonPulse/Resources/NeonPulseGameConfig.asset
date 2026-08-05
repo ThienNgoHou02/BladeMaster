@@ -26,6 +26,7 @@ MonoBehaviour:
     labelVisibleZ: 30
     countdownDuration: 3
     resultDelay: 0.6
+    randomizeSpawnPattern: 1
     perfectWindow: 0.06
     greatWindow: 0.12
     goodWindow: 0.21

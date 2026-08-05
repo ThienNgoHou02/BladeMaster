@@ -19,6 +19,7 @@ namespace NeonPulse
         [SerializeField, Min(5f)] private float labelVisibleZ = 30f;
         [SerializeField, Range(0f, 5f)] private float countdownDuration = 3f;
         [SerializeField, Range(0f, 3f)] private float resultDelay = 0.6f;
+        [SerializeField] private bool randomizeSpawnPattern = true;
         [SerializeField, Range(0.02f, 0.2f)] private float perfectWindow = 0.08f;
         [SerializeField, Range(0.05f, 0.3f)] private float greatWindow = 0.16f;
         [SerializeField, Range(0.1f, 0.5f)] private float goodWindow = 0.28f;
@@ -37,6 +38,7 @@ namespace NeonPulse
         public float LabelVisibleZ => labelVisibleZ;
         public float CountdownDuration => countdownDuration;
         public float ResultDelay => resultDelay;
+        public bool RandomizeSpawnPattern => randomizeSpawnPattern;
         public float PerfectWindow => perfectWindow;
         public float GreatWindow => greatWindow;
         public float GoodWindow => goodWindow;

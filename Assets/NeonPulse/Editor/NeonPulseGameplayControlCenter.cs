@@ -188,6 +188,7 @@ namespace NeonPulse.EditorTools
             DrawField(rhythm, "tileWaveEndBeat", "Beat kết thúc đợt gạch", "Target tròn và tường sẽ không xuất hiện chồng với đợt gạch.");
             DrawField(rhythm, "countdownDuration", "Đếm ngược trước khi chơi");
             DrawField(rhythm, "resultDelay", "Chờ trước khi hiện kết quả");
+            DrawField(rhythm, "randomizeSpawnPattern", "Random vật thể mỗi lượt", "Giữ nguyên beat để khớp nhạc, nhưng random loại mục tiêu, lane và cửa né sau mỗi lần Restart.");
 
             DrawSection("VỊ TRÍ VẬT THỂ");
             DrawField(rhythm, "spawnZ", "Vị trí xuất hiện");

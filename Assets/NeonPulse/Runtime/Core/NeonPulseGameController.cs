@@ -32,7 +32,7 @@ namespace NeonPulse
         private int nextPunchEventIndex;
         private int nextObstacleEventIndex;
         private int nextRhythmTileIndex;
-        private uint tileLaneRandomState;
+        private uint spawnRandomState;
         private bool runFinished;
         private Vector3 judgementPosition;
         private Color rhythmTileFeedbackColor;
@@ -169,8 +169,8 @@ namespace NeonPulse
             nextPunchEventIndex = 0;
             nextObstacleEventIndex = 0;
             nextRhythmTileIndex = 0;
-            tileLaneRandomState = unchecked((uint)System.Environment.TickCount) ^ unchecked((uint)GetInstanceID());
-            tileLaneRandomState |= 1u;
+            spawnRandomState = unchecked((uint)System.Environment.TickCount) ^ unchecked((uint)GetInstanceID());
+            spawnRandomState |= 1u;
             runFinished = false;
             score.Reset();
             hud.ResetRun();
@@ -189,6 +189,7 @@ namespace NeonPulse
                 punchTargetPool,
                 activePunchTargets,
                 songTime,
+                false,
                 "Punch Target Pool exhausted. Increase Traveller Pool Capacity.");
         }
 
@@ -200,6 +201,7 @@ namespace NeonPulse
                 obstaclePool,
                 activeObstacles,
                 songTime,
+                true,
                 "Obstacle Door Pool exhausted. Increase Traveller Pool Capacity.");
         }
 
@@ -209,6 +211,7 @@ namespace NeonPulse
             BeatTravellerPool pool,
             List<BeatTraveller> activeList,
             float songTime,
+            bool isObstacle,
             string exhaustedWarning)
         {
             float currentBeat = songTime / config.Rhythm.SecondsPerBeat;
@@ -227,6 +230,13 @@ namespace NeonPulse
                 {
                     Debug.LogWarning(exhaustedWarning);
                     return nextIndex;
+                }
+
+                if (config.Rhythm.RandomizeSpawnPattern)
+                {
+                    chartEvent = isObstacle
+                        ? RandomizeObstacleEvent(chartEvent)
+                        : RandomizePunchEvent(chartEvent);
                 }
 
                 float targetTime = chartEvent.Beat * config.Rhythm.SecondsPerBeat;
@@ -269,22 +279,58 @@ namespace NeonPulse
                     return;
                 }
 
-                firstTile.Lane = NextRandomTileLane(0);
-                secondTile.Lane = NextRandomTileLane(2);
+                if (config.Rhythm.RandomizeSpawnPattern)
+                {
+                    firstTile.Lane = NextRandomInt(0, 2);
+                    secondTile.Lane = NextRandomInt(2, 4);
+                }
+
                 SpawnRhythmTile(firstTile, songTime);
                 SpawnRhythmTile(secondTile, songTime);
                 nextRhythmTileIndex += 2;
             }
         }
 
-        private int NextRandomTileLane(int firstLane)
+        private BeatmapEvent RandomizePunchEvent(BeatmapEvent source)
         {
-            uint value = tileLaneRandomState;
+            source.Action = (GameplayAction)NextRandomInt(
+                (int)GameplayAction.LeftPunch,
+                (int)GameplayAction.BothPunch + 1);
+
+            switch (source.Action)
+            {
+                case GameplayAction.LeftPunch:
+                    source.Lane = NextRandomInt(0, 2);
+                    break;
+                case GameplayAction.RightPunch:
+                    source.Lane = NextRandomInt(2, 4);
+                    break;
+                default:
+                    source.Lane = NextRandomInt(1, 3);
+                    break;
+            }
+
+            return source;
+        }
+
+        private BeatmapEvent RandomizeObstacleEvent(BeatmapEvent source)
+        {
+            source.Action = (GameplayAction)NextRandomInt(
+                (int)GameplayAction.Duck,
+                (int)GameplayAction.DodgeRight + 1);
+            source.Lane = NextRandomInt(0, 4);
+            return source;
+        }
+
+        private int NextRandomInt(int minimumInclusive, int maximumExclusive)
+        {
+            uint value = spawnRandomState;
             value ^= value << 13;
             value ^= value >> 17;
             value ^= value << 5;
-            tileLaneRandomState = value;
-            return firstLane + (int)(value & 1u);
+            spawnRandomState = value;
+            uint range = (uint)Mathf.Max(1, maximumExclusive - minimumInclusive);
+            return minimumInclusive + (int)(value % range);
         }
 
         private void SpawnRhythmTile(RhythmTileEvent tileEvent, float songTime)
