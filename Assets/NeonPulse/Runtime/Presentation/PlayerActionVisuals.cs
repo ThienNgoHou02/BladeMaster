@@ -7,6 +7,7 @@ namespace NeonPulse
     public sealed class PlayerActionVisuals
     {
         private const float SlashDurationMultiplier = 1.35f;
+        private const float JumpDuration = 0.54f;
 
         private static readonly Vector3 LeftRestPosition = new Vector3(-0.92f, -0.67f, 1.45f);
         private static readonly Vector3 RightRestPosition = new Vector3(0.92f, -0.67f, 1.45f);
@@ -25,10 +26,17 @@ namespace NeonPulse
         private float rightPunchTimer;
         private float leftSlashDirection = 1f;
         private float rightSlashDirection = -1f;
+        private float jumpTimer;
+        private bool wasJumpHeld;
         private GameplayAction heldAction;
         private bool hasHeldAction;
         private Vector3 currentBodyOffset;
         private Vector3 currentCameraPostureOffset;
+        private Vector3 bodyOffsetVelocity;
+        private Vector3 cameraPostureVelocity;
+        private float jumpCameraOffset;
+        private float currentCameraPostureRoll;
+        private float cameraPostureRollVelocity;
         private float shakeTimer;
         private float shakeDuration;
         private float shakeAmplitude;
@@ -130,14 +138,16 @@ namespace NeonPulse
         /// <summary>Updates the continuously held fitness pose from cached input state.</summary>
         public void SetHeldInput(bool duck, bool jump, bool dodgeLeft, bool dodgeRight)
         {
-            hasHeldAction = duck || jump || dodgeLeft || dodgeRight;
+            if (jump && !wasJumpHeld)
+            {
+                jumpTimer = JumpDuration;
+            }
+
+            wasJumpHeld = jump;
+            hasHeldAction = duck || dodgeLeft || dodgeRight;
             if (duck)
             {
                 heldAction = GameplayAction.Duck;
-            }
-            else if (jump)
-            {
-                heldAction = GameplayAction.Jump;
             }
             else if (dodgeLeft)
             {
@@ -161,6 +171,8 @@ namespace NeonPulse
             StartShake(feel.RhythmTileShakeAmplitude, feel.RhythmTileShakeDuration);
         }
 
+        public float JumpLeadTime => JumpDuration * 0.5f;
+
         /// <summary>Updates glove positions without tweens, coroutines, or per-frame allocations.</summary>
         public void Tick(float deltaTime)
         {
@@ -171,26 +183,32 @@ namespace NeonPulse
 
             leftPunchTimer = Mathf.Max(0f, leftPunchTimer - deltaTime);
             rightPunchTimer = Mathf.Max(0f, rightPunchTimer - deltaTime);
+            jumpTimer = Mathf.Max(0f, jumpTimer - deltaTime);
 
             Vector3 targetBodyOffset = CalculateHeldBodyOffset();
-            float smoothing = 1f - Mathf.Exp(-feel.PoseSmoothing * deltaTime);
-            currentBodyOffset = Vector3.Lerp(currentBodyOffset, targetBodyOffset, smoothing);
-            currentCameraPostureOffset = Vector3.Lerp(currentCameraPostureOffset, CalculateCameraPostureOffset(), smoothing);
+            // Critically damped motion keeps lateral dodges fluid when the player switches side.
+            float smoothTime = 1f / Mathf.Max(1f, feel.PoseSmoothing);
+            currentBodyOffset = Vector3.SmoothDamp(currentBodyOffset, targetBodyOffset, ref bodyOffsetVelocity, smoothTime, Mathf.Infinity, deltaTime);
+            currentCameraPostureOffset = Vector3.SmoothDamp(currentCameraPostureOffset, CalculateCameraPostureOffset(), ref cameraPostureVelocity, smoothTime, Mathf.Infinity, deltaTime);
+            currentCameraPostureRoll = Mathf.SmoothDamp(currentCameraPostureRoll, CalculateCameraPostureRoll(), ref cameraPostureRollVelocity, smoothTime, Mathf.Infinity, deltaTime);
+            float jumpOffset = CalculateJumpOffset();
+            Vector3 displayedBodyOffset = currentBodyOffset + Vector3.up * (jumpOffset * 0.3f);
+            jumpCameraOffset = jumpOffset;
             float leftThrust = CalculateThrust(leftPunchTimer);
             float rightThrust = CalculateThrust(rightPunchTimer);
             if (usesSwords)
             {
                 float leftSlashAngle = CalculateSlashAngle(leftPunchTimer, leftSlashDirection);
                 float rightSlashAngle = CalculateSlashAngle(rightPunchTimer, rightSlashDirection);
-                leftGlove.localPosition = LeftRestPosition + currentBodyOffset + CalculateSlashOffset(leftThrust, 0.1f, leftSlashAngle);
-                rightGlove.localPosition = RightRestPosition + currentBodyOffset + CalculateSlashOffset(rightThrust, -0.1f, rightSlashAngle);
+                leftGlove.localPosition = LeftRestPosition + displayedBodyOffset + CalculateSlashOffset(leftThrust, 0.1f, leftSlashAngle);
+                rightGlove.localPosition = RightRestPosition + displayedBodyOffset + CalculateSlashOffset(rightThrust, -0.1f, rightSlashAngle);
                 leftGlove.localRotation = Quaternion.Euler(-14f - leftThrust * 24f, 9f + leftSlashDirection * leftThrust * 7f, -14f + leftSlashAngle);
                 rightGlove.localRotation = Quaternion.Euler(-14f - rightThrust * 24f, -9f + rightSlashDirection * rightThrust * 7f, 14f + rightSlashAngle);
             }
             else
             {
-                leftGlove.localPosition = LeftRestPosition + currentBodyOffset + CalculatePunchOffset(leftPunchTimer, 0.16f);
-                rightGlove.localPosition = RightRestPosition + currentBodyOffset + CalculatePunchOffset(rightPunchTimer, -0.16f);
+                leftGlove.localPosition = LeftRestPosition + displayedBodyOffset + CalculatePunchOffset(leftPunchTimer, 0.16f);
+                rightGlove.localPosition = RightRestPosition + displayedBodyOffset + CalculatePunchOffset(rightPunchTimer, -0.16f);
                 leftGlove.localRotation = Quaternion.Euler(-12f - leftThrust * 22f, 10f, -8f);
                 rightGlove.localRotation = Quaternion.Euler(-12f - rightThrust * 22f, -10f, 8f);
             }
@@ -209,8 +227,6 @@ namespace NeonPulse
             {
                 case GameplayAction.Duck:
                     return new Vector3(0f, -feel.DuckDistance * 0.3f, 0f);
-                case GameplayAction.Jump:
-                    return new Vector3(0f, feel.JumpDistance * 0.29f, 0f);
                 case GameplayAction.DodgeLeft:
                     return new Vector3(-feel.DodgeDistance * 0.16f, 0f, 0f);
                 case GameplayAction.DodgeRight:
@@ -230,10 +246,24 @@ namespace NeonPulse
             switch (heldAction)
             {
                 case GameplayAction.Duck: return new Vector3(0f, -feel.DuckDistance, 0f);
-                case GameplayAction.Jump: return new Vector3(0f, feel.JumpDistance, 0f);
                 case GameplayAction.DodgeLeft: return new Vector3(-feel.DodgeDistance, 0f, 0f);
                 case GameplayAction.DodgeRight: return new Vector3(feel.DodgeDistance, 0f, 0f);
                 default: return Vector3.zero;
+            }
+        }
+
+        private float CalculateCameraPostureRoll()
+        {
+            if (!hasHeldAction)
+            {
+                return 0f;
+            }
+
+            switch (heldAction)
+            {
+                case GameplayAction.DodgeLeft: return feel.DodgeCameraRoll;
+                case GameplayAction.DodgeRight: return -feel.DodgeCameraRoll;
+                default: return 0f;
             }
         }
 
@@ -253,8 +283,8 @@ namespace NeonPulse
         {
             if (shakeTimer <= 0f)
             {
-                cameraTransform.localPosition = cameraRestPosition + currentCameraPostureOffset;
-                cameraTransform.localRotation = cameraRestRotation;
+                cameraTransform.localPosition = cameraRestPosition + currentCameraPostureOffset + Vector3.up * jumpCameraOffset;
+                cameraTransform.localRotation = cameraRestRotation * Quaternion.Euler(0f, 0f, currentCameraPostureRoll);
                 return;
             }
 
@@ -264,8 +294,8 @@ namespace NeonPulse
             float x = Mathf.Sin(time * 91f) * shakeAmplitude * envelope;
             float y = Mathf.Sin(time * 67f + 1.7f) * shakeAmplitude * 0.65f * envelope;
             float roll = Mathf.Sin(time * 79f + 0.4f) * shakeAmplitude * 18f * envelope;
-            cameraTransform.localPosition = cameraRestPosition + currentCameraPostureOffset + new Vector3(x, y, 0f);
-            cameraTransform.localRotation = cameraRestRotation * Quaternion.Euler(y * 10f, x * 12f, roll);
+            cameraTransform.localPosition = cameraRestPosition + currentCameraPostureOffset + new Vector3(x, y + jumpCameraOffset, 0f);
+            cameraTransform.localRotation = cameraRestRotation * Quaternion.Euler(y * 10f, x * 12f, currentCameraPostureRoll + roll);
         }
 
         private Vector3 CalculatePunchOffset(float timer, float inwardDirection)
@@ -324,6 +354,17 @@ namespace NeonPulse
 
             float phase = 1f - timer / GetAttackDuration();
             return Mathf.Sin(phase * Mathf.PI);
+        }
+
+        private float CalculateJumpOffset()
+        {
+            if (jumpTimer <= 0f)
+            {
+                return 0f;
+            }
+
+            float phase = 1f - jumpTimer / JumpDuration;
+            return Mathf.Sin(phase * Mathf.PI) * feel.JumpDistance * 0.62f;
         }
 
         private float GetAttackDuration()

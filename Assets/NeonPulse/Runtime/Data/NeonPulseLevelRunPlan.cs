@@ -108,6 +108,12 @@ namespace NeonPulse
             float distance = Mathf.Max(0.1f, config.Rhythm.SpawnZ - config.Rhythm.HitZ);
             float travelDuration = distance / phase.FlySpeed;
             float spacing = Mathf.Clamp(travelDuration * 0.52f, MinimumEventSpacing, MaximumEventSpacing);
+            if (phase.Action == LevelPhaseAction.DodgeWalls)
+            {
+                // Do not overlap hold windows: changing direction while a wall is still active
+                // made the dodge phase feel jerky and could generate impossible inputs.
+                spacing = Mathf.Max(spacing, config.Rhythm.HoldWindowLead + config.Rhythm.HoldWindowTrail + 0.12f);
+            }
             float targetTime = phaseStartTime + travelDuration;
 
             while (targetTime <= phaseEndTime)
@@ -149,7 +155,14 @@ namespace NeonPulse
 
         private void AddDodgeWall(float targetTime, float spawnTime, ref uint randomState)
         {
-            GameplayAction action = NextRandomInt(ref randomState, 0, 2) == 0 ? GameplayAction.DodgeLeft : GameplayAction.DodgeRight;
+            GameplayAction action;
+            switch (NextRandomInt(ref randomState, 0, 4))
+            {
+                case 0: action = GameplayAction.DodgeLeft; break;
+                case 1: action = GameplayAction.DodgeRight; break;
+                case 2: action = GameplayAction.Duck; break;
+                default: action = GameplayAction.Jump; break;
+            }
             obstacleEvents.Add(new PlannedGameplayEvent
             {
                 Event = new BeatmapEvent(0f, 0, action),

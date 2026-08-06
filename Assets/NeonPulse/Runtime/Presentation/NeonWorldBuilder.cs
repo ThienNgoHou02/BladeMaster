@@ -7,8 +7,6 @@ namespace NeonPulse
     /// <summary>Builds the fixed camera and original neon arena entirely from Unity primitives.</summary>
     public static class NeonWorldBuilder
     {
-        private const float BackgroundDistance = 85f;
-
         /// <summary>Creates the arena and returns the gameplay camera.</summary>
         public static Camera Build(
             Transform parent,
@@ -20,7 +18,6 @@ namespace NeonPulse
             ConfigureRenderSettings();
 
             Camera camera = CreateCamera(parent, config.CameraFeel.StandingHeight);
-            CreateBackground(camera, materials.Background);
             CreateLighting(parent, materials);
             CreateTrack(parent, materials);
             judgementLineFeedback = CreateHitLine(parent, materials, config);
@@ -61,7 +58,7 @@ namespace NeonPulse
         {
             GameObject cameraObject = new GameObject("Fixed First Person Camera");
             cameraObject.transform.SetParent(parent, false);
-            cameraObject.transform.position = new Vector3(0f, standingHeight, -5.8f);
+            cameraObject.transform.position = new Vector3(0f, standingHeight, -4.8f);
             cameraObject.transform.rotation = Quaternion.Euler(2.5f, 0f, 0f);
 
             Camera camera = cameraObject.AddComponent<Camera>();
@@ -105,34 +102,6 @@ namespace NeonPulse
             magenta.range = 18f;
             magenta.intensity = 3f;
             magenta.shadows = LightShadows.None;
-        }
-
-        private static void CreateBackground(Camera camera, Material backgroundMaterial)
-        {
-            if (camera == null || backgroundMaterial == null)
-            {
-                return;
-            }
-
-            GameObject background = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            background.name = "Cyberpunk Background";
-            background.transform.SetParent(camera.transform, false);
-            background.transform.localPosition = new Vector3(0f, 0f, BackgroundDistance);
-
-            float height = 2f * BackgroundDistance * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
-            background.transform.localScale = new Vector3(height * camera.aspect, height, 1f) * 1.02f;
-
-            if (background.TryGetComponent(out Collider backgroundCollider))
-            {
-                Object.Destroy(backgroundCollider);
-            }
-
-            if (background.TryGetComponent(out Renderer backgroundRenderer))
-            {
-                backgroundRenderer.sharedMaterial = backgroundMaterial;
-                backgroundRenderer.shadowCastingMode = ShadowCastingMode.Off;
-                backgroundRenderer.receiveShadows = false;
-            }
         }
 
         private static void CreateTrack(Transform parent, RuntimeMaterialLibrary materials)

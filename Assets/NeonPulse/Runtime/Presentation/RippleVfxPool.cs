@@ -46,11 +46,13 @@ namespace NeonPulse
 
         private sealed class Ripple
         {
-            private const int SegmentCount = 28;
-            private const float Duration = 0.42f;
+            // A denser ring avoids visible polygon corners on mobile-sized screens.
+            private const int SegmentCount = 64;
+            private const float Duration = 0.52f;
 
             private readonly GameObject root;
             private readonly LineRenderer outerRing;
+            private readonly LineRenderer middleRing;
             private readonly LineRenderer innerRing;
             private float elapsed;
             private bool active;
@@ -60,6 +62,7 @@ namespace NeonPulse
                 root = new GameObject("Impact Ripple " + index);
                 root.transform.SetParent(parent, false);
                 outerRing = CreateRing(root.transform, "Outer Ring", material, 1f, 0.09f);
+                middleRing = CreateRing(root.transform, "Middle Ring", material, 0.76f, 0.07f);
                 innerRing = CreateRing(root.transform, "Inner Ring", material, 0.58f, 0.055f);
                 root.SetActive(false);
             }
@@ -70,18 +73,24 @@ namespace NeonPulse
                     ? new Vector3(position.x, 0.42f, position.z)
                     : position;
                 root.transform.rotation = alignToGround ? Quaternion.Euler(90f, 0f, 0f) : Quaternion.identity;
-                root.transform.localScale = Vector3.one * 0.28f;
                 Color outerColor = color;
                 outerColor.a = 0.95f;
                 Color innerColor = Color.Lerp(color, Color.white, 0.35f);
                 innerColor.a = 0.82f;
+                Color middleColor = Color.Lerp(color, Color.white, 0.18f);
+                middleColor.a = 0.88f;
                 outerRing.startColor = outerColor;
                 outerRing.endColor = outerColor;
+                middleRing.startColor = middleColor;
+                middleRing.endColor = middleColor;
                 innerRing.startColor = innerColor;
                 innerRing.endColor = innerColor;
                 elapsed = 0f;
                 active = true;
                 root.SetActive(true);
+                SetAlpha(innerRing, 0f);
+                SetAlpha(middleRing, 0f);
+                SetAlpha(outerRing, 0f);
             }
 
             public void Tick(float deltaTime)
@@ -98,12 +107,9 @@ namespace NeonPulse
                     return;
                 }
 
-                float normalized = elapsed / Duration;
-                float scale = Mathf.Lerp(0.28f, 2.15f, normalized);
-                root.transform.localScale = Vector3.one * scale;
-                float alpha = 1f - normalized;
-                SetAlpha(outerRing, alpha * 0.95f);
-                SetAlpha(innerRing, alpha * 0.72f);
+                TickRing(innerRing, 0f, 0.34f, 0.82f, 0.075f, 0.022f);
+                TickRing(middleRing, 0.11f, 0.34f, 0.9f, 0.085f, 0.028f);
+                TickRing(outerRing, 0.22f, 0.3f, 0.96f, 0.12f, 0.035f);
             }
 
             public void Clear()
@@ -122,7 +128,7 @@ namespace NeonPulse
                 ring.positionCount = SegmentCount;
                 ring.widthMultiplier = width;
                 ring.material = material;
-                ring.alignment = LineAlignment.View;
+                ring.alignment = LineAlignment.TransformZ;
                 ring.textureMode = LineTextureMode.Stretch;
                 ring.shadowCastingMode = ShadowCastingMode.Off;
                 ring.receiveShadows = false;
@@ -143,6 +149,21 @@ namespace NeonPulse
                 color.a = alpha;
                 ring.startColor = color;
                 ring.endColor = color;
+            }
+
+            private void TickRing(LineRenderer ring, float delay, float waveDuration, float initialAlpha, float startWidth, float endWidth)
+            {
+                float normalizedTime = Mathf.Clamp01((elapsed - delay) / waveDuration);
+                if (elapsed < delay)
+                {
+                    SetAlpha(ring, 0f);
+                    return;
+                }
+
+                float expansion = 1f - Mathf.Pow(1f - normalizedTime, 2.4f);
+                ring.transform.localScale = Vector3.one * Mathf.Lerp(0.28f, 2.2f, expansion);
+                SetAlpha(ring, initialAlpha * (1f - normalizedTime * normalizedTime));
+                ring.widthMultiplier = Mathf.Lerp(startWidth, endWidth, expansion);
             }
         }
     }

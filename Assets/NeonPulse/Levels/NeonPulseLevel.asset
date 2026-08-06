@@ -17,13 +17,13 @@ MonoBehaviour:
   phases:
   - action: 0
     durationSeconds: 30
-    flySpeed: 10
+    flySpeed: 25
   - action: 1
     durationSeconds: 30
-    flySpeed: 15
+    flySpeed: 30
   - action: 2
     durationSeconds: 30
-    flySpeed: 20
+    flySpeed: 35
   - action: 3
-    durationSeconds: 30
-    flySpeed: 25
+    durationSeconds: 35
+    flySpeed: 30

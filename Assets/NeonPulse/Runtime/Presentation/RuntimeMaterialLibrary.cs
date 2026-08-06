@@ -22,13 +22,12 @@ namespace NeonPulse
         public Material ObstacleGlow { get; }
         public Material White { get; }
         public Material Footprint { get; }
-        public Material Background { get; }
         public Material CyanGlow { get; }
         public Material MagentaGlow { get; }
         public Material PurpleGlow { get; }
         public Material YellowGlow { get; }
 
-        public RuntimeMaterialLibrary(VisualSettings settings, Texture backgroundTexture = null)
+        public RuntimeMaterialLibrary(VisualSettings settings)
         {
             VisualSettings safeSettings = settings ?? new VisualSettings();
             CyanColor = safeSettings.Cyan;
@@ -47,7 +46,6 @@ namespace NeonPulse
             ObstacleGlow = CreateGlow("Obstacle Aura", safeSettings.Obstacle);
             White = CreateParticle("Feedback White");
             Footprint = CreateEmissive("Footprint White", Color.white, neonIntensity * 1.35f);
-            Background = CreateBackground("Gameplay Background", backgroundTexture);
             CyanGlow = CreateGlow("Cyan Aura", CyanColor);
             MagentaGlow = CreateGlow("Magenta Aura", MagentaColor);
             PurpleGlow = CreateGlow("Purple Aura", PurpleColor);
@@ -76,7 +74,6 @@ namespace NeonPulse
             DestroyMaterial(ObstacleGlow);
             DestroyMaterial(White);
             DestroyMaterial(Footprint);
-            DestroyMaterial(Background);
             DestroyMaterial(CyanGlow);
             DestroyMaterial(MagentaGlow);
             DestroyMaterial(PurpleGlow);
@@ -135,32 +132,6 @@ namespace NeonPulse
                 name = materialName,
                 color = new Color(color.r, color.g, color.b, 0.48f)
             };
-        }
-
-        private static Material CreateBackground(string materialName, Texture texture)
-        {
-            if (texture == null)
-            {
-                return null;
-            }
-
-            Shader shader = Resources.Load<Shader>("NeonPulseBackground");
-            if (shader == null)
-            {
-                shader = Shader.Find("NeonPulse/Background");
-            }
-
-            if (shader == null)
-            {
-                shader = Shader.Find("Hidden/InternalErrorShader");
-            }
-
-            Material material = new Material(shader)
-            {
-                name = materialName
-            };
-            material.SetTexture("_MainTex", texture);
-            return material;
         }
 
         private static void SetEmission(Material material, Color color, float intensity)

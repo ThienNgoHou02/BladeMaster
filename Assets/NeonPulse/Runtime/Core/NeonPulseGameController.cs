@@ -23,6 +23,7 @@ namespace NeonPulse
         private RippleVfxPool impactRipples;
         private ScreenFlashFeedback screenFlash;
         private PlayerActionVisuals playerVisuals;
+        private NeonMotionFeedback motionFeedback;
         private JudgementLineFeedback judgementLineFeedback;
         private NeonHud hud;
         private RhythmScore score;
@@ -44,7 +45,7 @@ namespace NeonPulse
             ConfigureApplication();
 
             config = NeonPulseGameConfig.LoadRuntime(out ownsConfig);
-            materials = new RuntimeMaterialLibrary(config.Visuals, config.Visuals.BackgroundTexture);
+            materials = new RuntimeMaterialLibrary(config.Visuals);
             inputProvider = new KeyboardInputProvider(config.Input);
             score = new RhythmScore(config.Rhythm, config.Scoring);
             score.Changed += OnScoreChanged;
@@ -52,6 +53,7 @@ namespace NeonPulse
 
             Camera gameplayCamera = NeonWorldBuilder.Build(transform, materials, config, out judgementLineFeedback);
             playerVisuals = new PlayerActionVisuals(gameplayCamera, materials, config);
+            motionFeedback = new NeonMotionFeedback(transform, gameplayCamera, materials);
             int punchPoolCapacity = Mathf.Max(8, config.Visuals.TravellerPoolCapacity * 2 / 3);
             int obstaclePoolCapacity = Mathf.Max(8, config.Visuals.TravellerPoolCapacity - punchPoolCapacity);
             punchTargetPool = new BeatTravellerPool(punchPoolCapacity, transform, materials, config, "Punch Target Pool");
@@ -98,6 +100,7 @@ namespace NeonPulse
             slashDebris?.Tick(Time.deltaTime);
             impactRipples?.Tick(Time.deltaTime);
             screenFlash?.Tick(Time.unscaledDeltaTime);
+            motionFeedback?.Tick(Time.deltaTime, runFinished ? 0f : 24f);
 
             if (runFinished)
             {
@@ -120,7 +123,8 @@ namespace NeonPulse
             PlayerInputFrame gameplayInput = config.AutoPlay
                 ? CreateAutoPlayInput(songTime)
                 : manualInput;
-            playerVisuals?.SetHeldInput(gameplayInput.Duck, gameplayInput.Jump, gameplayInput.DodgeLeft, gameplayInput.DodgeRight);
+            bool jumpInMotionWindow = IsJumpInMotionWindow(gameplayInput.Jump, songTime);
+            playerVisuals?.SetHeldInput(gameplayInput.Duck, jumpInMotionWindow, gameplayInput.DodgeLeft, gameplayInput.DodgeRight);
             playerVisuals?.Tick(Time.deltaTime);
 
             if (songTime >= 0f)
@@ -416,6 +420,31 @@ namespace NeonPulse
             }
         }
 
+        private bool IsJumpInMotionWindow(bool jumpHeld, float songTime)
+        {
+            if (!jumpHeld || playerVisuals == null)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < activeObstacles.Count; index++)
+            {
+                BeatTraveller traveller = activeObstacles[index];
+                if (traveller.Action != GameplayAction.Jump)
+                {
+                    continue;
+                }
+
+                float relativeTime = songTime - traveller.TargetTime;
+                if (relativeTime >= -playerVisuals.JumpLeadTime && relativeTime <= playerVisuals.JumpLeadTime)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private PlayerInputFrame CreateAutoPlayInput(float songTime)
         {
             bool leftPunch = false;
@@ -607,7 +636,7 @@ namespace NeonPulse
                 return;
             }
 
-            if (runPlan.TryGetPhase(songTime, out NeonPulseLevelPhase phase, out float phaseProgress))
+            if (runPlan.TryGetPhase(songTime, out NeonPulseLevelPhase phase, out _))
             {
                 CombatGameplayMode mode = phase.Action == LevelPhaseAction.SlashObjects
                     ? CombatGameplayMode.Slash
@@ -616,12 +645,12 @@ namespace NeonPulse
                 playerVisuals?.SetCombatMode(mode);
                 hud.SetActionMode(mode);
                 hud.SetLevelProgress(runPlan.GetPhaseIndex(songTime) + 1, runPlan.PhaseCount, phase.DisplayName,
-                    Mathf.Clamp01(songTime / Mathf.Max(0.01f, songDuration)), phaseProgress);
+                    Mathf.Clamp01(songTime / Mathf.Max(0.01f, songDuration)));
                 return;
             }
 
             hud.SetLevelProgress(runPlan.PhaseCount, runPlan.PhaseCount, "Nghỉ chuyển phase",
-                Mathf.Clamp01(songTime / Mathf.Max(0.01f, songDuration)), 0f);
+                Mathf.Clamp01(songTime / Mathf.Max(0.01f, songDuration)));
         }
 
         private int GetAudioBeatCount()
@@ -676,10 +705,10 @@ namespace NeonPulse
 
             if (grade != AccuracyGrade.Miss)
             {
-                impactRipples?.Play(judgementPosition, color, false);
                 if (action == GameplayAction.LeftPunch || action == GameplayAction.RightPunch ||
                     action == GameplayAction.BothPunch)
                 {
+                    impactRipples?.Play(judgementPosition, color, false);
                     screenFlash?.Play(color);
                 }
 

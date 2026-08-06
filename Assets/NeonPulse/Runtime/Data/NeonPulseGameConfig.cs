@@ -121,6 +121,7 @@ namespace NeonPulse
         [SerializeField] private float duckDistance = 0.95f;
         [SerializeField] private float jumpDistance = 0.9f;
         [SerializeField, Min(0.1f)] private float punchDistance = 1.9f;
+        [SerializeField, Range(2f, 16f)] private float dodgeCameraRoll = 7f;
         [SerializeField, Range(0.1f, 0.6f)] private float punchDuration = 0.24f;
         [SerializeField, Range(0f, 0.2f)] private float punchShakeAmplitude = 0.045f;
         [SerializeField, Range(0.05f, 0.5f)] private float punchShakeDuration = 0.12f;
@@ -137,6 +138,7 @@ namespace NeonPulse
         public float DuckDistance => duckDistance;
         public float JumpDistance => jumpDistance;
         public float PunchDistance => punchDistance;
+        public float DodgeCameraRoll => dodgeCameraRoll;
         public float PunchDuration => punchDuration;
         public float PunchShakeAmplitude => punchShakeAmplitude;
         public float PunchShakeDuration => punchShakeDuration;

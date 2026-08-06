@@ -7,6 +7,9 @@ namespace NeonPulse
     /// <summary>Runtime-built TextMeshPro HUD with score, combo, feedback, controls and results.</summary>
     public sealed class NeonHud : MonoBehaviour
     {
+        private const float ProgressBarWidth = 720f;
+        private const float LevelProgressBarHeight = 13f;
+
         private TMP_FontAsset fontAsset;
         private Font sourceFont;
         private bool ownsFontAsset;
@@ -17,7 +20,6 @@ namespace NeonPulse
         private TextMeshProUGUI levelProgressText;
         private TextMeshProUGUI phaseProgressText;
         private Image levelProgressFill;
-        private Image phaseProgressFill;
         private GameObject nextActionPanel;
         private TextMeshProUGUI nextActionText;
         private Image nextActionFill;
@@ -106,15 +108,16 @@ namespace NeonPulse
         }
 
         /// <summary>Updates level and phase progress without creating formatted strings each frame.</summary>
-        public void SetLevelProgress(int phaseIndex, int phaseCount, string phaseName, float levelProgress, float phaseProgress)
+        public void SetLevelProgress(int phaseIndex, int phaseCount, string phaseName, float levelProgress)
         {
-            if (levelProgressText == null || phaseProgressText == null || levelProgressFill == null || phaseProgressFill == null)
+            if (levelProgressText == null || phaseProgressText == null || levelProgressFill == null)
             {
                 return;
             }
 
             levelProgressText.SetText("LEVEL  {0:0}%", levelProgress * 100f);
-            if (displayedPhaseIndex != phaseIndex || displayedPhaseCount != phaseCount || displayedPhaseName != phaseName)
+            bool phaseChanged = displayedPhaseIndex != phaseIndex || displayedPhaseCount != phaseCount || displayedPhaseName != phaseName;
+            if (phaseChanged)
             {
                 displayedPhaseIndex = phaseIndex;
                 displayedPhaseCount = phaseCount;
@@ -122,8 +125,7 @@ namespace NeonPulse
                 phaseProgressText.text = "PHASE " + phaseIndex + "/" + phaseCount + "  •  " + phaseName;
             }
 
-            levelProgressFill.fillAmount = levelProgress;
-            phaseProgressFill.fillAmount = phaseProgress;
+            SetProgressBarWidth(levelProgressFill, levelProgress, LevelProgressBarHeight, 31f);
         }
 
         /// <summary>Switches labels between punch and slash phases while keeping a single HUD instance.</summary>
@@ -323,6 +325,12 @@ namespace NeonPulse
             }
 
             HideUpcomingAction();
+
+            if (levelProgressFill != null)
+            {
+                SetProgressBarWidth(levelProgressFill, 0f, LevelProgressBarHeight, 31f);
+            }
+
         }
 
         private void Update()
@@ -476,24 +484,23 @@ namespace NeonPulse
             GameObject bar = new GameObject("Level Progress Fill", typeof(RectTransform), typeof(Image));
             bar.transform.SetParent(panel.transform, false);
             levelProgressFill = bar.GetComponent<Image>();
-            levelProgressFill.type = Image.Type.Filled;
-            levelProgressFill.fillMethod = Image.FillMethod.Horizontal;
-            levelProgressFill.fillOrigin = 0;
+            levelProgressFill.type = Image.Type.Simple;
             levelProgressFill.color = materials.CyanColor;
             levelProgressFill.raycastTarget = false;
             SetRect(levelProgressFill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, 31f), new Vector2(720f, 13f));
+                new Vector2(0f, 31f), new Vector2(ProgressBarWidth, LevelProgressBarHeight));
+            SetProgressBarWidth(levelProgressFill, 0f, LevelProgressBarHeight, 31f);
 
-            GameObject phaseBar = new GameObject("Phase Progress Fill", typeof(RectTransform), typeof(Image));
-            phaseBar.transform.SetParent(panel.transform, false);
-            phaseProgressFill = phaseBar.GetComponent<Image>();
-            phaseProgressFill.type = Image.Type.Filled;
-            phaseProgressFill.fillMethod = Image.FillMethod.Horizontal;
-            phaseProgressFill.fillOrigin = 0;
-            phaseProgressFill.color = materials.YellowColor;
-            phaseProgressFill.raycastTarget = false;
-            SetRect(phaseProgressFill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, 12f), new Vector2(720f, 7f));
+        }
+
+        private static void SetProgressBarWidth(Image progressBar, float progress, float height, float yPosition)
+        {
+            RectTransform rect = progressBar.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.zero;
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.anchoredPosition = new Vector2(20f, yPosition);
+            rect.sizeDelta = new Vector2(ProgressBarWidth * Mathf.Clamp01(progress), height);
         }
 
         private void CreateCountdownPanel(RuntimeMaterialLibrary materials)
