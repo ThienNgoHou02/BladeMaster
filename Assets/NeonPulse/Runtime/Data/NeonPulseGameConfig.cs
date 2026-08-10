@@ -158,6 +158,9 @@ namespace NeonPulse
         [SerializeField] private GameObject punchHitVfxPrefab;
         [SerializeField] private bool showSlashWeapons;
         [SerializeField] private GameObject slashHitVfxPrefab;
+        [SerializeField] private GameObject rhythmTileHitVfxPrefab;
+        [SerializeField] private Texture2D punchIconTexture;
+        [SerializeField] private Texture2D swordIconTexture;
         [SerializeField] private Color cyan = new Color(0.02f, 1f, 0.95f, 1f);
         [SerializeField] private Color magenta = new Color(1f, 0.03f, 0.72f, 1f);
         [SerializeField] private Color purple = new Color(0.48f, 0.05f, 1f, 1f);
@@ -181,6 +184,9 @@ namespace NeonPulse
         public GameObject PunchHitVfxPrefab => punchHitVfxPrefab;
         public bool ShowSlashWeapons => showSlashWeapons;
         public GameObject SlashHitVfxPrefab => slashHitVfxPrefab;
+        public GameObject RhythmTileHitVfxPrefab => rhythmTileHitVfxPrefab;
+        public Texture2D PunchIconTexture => punchIconTexture;
+        public Texture2D SwordIconTexture => swordIconTexture;
         public Color Cyan => cyan;
         public Color Magenta => magenta;
         public Color Purple => purple;

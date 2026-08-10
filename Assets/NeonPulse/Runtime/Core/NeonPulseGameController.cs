@@ -7,7 +7,8 @@ namespace NeonPulse
     public sealed class NeonPulseGameController : MonoBehaviour
     {
         private const float JudgementStepSurfaceY = 0.34f;
-        private const float CombatVfxFrontOffset = 0.5f;
+        private const float RhythmTileVfxSurfaceY = 0.42f;
+        private const float CombatVfxFrontOffset = 0.65f;
         private const float DualTargetOffsetX = 1.25f;
 
         private readonly List<BeatTraveller> activePunchTargets = new List<BeatTraveller>(24);
@@ -22,9 +23,9 @@ namespace NeonPulse
         private RhythmLaneTilePool rhythmTilePool;
         private HitBurstPool hitBursts;
         private SlashDebrisPool slashDebris;
-        private RippleVfxPool impactRipples;
         private PrefabParticleVfxPool punchHitVfx;
         private PrefabParticleVfxPool slashHitVfx;
+        private PrefabParticleVfxPool rhythmTileHitVfx;
         private ScreenFlashFeedback screenFlash;
         private PlayerActionVisuals playerVisuals;
         private NeonMotionFeedback motionFeedback;
@@ -66,7 +67,6 @@ namespace NeonPulse
             rhythmTilePool = new RhythmLaneTilePool(config.Visuals.RhythmTilePoolCapacity, transform, materials, config);
             hitBursts = new HitBurstPool(config.Visuals.HitVfxPoolCapacity, transform, materials.White, config.Visuals.HitParticleCount);
             slashDebris = new SlashDebrisPool(config.Visuals.HitVfxPoolCapacity, transform, materials);
-            impactRipples = new RippleVfxPool(config.Visuals.HitVfxPoolCapacity, transform, materials);
             punchHitVfx = new PrefabParticleVfxPool(
                 config.Visuals.HitVfxPoolCapacity,
                 transform,
@@ -77,6 +77,11 @@ namespace NeonPulse
                 transform,
                 config.Visuals.SlashHitVfxPrefab,
                 "Slash Hit VFX Pool");
+            rhythmTileHitVfx = new PrefabParticleVfxPool(
+                config.Visuals.HitVfxPoolCapacity,
+                transform,
+                config.Visuals.RhythmTileHitVfxPrefab,
+                "Rhythm Tile Hit VFX Pool");
             screenFlash = new ScreenFlashFeedback(
                 transform,
                 config.Visuals.ScreenFlashDuration,
@@ -113,7 +118,6 @@ namespace NeonPulse
             }
 
             slashDebris?.Tick(Time.deltaTime);
-            impactRipples?.Tick(Time.deltaTime);
             screenFlash?.Tick(Time.unscaledDeltaTime);
             motionFeedback?.Tick(Time.deltaTime, runFinished ? 0f : 24f);
 
@@ -188,9 +192,9 @@ namespace NeonPulse
         {
             ReturnAllTravellers();
             slashDebris?.Clear();
-            impactRipples?.Clear();
             punchHitVfx?.Clear();
             slashHitVfx?.Clear();
+            rhythmTileHitVfx?.Clear();
             screenFlash?.Clear();
             nextPunchEventIndex = 0;
             nextObstacleEventIndex = 0;
@@ -715,7 +719,11 @@ namespace NeonPulse
             hitBursts.Play(judgementPosition, color);
             if (action == GameplayAction.RhythmTile)
             {
-                impactRipples?.Play(judgementPosition, color, true);
+                Vector3 rhythmVfxPosition = new Vector3(
+                    judgementPosition.x,
+                    RhythmTileVfxSurfaceY,
+                    judgementPosition.z);
+                rhythmTileHitVfx?.Play(rhythmVfxPosition, Quaternion.Euler(90f, 0f, 0f));
                 playerVisuals?.TriggerRhythmTileImpactShake();
                 screenFlash?.Play(color, 0.6f);
                 judgementLineFeedback?.Pulse(judgementPosition.x);

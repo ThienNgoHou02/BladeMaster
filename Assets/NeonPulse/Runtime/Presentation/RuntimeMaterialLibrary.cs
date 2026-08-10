@@ -26,6 +26,8 @@ namespace NeonPulse
         public Material MagentaGlow { get; }
         public Material PurpleGlow { get; }
         public Material YellowGlow { get; }
+        public Material PunchIcon { get; }
+        public Material SwordIcon { get; }
 
         public RuntimeMaterialLibrary(VisualSettings settings)
         {
@@ -50,6 +52,8 @@ namespace NeonPulse
             MagentaGlow = CreateGlow("Magenta Aura", MagentaColor);
             PurpleGlow = CreateGlow("Purple Aura", PurpleColor);
             YellowGlow = CreateGlow("Yellow Aura", YellowColor);
+            PunchIcon = CreateIcon("Punch Icon", safeSettings.PunchIconTexture, 0.88f);
+            SwordIcon = CreateIcon("Sword Icon", safeSettings.SwordIconTexture, 0.72f);
         }
 
         /// <summary>Pulses shared emission on the beat without creating material instances per renderer.</summary>
@@ -78,6 +82,8 @@ namespace NeonPulse
             DestroyMaterial(MagentaGlow);
             DestroyMaterial(PurpleGlow);
             DestroyMaterial(YellowGlow);
+            DestroyMaterial(PunchIcon);
+            DestroyMaterial(SwordIcon);
         }
 
         private static Material CreateEmissive(string materialName, Color color, float intensity)
@@ -159,6 +165,32 @@ namespace NeonPulse
             {
                 name = materialName,
                 color = Color.white
+            };
+        }
+
+        private static Material CreateIcon(string materialName, Texture2D texture, float alpha)
+        {
+            if (texture == null)
+            {
+                return null;
+            }
+
+            Shader shader = Shader.Find("Unlit/Transparent");
+            if (shader == null)
+            {
+                shader = Shader.Find("Sprites/Default");
+            }
+
+            if (shader == null)
+            {
+                shader = Shader.Find("Hidden/InternalErrorShader");
+            }
+
+            return new Material(shader)
+            {
+                name = materialName,
+                mainTexture = texture,
+                color = new Color(1f, 1f, 1f, alpha)
             };
         }
 

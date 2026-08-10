@@ -15,15 +15,15 @@ MonoBehaviour:
   levelName: Level 01
   phaseTransitionRestSeconds: 1.25
   phases:
-  - action: 2
-    durationSeconds: 30
-    flySpeed: 35
-  - action: 1
-    durationSeconds: 30
-    flySpeed: 30
   - action: 0
     durationSeconds: 30
     flySpeed: 25
+  - action: 1
+    durationSeconds: 30
+    flySpeed: 30
+  - action: 2
+    durationSeconds: 30
+    flySpeed: 35
   - action: 3
     durationSeconds: 35
     flySpeed: 30

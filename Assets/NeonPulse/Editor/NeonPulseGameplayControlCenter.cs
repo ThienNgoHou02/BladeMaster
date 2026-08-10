@@ -250,6 +250,9 @@ namespace NeonPulse.EditorTools
             DrawField(visuals, "punchHitVfxPrefab", "VFX khi đấm vỡ khối");
             DrawField(visuals, "showSlashWeapons", "Hiện kiếm góc nhìn thứ nhất");
             DrawField(visuals, "slashHitVfxPrefab", "VFX khi chém vỡ khối");
+            DrawField(visuals, "rhythmTileHitVfxPrefab", "VFX khi dậm chân");
+            DrawField(visuals, "punchIconTexture", "Icon trên khối đấm");
+            DrawField(visuals, "swordIconTexture", "Icon trên khối chém");
             DrawField(visuals, "cyan", "Màu tay trái");
             DrawField(visuals, "magenta", "Màu tay phải");
             DrawField(visuals, "purple", "Màu đường hầm");

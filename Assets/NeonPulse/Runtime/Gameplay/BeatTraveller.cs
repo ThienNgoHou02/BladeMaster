@@ -51,12 +51,12 @@ namespace NeonPulse
             despawnZ = config.Rhythm.DespawnZ;
             labelVisibleZ = config.Rhythm.LabelVisibleZ;
             targetGlowScale = config.Visuals.TargetGlowScale;
-            punchVariants[(int)GameplayAction.LeftPunch] = CreatePunchVariant("Left Punch", materials.Cyan, materials.CyanGlow);
-            punchVariants[(int)GameplayAction.RightPunch] = CreatePunchVariant("Right Punch", materials.Magenta, materials.MagentaGlow);
-            punchVariants[(int)GameplayAction.BothPunch] = CreatePairVariant(materials.Cyan, materials.Magenta, materials.CyanGlow, materials.MagentaGlow);
-            slashVariants[(int)GameplayAction.LeftPunch] = CreateSlashVariant("Left Slash", materials.Cyan, materials.CyanGlow, out leftSlashIndicator);
-            slashVariants[(int)GameplayAction.RightPunch] = CreateSlashVariant("Right Slash", materials.Magenta, materials.MagentaGlow, out rightSlashIndicator);
-            slashVariants[(int)GameplayAction.BothPunch] = CreateSlashPairVariant(materials.Cyan, materials.Magenta, materials.CyanGlow, materials.MagentaGlow);
+            punchVariants[(int)GameplayAction.LeftPunch] = CreatePunchVariant("Left Punch", materials.Cyan, materials.CyanGlow, materials.PunchIcon);
+            punchVariants[(int)GameplayAction.RightPunch] = CreatePunchVariant("Right Punch", materials.Magenta, materials.MagentaGlow, materials.PunchIcon);
+            punchVariants[(int)GameplayAction.BothPunch] = CreatePairVariant(materials.Cyan, materials.Magenta, materials.CyanGlow, materials.MagentaGlow, materials.PunchIcon);
+            slashVariants[(int)GameplayAction.LeftPunch] = CreateSlashVariant("Left Slash", materials.Cyan, materials.CyanGlow, materials.SwordIcon, out leftSlashIndicator);
+            slashVariants[(int)GameplayAction.RightPunch] = CreateSlashVariant("Right Slash", materials.Magenta, materials.MagentaGlow, materials.SwordIcon, out rightSlashIndicator);
+            slashVariants[(int)GameplayAction.BothPunch] = CreateSlashPairVariant(materials.Cyan, materials.Magenta, materials.CyanGlow, materials.MagentaGlow, materials.SwordIcon);
             GameObject duck = CreateBarVariant("Duck Gate", materials.Obstacle, materials.ObstacleGlow, new Vector3(7.8f, 1.15f, 0.75f), new Vector3(0f, 3.25f, 0f));
             GameObject jump = CreateBarVariant("Jump Gate", materials.Obstacle, materials.ObstacleGlow, new Vector3(7.8f, 1.05f, 0.75f), new Vector3(0f, 0.35f, 0f));
             GameObject dodgeLeft = CreateDodgeVariant("Dodge Left", materials.Obstacle, materials.ObstacleGlow, materials.Cyan, true);
@@ -239,7 +239,7 @@ namespace NeonPulse
             actionLabel.gameObject.SetActive(true);
         }
 
-        private GameObject CreatePunchVariant(string objectName, Material material, Material glowMaterial)
+        private GameObject CreatePunchVariant(string objectName, Material material, Material glowMaterial, Material iconMaterial)
         {
             GameObject root = new GameObject(objectName);
             root.transform.SetParent(transform, false);
@@ -248,11 +248,12 @@ namespace NeonPulse
             Vector3 cubeScale = new Vector3(1.15f, 1.15f, 0.72f);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Punch Cube Aura", Vector3.zero, cubeScale * targetGlowScale, glowMaterial);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Punch Cube", new Vector3(0f, 0f, -0.06f), cubeScale, material);
+            CreateIcon(root.transform, "Punch Icon", Vector3.zero, 0.78f, iconMaterial);
 
             return root;
         }
 
-        private GameObject CreatePairVariant(Material leftMaterial, Material rightMaterial, Material leftGlow, Material rightGlow)
+        private GameObject CreatePairVariant(Material leftMaterial, Material rightMaterial, Material leftGlow, Material rightGlow, Material iconMaterial)
         {
             GameObject root = new GameObject("Both Punch");
             root.transform.SetParent(transform, false);
@@ -262,10 +263,12 @@ namespace NeonPulse
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Right Cube Aura", new Vector3(1.25f, 0f, 0f), cubeScale * targetGlowScale, rightGlow);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Left Cube", new Vector3(-1.25f, 0f, -0.06f), cubeScale, leftMaterial);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Right Cube", new Vector3(1.25f, 0f, -0.06f), cubeScale, rightMaterial);
+            CreateIcon(root.transform, "Left Punch Icon", new Vector3(-1.25f, 0f, 0f), 0.68f, iconMaterial);
+            CreateIcon(root.transform, "Right Punch Icon", new Vector3(1.25f, 0f, 0f), 0.68f, iconMaterial);
             return root;
         }
 
-        private GameObject CreateSlashVariant(string objectName, Material material, Material glowMaterial, out Transform indicator)
+        private GameObject CreateSlashVariant(string objectName, Material material, Material glowMaterial, Material iconMaterial, out Transform indicator)
         {
             GameObject root = new GameObject(objectName);
             root.transform.SetParent(transform, false);
@@ -274,17 +277,18 @@ namespace NeonPulse
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Slash Aura", Vector3.zero, new Vector3(1.4f, 1.4f, 0.38f) * targetGlowScale, glowMaterial);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Slash Block", new Vector3(0f, 0f, -0.08f), new Vector3(1.4f, 1.4f, 0.38f), material);
             indicator = CreatePrimitive(root.transform, PrimitiveType.Cube, "Slash Direction", new Vector3(0f, 0f, -0.31f), new Vector3(0.14f, 1.05f, 0.06f), glowMaterial).transform;
+            CreateIcon(root.transform, "Sword Icon", Vector3.zero, 0.82f, iconMaterial);
             return root;
         }
 
-        private GameObject CreateSlashPairVariant(Material leftMaterial, Material rightMaterial, Material leftGlow, Material rightGlow)
+        private GameObject CreateSlashPairVariant(Material leftMaterial, Material rightMaterial, Material leftGlow, Material rightGlow, Material iconMaterial)
         {
             GameObject root = new GameObject("Both Slash");
             root.transform.SetParent(transform, false);
             root.transform.localPosition = new Vector3(0f, 1.8f, 0f);
 
-            CreateSlashBlock(root.transform, "Left", new Vector3(-1.25f, 0f, 0f), leftMaterial, leftGlow, out bothLeftSlashIndicator);
-            CreateSlashBlock(root.transform, "Right", new Vector3(1.25f, 0f, 0f), rightMaterial, rightGlow, out bothRightSlashIndicator);
+            CreateSlashBlock(root.transform, "Left", new Vector3(-1.25f, 0f, 0f), leftMaterial, leftGlow, iconMaterial, out bothLeftSlashIndicator);
+            CreateSlashBlock(root.transform, "Right", new Vector3(1.25f, 0f, 0f), rightMaterial, rightGlow, iconMaterial, out bothRightSlashIndicator);
             return root;
         }
 
@@ -294,11 +298,29 @@ namespace NeonPulse
             Vector3 localPosition,
             Material material,
             Material glowMaterial,
+            Material iconMaterial,
             out Transform indicator)
         {
             CreatePrimitive(parent, PrimitiveType.Cube, prefix + " Slash Aura", localPosition, new Vector3(1.2f, 1.2f, 0.34f) * targetGlowScale, glowMaterial);
             CreatePrimitive(parent, PrimitiveType.Cube, prefix + " Slash Block", localPosition + new Vector3(0f, 0f, -0.08f), new Vector3(1.2f, 1.2f, 0.34f), material);
             indicator = CreatePrimitive(parent, PrimitiveType.Cube, prefix + " Slash Direction", localPosition + new Vector3(0f, 0f, -0.29f), new Vector3(0.13f, 0.9f, 0.05f), glowMaterial).transform;
+            CreateIcon(parent, prefix + " Sword Icon", localPosition, 0.7f, iconMaterial);
+        }
+
+        private static void CreateIcon(Transform parent, string objectName, Vector3 localPosition, float size, Material material)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            CreatePrimitive(
+                parent,
+                PrimitiveType.Quad,
+                objectName,
+                localPosition + new Vector3(0f, 0f, -0.52f),
+                new Vector3(size, size, 1f),
+                material);
         }
 
         private void ConfigureSlashIndicators()
