@@ -61,6 +61,7 @@ MonoBehaviour:
     duckDistance: 0.95
     jumpDistance: 0.9
     punchDistance: 1.9
+    dodgeCameraRoll: 7
     punchDuration: 0.24
     punchShakeAmplitude: 0.045
     punchShakeDuration: 0.12
@@ -72,6 +73,10 @@ MonoBehaviour:
     failShakeDuration: 0.32
   visuals:
     backgroundTexture: {fileID: 2800000, guid: e9b2bc231ffbb2a48a109cd0a786e10c, type: 3}
+    showPunchHands: 0
+    punchHitVfxPrefab: {fileID: 1429954232896169633, guid: 83036083a4ebcd34f98131bd3cf6f4d2, type: 3}
+    showSlashWeapons: 0
+    slashHitVfxPrefab: {fileID: 2708598583397607911, guid: 6398d43fe79ea0140913dc5530c646af, type: 3}
     cyan: {r: 0.02, g: 1, b: 0.95, a: 1}
     magenta: {r: 1, g: 0.03, b: 0.72, a: 1}
     purple: {r: 0.48, g: 0.05, b: 1, a: 1}

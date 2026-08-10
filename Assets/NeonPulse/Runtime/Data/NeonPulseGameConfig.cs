@@ -154,6 +154,10 @@ namespace NeonPulse
     public sealed class VisualSettings
     {
         [SerializeField] private Texture2D backgroundTexture;
+        [SerializeField] private bool showPunchHands;
+        [SerializeField] private GameObject punchHitVfxPrefab;
+        [SerializeField] private bool showSlashWeapons;
+        [SerializeField] private GameObject slashHitVfxPrefab;
         [SerializeField] private Color cyan = new Color(0.02f, 1f, 0.95f, 1f);
         [SerializeField] private Color magenta = new Color(1f, 0.03f, 0.72f, 1f);
         [SerializeField] private Color purple = new Color(0.48f, 0.05f, 1f, 1f);
@@ -173,6 +177,10 @@ namespace NeonPulse
         [SerializeField, Range(0f, 1f)] private float audioVolume = 0.58f;
 
         public Texture2D BackgroundTexture => backgroundTexture;
+        public bool ShowPunchHands => showPunchHands;
+        public GameObject PunchHitVfxPrefab => punchHitVfxPrefab;
+        public bool ShowSlashWeapons => showSlashWeapons;
+        public GameObject SlashHitVfxPrefab => slashHitVfxPrefab;
         public Color Cyan => cyan;
         public Color Magenta => magenta;
         public Color Purple => purple;

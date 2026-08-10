@@ -246,6 +246,10 @@ namespace NeonPulse.EditorTools
             DrawSection("MÀU, SHADER & VFX");
             SerializedProperty visuals = serializedConfig.FindProperty("visuals");
             DrawField(visuals, "backgroundTexture", "Ảnh nền gameplay");
+            DrawField(visuals, "showPunchHands", "Hiện nắm đấm góc nhìn thứ nhất");
+            DrawField(visuals, "punchHitVfxPrefab", "VFX khi đấm vỡ khối");
+            DrawField(visuals, "showSlashWeapons", "Hiện kiếm góc nhìn thứ nhất");
+            DrawField(visuals, "slashHitVfxPrefab", "VFX khi chém vỡ khối");
             DrawField(visuals, "cyan", "Màu tay trái");
             DrawField(visuals, "magenta", "Màu tay phải");
             DrawField(visuals, "purple", "Màu đường hầm");

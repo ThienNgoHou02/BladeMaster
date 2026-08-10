@@ -167,4 +167,114 @@ namespace NeonPulse
             }
         }
     }
+
+    /// <summary>Fixed-capacity pool for authored particle prefabs.</summary>
+    public sealed class PrefabParticleVfxPool
+    {
+        private readonly GameObject[] instances;
+        private readonly ParticleSystem[][] particleSystems;
+        private int nextIndex;
+
+        public PrefabParticleVfxPool(int capacity, Transform parent, GameObject prefab, string poolName)
+        {
+            if (prefab == null)
+            {
+                instances = new GameObject[0];
+                particleSystems = new ParticleSystem[0][];
+                Debug.LogWarning(poolName + " prefab is missing. Assign it in NeonPulseGameConfig.");
+                return;
+            }
+
+            int safeCapacity = Mathf.Max(1, capacity);
+            instances = new GameObject[safeCapacity];
+            particleSystems = new ParticleSystem[safeCapacity][];
+
+            GameObject poolRoot = new GameObject(poolName);
+            poolRoot.transform.SetParent(parent, false);
+
+            for (int index = 0; index < safeCapacity; index++)
+            {
+                GameObject instance = Object.Instantiate(prefab, poolRoot.transform);
+                instance.name = prefab.name + " " + index;
+
+                ConfigureDisableOnComplete(instance);
+
+                ParticleSystem[] systems = instance.GetComponentsInChildren<ParticleSystem>(true);
+                SetSortingOrder(instance, 10);
+                StopAndClear(systems);
+                instance.SetActive(false);
+                instances[index] = instance;
+                particleSystems[index] = systems;
+            }
+        }
+
+        public void Play(Vector3 position, Quaternion rotation)
+        {
+            if (instances.Length == 0)
+            {
+                return;
+            }
+
+            int index = nextIndex;
+            nextIndex = (nextIndex + 1) % instances.Length;
+
+            GameObject instance = instances[index];
+            ParticleSystem[] systems = particleSystems[index];
+            instance.SetActive(false);
+            StopAndClear(systems);
+            instance.transform.SetPositionAndRotation(position, rotation);
+            instance.SetActive(true);
+
+            for (int systemIndex = 0; systemIndex < systems.Length; systemIndex++)
+            {
+                systems[systemIndex].Play(false);
+            }
+        }
+
+        public void Clear()
+        {
+            for (int index = 0; index < instances.Length; index++)
+            {
+                StopAndClear(particleSystems[index]);
+                instances[index].SetActive(false);
+            }
+
+            nextIndex = 0;
+        }
+
+        private static void StopAndClear(ParticleSystem[] systems)
+        {
+            for (int index = 0; index < systems.Length; index++)
+            {
+                systems[index].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+        }
+
+        private static void ConfigureDisableOnComplete(GameObject instance)
+        {
+            Component effect = instance.GetComponent("CFXR_Effect");
+            if (effect == null)
+            {
+                return;
+            }
+
+            System.Reflection.FieldInfo clearBehaviorField = effect.GetType().GetField("clearBehavior");
+            if (clearBehaviorField == null || !clearBehaviorField.FieldType.IsEnum)
+            {
+                return;
+            }
+
+            object disableValue = System.Enum.ToObject(clearBehaviorField.FieldType, 1);
+            clearBehaviorField.SetValue(effect, disableValue);
+        }
+
+        private static void SetSortingOrder(GameObject instance, int sortingOrder)
+        {
+            ParticleSystemRenderer[] renderers = instance.GetComponentsInChildren<ParticleSystemRenderer>(true);
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                renderers[index].sortingOrder = sortingOrder;
+            }
+        }
+    }
 }

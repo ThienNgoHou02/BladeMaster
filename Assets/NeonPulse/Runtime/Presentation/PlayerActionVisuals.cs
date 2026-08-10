@@ -18,6 +18,8 @@ namespace NeonPulse
         private readonly Vector3 cameraRestPosition;
         private readonly Quaternion cameraRestRotation;
         private readonly CameraFeelSettings feel;
+        private readonly bool showPunchHands;
+        private readonly bool showSlashWeapons;
         private bool usesSwords;
         private bool handsVisible = true;
         private readonly GameObject leftSwordVisual;
@@ -45,6 +47,8 @@ namespace NeonPulse
         public PlayerActionVisuals(Camera camera, RuntimeMaterialLibrary materials, NeonPulseGameConfig config)
         {
             feel = config != null ? config.CameraFeel : new CameraFeelSettings();
+            showPunchHands = config != null && config.Visuals.ShowPunchHands;
+            showSlashWeapons = config != null && config.Visuals.ShowSlashWeapons;
             usesSwords = config != null && config.GameplayMode == CombatGameplayMode.Slash;
             if (camera == null || materials == null)
             {
@@ -65,14 +69,25 @@ namespace NeonPulse
         public void SetCombatMode(CombatGameplayMode mode)
         {
             usesSwords = mode == CombatGameplayMode.Slash;
+            bool showHandRoots = handsVisible && (usesSwords ? showSlashWeapons : showPunchHands);
+            if (leftGlove != null)
+            {
+                leftGlove.gameObject.SetActive(showHandRoots);
+            }
+
+            if (rightGlove != null)
+            {
+                rightGlove.gameObject.SetActive(showHandRoots);
+            }
+
             if (leftSwordVisual != null)
             {
-                leftSwordVisual.SetActive(handsVisible && usesSwords);
+                leftSwordVisual.SetActive(showHandRoots && usesSwords);
             }
 
             if (rightSwordVisual != null)
             {
-                rightSwordVisual.SetActive(handsVisible && usesSwords);
+                rightSwordVisual.SetActive(showHandRoots && usesSwords);
             }
         }
 
@@ -85,20 +100,7 @@ namespace NeonPulse
             }
 
             handsVisible = visible;
-            if (leftGlove != null)
-            {
-                leftGlove.gameObject.SetActive(visible);
-            }
-
-            if (rightGlove != null)
-            {
-                rightGlove.gameObject.SetActive(visible);
-            }
-
-            if (visible)
-            {
-                SetCombatMode(usesSwords ? CombatGameplayMode.Slash : CombatGameplayMode.Punch);
-            }
+            SetCombatMode(usesSwords ? CombatGameplayMode.Slash : CombatGameplayMode.Punch);
         }
 
         /// <summary>Starts cached procedural feedback for the requested action.</summary>
@@ -172,6 +174,7 @@ namespace NeonPulse
         }
 
         public float JumpLeadTime => JumpDuration * 0.5f;
+        public bool UsesSlashVisual => usesSwords;
 
         /// <summary>Updates glove positions without tweens, coroutines, or per-frame allocations.</summary>
         public void Tick(float deltaTime)

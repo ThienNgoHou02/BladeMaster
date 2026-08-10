@@ -7,6 +7,8 @@ namespace NeonPulse
     public sealed class NeonPulseGameController : MonoBehaviour
     {
         private const float JudgementStepSurfaceY = 0.34f;
+        private const float CombatVfxFrontOffset = 0.5f;
+        private const float DualTargetOffsetX = 1.25f;
 
         private readonly List<BeatTraveller> activePunchTargets = new List<BeatTraveller>(24);
         private readonly List<BeatTraveller> activeObstacles = new List<BeatTraveller>(12);
@@ -21,6 +23,8 @@ namespace NeonPulse
         private HitBurstPool hitBursts;
         private SlashDebrisPool slashDebris;
         private RippleVfxPool impactRipples;
+        private PrefabParticleVfxPool punchHitVfx;
+        private PrefabParticleVfxPool slashHitVfx;
         private ScreenFlashFeedback screenFlash;
         private PlayerActionVisuals playerVisuals;
         private NeonMotionFeedback motionFeedback;
@@ -36,6 +40,7 @@ namespace NeonPulse
         private int nextObstacleEventIndex;
         private int nextRhythmTileIndex;
         private uint spawnRandomState;
+        private uint vfxRandomState;
         private bool runFinished;
         private Vector3 judgementPosition;
         private Color rhythmTileFeedbackColor;
@@ -62,6 +67,16 @@ namespace NeonPulse
             hitBursts = new HitBurstPool(config.Visuals.HitVfxPoolCapacity, transform, materials.White, config.Visuals.HitParticleCount);
             slashDebris = new SlashDebrisPool(config.Visuals.HitVfxPoolCapacity, transform, materials);
             impactRipples = new RippleVfxPool(config.Visuals.HitVfxPoolCapacity, transform, materials);
+            punchHitVfx = new PrefabParticleVfxPool(
+                config.Visuals.HitVfxPoolCapacity,
+                transform,
+                config.Visuals.PunchHitVfxPrefab,
+                "Punch Hit VFX Pool");
+            slashHitVfx = new PrefabParticleVfxPool(
+                config.Visuals.HitVfxPoolCapacity,
+                transform,
+                config.Visuals.SlashHitVfxPrefab,
+                "Slash Hit VFX Pool");
             screenFlash = new ScreenFlashFeedback(
                 transform,
                 config.Visuals.ScreenFlashDuration,
@@ -174,12 +189,16 @@ namespace NeonPulse
             ReturnAllTravellers();
             slashDebris?.Clear();
             impactRipples?.Clear();
+            punchHitVfx?.Clear();
+            slashHitVfx?.Clear();
             screenFlash?.Clear();
             nextPunchEventIndex = 0;
             nextObstacleEventIndex = 0;
             nextRhythmTileIndex = 0;
             spawnRandomState = unchecked((uint)System.Environment.TickCount) ^ unchecked((uint)GetInstanceID());
             spawnRandomState |= 1u;
+            vfxRandomState = spawnRandomState ^ 0xA511E9B3u;
+            vfxRandomState |= 1u;
             runFinished = false;
             score.Reset();
             hud.ResetRun();
@@ -708,13 +727,55 @@ namespace NeonPulse
                 if (action == GameplayAction.LeftPunch || action == GameplayAction.RightPunch ||
                     action == GameplayAction.BothPunch)
                 {
-                    impactRipples?.Play(judgementPosition, color, false);
+                    PlayCombatHitVfx(action);
                     screenFlash?.Play(color);
                 }
 
                 judgementLineFeedback?.Pulse(judgementPosition.x);
                 hitBursts.Play(new Vector3(judgementPosition.x, JudgementStepSurfaceY, config.Rhythm.HitZ), color);
             }
+        }
+
+        private void PlayCombatHitVfx(GameplayAction action)
+        {
+            bool usesSlashVfx = playerVisuals != null && playerVisuals.UsesSlashVisual;
+            PrefabParticleVfxPool pool = usesSlashVfx ? slashHitVfx : punchHitVfx;
+            if (pool == null)
+            {
+                return;
+            }
+
+            if (action == GameplayAction.BothPunch)
+            {
+                PlayCombatHitVfx(pool, -DualTargetOffsetX, usesSlashVfx);
+                PlayCombatHitVfx(pool, DualTargetOffsetX, usesSlashVfx);
+                return;
+            }
+
+            PlayCombatHitVfx(pool, 0f, usesSlashVfx);
+        }
+
+        private void PlayCombatHitVfx(PrefabParticleVfxPool pool, float xOffset, bool randomizeRotation)
+        {
+            Vector3 position = new Vector3(
+                judgementPosition.x + xOffset,
+                judgementPosition.y,
+                judgementPosition.z - CombatVfxFrontOffset);
+            Quaternion rotation = randomizeRotation ? NextSlashVfxRotation() : Quaternion.identity;
+            pool.Play(position, rotation);
+        }
+
+        private Quaternion NextSlashVfxRotation()
+        {
+            uint state = vfxRandomState;
+            state ^= state << 13;
+            state ^= state >> 17;
+            state ^= state << 5;
+            vfxRandomState = state;
+
+            const float DegreesPerState = 360f / 16777216f;
+            float angle = (state & 0x00FFFFFFu) * DegreesPerState;
+            return Quaternion.Euler(0f, 0f, angle);
         }
 
         private Color GetFeedbackColor(AccuracyGrade grade, GameplayAction action)
