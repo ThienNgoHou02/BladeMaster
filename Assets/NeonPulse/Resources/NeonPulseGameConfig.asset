@@ -79,6 +79,7 @@ MonoBehaviour:
     showSlashWeapons: 0
     slashHitVfxPrefab: {fileID: 2708598583397607911, guid: 6398d43fe79ea0140913dc5530c646af, type: 3}
     rhythmTileHitVfxPrefab: {fileID: 8771972552311404799, guid: bbf9e36a48d6c5648a13889afab076fd, type: 3}
+    footprintIconTexture: {fileID: 2800000, guid: 6638f6abe081d5947931f699d3840107, type: 3}
     punchIconTexture: {fileID: 2800000, guid: 3e3b249ca243b4348badc18402a11cf8, type: 3}
     swordIconTexture: {fileID: 2800000, guid: cf3d143f8b2a23847b926e38129a2bc1, type: 3}
     cyan: {r: 0.02, g: 1, b: 0.95, a: 1}

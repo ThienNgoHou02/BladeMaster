@@ -27,8 +27,14 @@ namespace NeonPulse
         public Material MagentaGlow { get; }
         public Material PurpleGlow { get; }
         public Material YellowGlow { get; }
-        public Material PunchIcon { get; }
-        public Material SwordIcon { get; }
+        public Material FootprintIconOnCyan { get; }
+        public Material FootprintIconOnMagenta { get; }
+        public Material FootprintIconOnPurple { get; }
+        public Material FootprintIconOnYellow { get; }
+        public Material PunchIconOnCyan { get; }
+        public Material PunchIconOnMagenta { get; }
+        public Material SwordIconOnCyan { get; }
+        public Material SwordIconOnMagenta { get; }
 
         public RuntimeMaterialLibrary(VisualSettings settings)
         {
@@ -54,8 +60,14 @@ namespace NeonPulse
             MagentaGlow = CreateGlow("Magenta Aura", MagentaColor);
             PurpleGlow = CreateGlow("Purple Aura", PurpleColor);
             YellowGlow = CreateGlow("Yellow Aura", YellowColor);
-            PunchIcon = CreateIcon("Punch Icon", safeSettings.PunchIconTexture, 0.88f);
-            SwordIcon = CreateIcon("Sword Icon", safeSettings.SwordIconTexture, 0.72f);
+            FootprintIconOnCyan = CreateIcon("Footprint Icon On Cyan", safeSettings.FootprintIconTexture, MagentaColor, 1f);
+            FootprintIconOnMagenta = CreateIcon("Footprint Icon On Magenta", safeSettings.FootprintIconTexture, CyanColor, 1f);
+            FootprintIconOnPurple = CreateIcon("Footprint Icon On Purple", safeSettings.FootprintIconTexture, YellowColor, 1f);
+            FootprintIconOnYellow = CreateIcon("Footprint Icon On Yellow", safeSettings.FootprintIconTexture, PurpleColor, 1f);
+            PunchIconOnCyan = CreateIcon("Punch Icon On Cyan", safeSettings.PunchIconTexture, MagentaColor, 1f);
+            PunchIconOnMagenta = CreateIcon("Punch Icon On Magenta", safeSettings.PunchIconTexture, CyanColor, 1f);
+            SwordIconOnCyan = CreateIcon("Sword Icon On Cyan", safeSettings.SwordIconTexture, MagentaColor, 1f);
+            SwordIconOnMagenta = CreateIcon("Sword Icon On Magenta", safeSettings.SwordIconTexture, CyanColor, 1f);
         }
 
         /// <summary>Pulses shared emission on the beat without creating material instances per renderer.</summary>
@@ -85,8 +97,29 @@ namespace NeonPulse
             DestroyMaterial(MagentaGlow);
             DestroyMaterial(PurpleGlow);
             DestroyMaterial(YellowGlow);
-            DestroyMaterial(PunchIcon);
-            DestroyMaterial(SwordIcon);
+            DestroyMaterial(FootprintIconOnCyan);
+            DestroyMaterial(FootprintIconOnMagenta);
+            DestroyMaterial(FootprintIconOnPurple);
+            DestroyMaterial(FootprintIconOnYellow);
+            DestroyMaterial(PunchIconOnCyan);
+            DestroyMaterial(PunchIconOnMagenta);
+            DestroyMaterial(SwordIconOnCyan);
+            DestroyMaterial(SwordIconOnMagenta);
+        }
+
+        public Material GetFootprintIcon(RhythmTileColor tileColor)
+        {
+            switch (tileColor)
+            {
+                case RhythmTileColor.Cyan:
+                    return FootprintIconOnCyan;
+                case RhythmTileColor.Magenta:
+                    return FootprintIconOnMagenta;
+                case RhythmTileColor.Purple:
+                    return FootprintIconOnPurple;
+                default:
+                    return FootprintIconOnYellow;
+            }
         }
 
         private static Material CreateEmissive(string materialName, Color color, float intensity)
@@ -171,7 +204,7 @@ namespace NeonPulse
             };
         }
 
-        private static Material CreateIcon(string materialName, Texture2D texture, float alpha)
+        private static Material CreateIcon(string materialName, Texture2D texture, Color tint, float alpha)
         {
             if (texture == null)
             {
@@ -193,7 +226,7 @@ namespace NeonPulse
             {
                 name = materialName,
                 mainTexture = texture,
-                color = new Color(1f, 1f, 1f, alpha)
+                color = new Color(tint.r, tint.g, tint.b, alpha)
             };
         }
 

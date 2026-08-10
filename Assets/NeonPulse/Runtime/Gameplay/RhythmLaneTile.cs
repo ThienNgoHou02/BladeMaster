@@ -11,6 +11,7 @@ namespace NeonPulse
 
         private Renderer tileRenderer;
         private Renderer glowRenderer;
+        private Renderer footprintRenderer;
         private Transform footprintRoot;
         private RuntimeMaterialLibrary materials;
         private float targetTime;
@@ -44,14 +45,8 @@ namespace NeonPulse
                 materials.Cyan);
             tileRenderer = tile.GetComponent<Renderer>();
 
-            CreateCube(
-                transform,
-                "Tile Highlight",
-                new Vector3(0f, 0.235f, -config.Visuals.RhythmTileLength * 0.32f),
-                new Vector3(1.08f, 0.025f, config.Visuals.RhythmTileLength * 0.16f),
-                materials.Footprint);
-
-            footprintRoot = CreateFootprint(transform, materials.Footprint);
+            footprintRoot = CreateFootprint(transform, materials.FootprintIconOnCyan);
+            footprintRenderer = footprintRoot.GetComponent<Renderer>();
 
             gameObject.SetActive(false);
         }
@@ -66,8 +61,14 @@ namespace NeonPulse
             IsActive = true;
 
             int lane = Mathf.Clamp(chartEvent.Lane, 0, LaneX.Length - 1);
+            bool isLeftFoot = lane < 2;
             transform.SetPositionAndRotation(new Vector3(LaneX[lane], 0f, startZ), Quaternion.identity);
-            footprintRoot.localRotation = Quaternion.Euler(0f, lane < 2 ? -9f : 9f, 0f);
+            footprintRoot.localRotation =
+                Quaternion.Euler(0f, isLeftFoot ? -9f : 9f, 0f) * Quaternion.Euler(90f, 0f, 0f);
+
+            Vector3 footprintScale = footprintRoot.localScale;
+            footprintScale.x = (isLeftFoot ? -1f : 1f) * Mathf.Abs(footprintScale.x);
+            footprintRoot.localScale = footprintScale;
             SetTileMaterials(chartEvent.Color);
             gameObject.SetActive(true);
         }
@@ -136,6 +137,7 @@ namespace NeonPulse
 
             tileRenderer.sharedMaterial = body;
             glowRenderer.sharedMaterial = glow;
+            footprintRenderer.sharedMaterial = materials.GetFootprintIcon(color);
         }
 
         private static GameObject CreateCube(Transform parent, string objectName, Vector3 localPosition, Vector3 localScale, Material material)
@@ -145,24 +147,15 @@ namespace NeonPulse
 
         private static Transform CreateFootprint(Transform parent, Material material)
         {
-            GameObject root = new GameObject("Footprint");
-            root.transform.SetParent(parent, false);
-
-            CreatePrimitive(
-                root.transform,
-                PrimitiveType.Capsule,
-                "Foot Sole",
-                new Vector3(0f, 0.29f, -0.08f),
-                new Vector3(0.46f, 0.42f, 0.08f),
+            GameObject footprint = CreatePrimitive(
+                parent,
+                PrimitiveType.Quad,
+                "Footprint Icon",
+                new Vector3(0f, 0.255f, 0f),
+                new Vector3(0.72f, 1.08f, 1f),
                 Quaternion.Euler(90f, 0f, 0f),
                 material);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Foot Heel", new Vector3(0f, 0.29f, -0.43f), new Vector3(0.4f, 0.08f, 0.32f), Quaternion.identity, material);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Toe 1", new Vector3(-0.2f, 0.29f, 0.34f), new Vector3(0.13f, 0.07f, 0.13f), Quaternion.identity, material);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Toe 2", new Vector3(-0.1f, 0.29f, 0.4f), new Vector3(0.15f, 0.07f, 0.15f), Quaternion.identity, material);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Toe 3", new Vector3(0.02f, 0.29f, 0.43f), new Vector3(0.17f, 0.07f, 0.17f), Quaternion.identity, material);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Toe 4", new Vector3(0.15f, 0.29f, 0.4f), new Vector3(0.19f, 0.07f, 0.19f), Quaternion.identity, material);
-            CreatePrimitive(root.transform, PrimitiveType.Sphere, "Toe 5", new Vector3(0.27f, 0.29f, 0.33f), new Vector3(0.21f, 0.07f, 0.21f), Quaternion.identity, material);
-            return root.transform;
+            return footprint.transform;
         }
 
         private static GameObject CreatePrimitive(
