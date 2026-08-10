@@ -17,7 +17,11 @@ namespace NeonPulse
             DisableSceneCamerasAndLights();
             ConfigureRenderSettings();
 
-            Camera camera = CreateCamera(parent, config.CameraFeel.StandingHeight);
+            Camera camera = CreateCamera(
+                parent,
+                config.CameraFeel.StandingHeight,
+                config.Rhythm.HitZ,
+                config.CameraFeel.DistanceToJudgementLine);
             CreateLighting(parent, materials);
             CreateTrack(parent, materials);
             judgementLineFeedback = CreateHitLine(parent, materials, config);
@@ -54,11 +58,11 @@ namespace NeonPulse
             RenderSettings.ambientLight = new Color(0.05f, 0.015f, 0.09f, 1f);
         }
 
-        private static Camera CreateCamera(Transform parent, float standingHeight)
+        private static Camera CreateCamera(Transform parent, float standingHeight, float hitZ, float distanceToJudgementLine)
         {
             GameObject cameraObject = new GameObject("Fixed First Person Camera");
             cameraObject.transform.SetParent(parent, false);
-            cameraObject.transform.position = new Vector3(0f, standingHeight, -4.8f);
+            cameraObject.transform.position = new Vector3(0f, standingHeight, hitZ - distanceToJudgementLine);
             cameraObject.transform.rotation = Quaternion.Euler(2.5f, 0f, 0f);
 
             Camera camera = cameraObject.AddComponent<Camera>();
@@ -128,27 +132,20 @@ namespace NeonPulse
         private static JudgementLineFeedback CreateHitLine(Transform parent, RuntimeMaterialLibrary materials, NeonPulseGameConfig config)
         {
             float hitZ = config.Rhythm.HitZ;
-            CreateCube(parent, "Judgement Step Backplate", new Vector3(0f, 0.04f, hitZ), new Vector3(8.5f, 0.08f, 0.98f), materials.Dark);
-            GameObject glassStep = CreateCube(parent, "Judgement Step Glass", new Vector3(0f, 0.16f, hitZ), new Vector3(8.3f, 0.24f, 0.82f), materials.YellowGlow);
-            CreateCube(parent, "Judgement Step Top Glow", new Vector3(0f, 0.29f, hitZ + 0.02f), new Vector3(8.2f, 0.025f, 0.72f), materials.YellowGlow);
-            CreateCube(parent, "Judgement Step Front Edge", new Vector3(0f, 0.28f, hitZ - 0.4f), new Vector3(8.15f, 0.12f, 0.11f), materials.Yellow);
-            CreateCube(parent, "Judgement Zone Cyan", new Vector3(-2f, 0.32f, hitZ + 0.09f), new Vector3(3.85f, 0.035f, 0.3f), materials.Cyan);
-            CreateCube(parent, "Judgement Zone Magenta", new Vector3(2f, 0.32f, hitZ + 0.09f), new Vector3(3.85f, 0.035f, 0.3f), materials.Magenta);
-            GameObject core = CreateCube(parent, "Contact Line White", new Vector3(0f, 0.37f, hitZ), new Vector3(8.35f, 0.09f, 0.09f), materials.Footprint);
-            CreateCube(parent, "Contact Line Near Rim", new Vector3(0f, 0.34f, hitZ - 0.09f), new Vector3(8.25f, 0.04f, 0.04f), materials.Yellow);
-            CreateCube(parent, "Contact Line Far Rim", new Vector3(0f, 0.34f, hitZ + 0.09f), new Vector3(8.25f, 0.04f, 0.04f), materials.Yellow);
-
-            Transform[] pads = new Transform[4];
-            for (int lane = 0; lane < pads.Length; lane++)
+            Renderer[] tiles = new Renderer[4];
+            for (int lane = 0; lane < tiles.Length; lane++)
             {
                 float x = -2.7f + lane * 1.8f;
-                Material laneMaterial = lane < 2 ? materials.Cyan : materials.Magenta;
-                CreateCube(parent, "Receptor Base " + lane, new Vector3(x, 0.08f, hitZ - 0.78f), new Vector3(1.66f, 0.16f, 0.62f), materials.Dark);
-                GameObject pad = CreateCube(parent, "Receptor Pad " + lane, new Vector3(x, 0.2f, hitZ - 0.58f), new Vector3(1.58f, 0.1f, 0.18f), laneMaterial);
-                pads[lane] = pad.transform;
+                GameObject tile = CreateCube(
+                    parent,
+                    "Judgement Tile " + lane,
+                    new Vector3(x, 0.1f, hitZ),
+                    new Vector3(1.62f, 0.12f, 0.82f),
+                    materials.JudgementTile);
+                tiles[lane] = tile.GetComponent<Renderer>();
             }
 
-            return new JudgementLineFeedback(core.transform, glassStep.transform, pads, config.Visuals.JudgementLinePulseStrength);
+            return new JudgementLineFeedback(tiles, config.Visuals.JudgementLinePulseStrength);
         }
 
         private static GameObject CreateCube(Transform parent, string objectName, Vector3 position, Vector3 scale, Material material)
@@ -175,67 +172,62 @@ namespace NeonPulse
         }
     }
 
-    /// <summary>Allocation-free pulse feedback for the foreground judgement line and four receptors.</summary>
+    /// <summary>Allocation-free color feedback for the four translucent tiles fixed at the judgement line.</summary>
     public sealed class JudgementLineFeedback
     {
         private const float PulseDuration = 0.18f;
+        private const float BaseAlpha = 0.2f;
+        private const float HighlightAlpha = 0.44f;
+        private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
+        private static readonly Color BaseColor = new Color(0.42f, 0.55f, 0.7f, BaseAlpha);
 
-        private readonly Transform lineCore;
-        private readonly Transform lineGlow;
-        private readonly Transform[] pads;
-        private readonly float[] padTimers;
-        private readonly Vector3[] restScales;
-        private readonly Vector3 lineCoreRestScale;
-        private readonly Vector3 lineGlowRestScale;
-        private readonly float pulseStrength;
-        private float lineTimer;
+        private readonly Renderer[] tiles;
+        private readonly MaterialPropertyBlock[] propertyBlocks;
+        private readonly Color[] highlightColors;
+        private readonly float[] tileTimers;
+        private readonly float highlightStrength;
 
-        public JudgementLineFeedback(Transform core, Transform glow, Transform[] receptorPads, float configuredPulseStrength)
+        public JudgementLineFeedback(Renderer[] judgementTiles, float configuredPulseStrength)
         {
-            lineCore = core;
-            lineGlow = glow;
-            pads = receptorPads;
-            pulseStrength = Mathf.Max(0f, configuredPulseStrength);
-            lineCoreRestScale = lineCore.localScale;
-            lineGlowRestScale = lineGlow.localScale;
-            padTimers = new float[pads.Length];
-            restScales = new Vector3[pads.Length];
-            for (int index = 0; index < pads.Length; index++)
+            tiles = judgementTiles;
+            highlightStrength = Mathf.Clamp01(configuredPulseStrength * 3f);
+            propertyBlocks = new MaterialPropertyBlock[tiles.Length];
+            highlightColors = new Color[tiles.Length];
+            tileTimers = new float[tiles.Length];
+            for (int index = 0; index < tiles.Length; index++)
             {
-                restScales[index] = pads[index].localScale;
+                propertyBlocks[index] = new MaterialPropertyBlock();
+                highlightColors[index] = BaseColor;
+                ApplyVisual(index, 0f);
             }
         }
 
-        /// <summary>Pulses the receptor closest to the successfully judged world X position.</summary>
-        public void Pulse(float worldX)
+        /// <summary>Changes the fixed judgement tile at the contact lane toward the incoming tile color.</summary>
+        public void Highlight(float worldX, Color color)
         {
-            lineTimer = PulseDuration;
-            int lane = Mathf.Clamp(Mathf.RoundToInt((worldX + 2.7f) / 1.8f), 0, pads.Length - 1);
-            padTimers[lane] = PulseDuration;
+            int lane = Mathf.Clamp(Mathf.RoundToInt((worldX + 2.7f) / 1.8f), 0, tiles.Length - 1);
+            color.a = HighlightAlpha;
+            highlightColors[lane] = color;
+            tileTimers[lane] = PulseDuration;
         }
 
-        /// <summary>Returns the line and pads to their cached rest scale without tween allocations.</summary>
+        /// <summary>Fades every tile back to its neutral translucent state without tween allocations.</summary>
         public void Tick(float deltaTime)
         {
-            lineTimer = Mathf.Max(0f, lineTimer - deltaTime);
-            float normalized = lineTimer / PulseDuration;
-            float lineScale = 1f + normalized * pulseStrength;
-            lineCore.localScale = new Vector3(
-                lineCoreRestScale.x,
-                lineCoreRestScale.y * lineScale,
-                lineCoreRestScale.z * (1f + normalized * 0.04f));
-            lineGlow.localScale = new Vector3(
-                lineGlowRestScale.x,
-                lineGlowRestScale.y * lineScale,
-                lineGlowRestScale.z * lineScale);
-
-            for (int index = 0; index < pads.Length; index++)
+            for (int index = 0; index < tiles.Length; index++)
             {
-                padTimers[index] = Mathf.Max(0f, padTimers[index] - deltaTime);
-                float padPulse = padTimers[index] / PulseDuration * pulseStrength;
-                Vector3 rest = restScales[index];
-                pads[index].localScale = new Vector3(rest.x * (1f + padPulse), rest.y * (1f + padPulse), rest.z * (1f + padPulse));
+                tileTimers[index] = Mathf.Max(0f, tileTimers[index] - deltaTime);
+                float normalized = tileTimers[index] / PulseDuration;
+                ApplyVisual(index, normalized * normalized);
             }
+        }
+
+        private void ApplyVisual(int index, float normalized)
+        {
+            Color displayColor = Color.Lerp(BaseColor, highlightColors[index], normalized * highlightStrength);
+            MaterialPropertyBlock propertyBlock = propertyBlocks[index];
+            propertyBlock.SetColor(ColorPropertyId, displayColor);
+            tiles[index].SetPropertyBlock(propertyBlock);
         }
     }
 

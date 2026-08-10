@@ -726,7 +726,7 @@ namespace NeonPulse
                 rhythmTileHitVfx?.Play(rhythmVfxPosition, Quaternion.Euler(90f, 0f, 0f));
                 playerVisuals?.TriggerRhythmTileImpactShake();
                 screenFlash?.Play(color, 0.6f);
-                judgementLineFeedback?.Pulse(judgementPosition.x);
+                judgementLineFeedback?.Highlight(judgementPosition.x, color);
                 return;
             }
 
@@ -739,7 +739,6 @@ namespace NeonPulse
                     screenFlash?.Play(color);
                 }
 
-                judgementLineFeedback?.Pulse(judgementPosition.x);
                 hitBursts.Play(new Vector3(judgementPosition.x, JudgementStepSurfaceY, config.Rhythm.HitZ), color);
             }
         }

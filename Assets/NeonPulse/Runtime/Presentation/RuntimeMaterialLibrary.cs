@@ -22,6 +22,7 @@ namespace NeonPulse
         public Material ObstacleGlow { get; }
         public Material White { get; }
         public Material Footprint { get; }
+        public Material JudgementTile { get; }
         public Material CyanGlow { get; }
         public Material MagentaGlow { get; }
         public Material PurpleGlow { get; }
@@ -48,6 +49,7 @@ namespace NeonPulse
             ObstacleGlow = CreateGlow("Obstacle Aura", safeSettings.Obstacle);
             White = CreateParticle("Feedback White");
             Footprint = CreateEmissive("Footprint White", Color.white, neonIntensity * 1.35f);
+            JudgementTile = CreateGlow("Judgement Tile", new Color(0.42f, 0.55f, 0.7f, 1f), 0.2f);
             CyanGlow = CreateGlow("Cyan Aura", CyanColor);
             MagentaGlow = CreateGlow("Magenta Aura", MagentaColor);
             PurpleGlow = CreateGlow("Purple Aura", PurpleColor);
@@ -78,6 +80,7 @@ namespace NeonPulse
             DestroyMaterial(ObstacleGlow);
             DestroyMaterial(White);
             DestroyMaterial(Footprint);
+            DestroyMaterial(JudgementTile);
             DestroyMaterial(CyanGlow);
             DestroyMaterial(MagentaGlow);
             DestroyMaterial(PurpleGlow);
@@ -120,7 +123,7 @@ namespace NeonPulse
             return material;
         }
 
-        private static Material CreateGlow(string materialName, Color color)
+        private static Material CreateGlow(string materialName, Color color, float alpha = 0.48f)
         {
             Shader shader = Resources.Load<Shader>("NeonPulseGlow");
             if (shader == null)
@@ -136,7 +139,7 @@ namespace NeonPulse
             return new Material(shader)
             {
                 name = materialName,
-                color = new Color(color.r, color.g, color.b, 0.48f)
+                color = new Color(color.r, color.g, color.b, alpha)
             };
         }
 

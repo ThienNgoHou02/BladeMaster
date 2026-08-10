@@ -116,6 +116,7 @@ namespace NeonPulse
     public sealed class CameraFeelSettings
     {
         [SerializeField, Range(1.8f, 3f)] private float standingHeight = 2.55f;
+        [SerializeField, Range(4f, 8f)] private float distanceToJudgementLine = 5.6f;
         [SerializeField, Min(1f)] private float poseSmoothing = 18f;
         [SerializeField] private float dodgeDistance = 1.95f;
         [SerializeField] private float duckDistance = 0.95f;
@@ -133,6 +134,7 @@ namespace NeonPulse
         [SerializeField, Range(0.05f, 1f)] private float failShakeDuration = 0.32f;
 
         public float StandingHeight => standingHeight;
+        public float DistanceToJudgementLine => distanceToJudgementLine;
         public float PoseSmoothing => poseSmoothing;
         public float DodgeDistance => dodgeDistance;
         public float DuckDistance => duckDistance;

@@ -226,6 +226,7 @@ namespace NeonPulse.EditorTools
             DrawSection("CẢM GIÁC DI CHUYỂN");
             SerializedProperty cameraFeel = serializedConfig.FindProperty("cameraFeel");
             DrawField(cameraFeel, "standingHeight", "Độ cao đứng của player", "Tăng để nâng camera và toàn bộ góc nhìn player.");
+            DrawField(cameraFeel, "distanceToJudgementLine", "Khoảng cách camera tới vạch", "Giảm để đưa camera lại gần vạch hơn.");
             DrawField(cameraFeel, "poseSmoothing", "Độ mượt chuyển động");
             DrawField(cameraFeel, "dodgeDistance", "Khoảng cách né trái / phải");
             DrawField(cameraFeel, "duckDistance", "Khoảng cách cúi");
@@ -262,7 +263,7 @@ namespace NeonPulse.EditorTools
             DrawField(visuals, "beatPulseIntensity", "Độ nhấp nháy theo nhịp");
             DrawField(visuals, "targetGlowScale", "Độ lớn viền sáng vật thể");
             DrawField(visuals, "rhythmTileLength", "Độ dài viên gạch bay");
-            DrawField(visuals, "judgementLinePulseStrength", "Độ nảy của vạch khi trúng");
+            DrawField(visuals, "judgementLinePulseStrength", "Độ đậm highlight ô tại vạch");
             DrawField(visuals, "screenFlashDuration", "Thời gian lóe màn hình");
             DrawField(visuals, "screenFlashIntensity", "Cường độ lóe màn hình");
             DrawField(visuals, "hitParticleCount", "Số hạt VFX khi trúng");
