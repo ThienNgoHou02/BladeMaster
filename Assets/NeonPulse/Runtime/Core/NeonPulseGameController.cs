@@ -723,7 +723,7 @@ namespace NeonPulse
                     judgementPosition.x,
                     RhythmTileVfxSurfaceY,
                     judgementPosition.z);
-                rhythmTileHitVfx?.Play(rhythmVfxPosition, Quaternion.Euler(90f, 0f, 0f));
+                rhythmTileHitVfx?.Play(rhythmVfxPosition, Quaternion.identity);
                 playerVisuals?.TriggerRhythmTileImpactShake();
                 screenFlash?.Play(color, 0.6f);
                 judgementLineFeedback?.Highlight(judgementPosition.x, color);
