@@ -29,6 +29,7 @@ namespace NeonPulse
         private readonly List<float> phaseStartTimes = new List<float>(8);
         private readonly List<float> phaseEndTimes = new List<float>(8);
         private readonly List<NeonPulseLevelPhase> phases = new List<NeonPulseLevelPhase>(8);
+        private readonly List<LevelPhaseAction> randomMixedActions = new List<LevelPhaseAction>(4);
         private float legacyFlySpeed;
 
         public IReadOnlyList<PlannedGameplayEvent> TargetEvents => targetEvents;
@@ -46,6 +47,7 @@ namespace NeonPulse
                 return plan;
             }
 
+            plan.CollectRandomMixedActions(level);
             float cursor = 0f;
             for (int index = 0; index < level.Phases.Count; index++)
             {
@@ -118,19 +120,13 @@ namespace NeonPulse
         {
             float distance = Mathf.Max(0.1f, config.Rhythm.SpawnZ - config.Rhythm.HitZ);
             float travelDuration = distance / phase.FlySpeed;
-            float spacing = phase.SpawnIntervalSeconds;
-            if (phase.Action == LevelPhaseAction.DodgeWalls)
-            {
-                // Do not overlap hold windows: changing direction while a wall is still active
-                // made the dodge phase feel jerky and could generate impossible inputs.
-                spacing = Mathf.Max(spacing, config.Rhythm.HoldWindowLead + config.Rhythm.HoldWindowTrail + 0.12f);
-            }
             float targetTime = phaseStartTime + travelDuration;
 
             while (targetTime <= phaseEndTime)
             {
                 float spawnTime = targetTime - travelDuration;
-                switch (phase.Action)
+                LevelPhaseAction action = ResolveSpawnAction(phase.Action, ref randomState);
+                switch (action)
                 {
                     case LevelPhaseAction.RhythmTiles:
                         AddRhythmTilePair(targetTime, spawnTime, ref randomState);
@@ -146,8 +142,42 @@ namespace NeonPulse
                         break;
                 }
 
+                float spacing = phase.SpawnIntervalSeconds;
+                if (action == LevelPhaseAction.DodgeWalls)
+                {
+                    // Do not overlap hold windows: changing direction while a wall is still active
+                    // made the dodge phase feel jerky and could generate impossible inputs.
+                    spacing = Mathf.Max(spacing, config.Rhythm.HoldWindowLead + config.Rhythm.HoldWindowTrail + 0.12f);
+                }
+
                 targetTime += spacing;
             }
+        }
+
+        private void CollectRandomMixedActions(NeonPulseLevelDefinition level)
+        {
+            for (int index = 0; index < level.Phases.Count; index++)
+            {
+                NeonPulseLevelPhase phase = level.Phases[index];
+                if (phase == null || phase.Action == LevelPhaseAction.RandomMixed ||
+                    randomMixedActions.Contains(phase.Action))
+                {
+                    continue;
+                }
+
+                randomMixedActions.Add(phase.Action);
+            }
+        }
+
+        private LevelPhaseAction ResolveSpawnAction(LevelPhaseAction authoredAction, ref uint randomState)
+        {
+            if (authoredAction != LevelPhaseAction.RandomMixed || randomMixedActions.Count == 0)
+            {
+                return authoredAction;
+            }
+
+            int randomIndex = NextRandomInt(ref randomState, 0, randomMixedActions.Count);
+            return randomMixedActions[randomIndex];
         }
 
         private void AddTargetWave(

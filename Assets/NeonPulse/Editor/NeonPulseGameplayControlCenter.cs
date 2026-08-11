@@ -353,7 +353,8 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.RhythmTiles: return "Thời gian dậm chân";
                 case LevelPhaseAction.PunchObjects: return "Thời gian đấm";
                 case LevelPhaseAction.SlashObjects: return "Thời gian chém";
-                default: return "Thời gian né";
+                case LevelPhaseAction.DodgeWalls: return "Thời gian né";
+                default: return "Thời gian tổng hợp";
             }
         }
 
@@ -364,7 +365,8 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.RhythmTiles: return "Tốc độ gạch";
                 case LevelPhaseAction.PunchObjects: return "Tốc độ vật thể";
                 case LevelPhaseAction.SlashObjects: return "Tốc độ vật thể";
-                default: return "Tốc độ tường";
+                case LevelPhaseAction.DodgeWalls: return "Tốc độ tường";
+                default: return "Tốc độ tổng hợp";
             }
         }
 
@@ -375,13 +377,16 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.RhythmTiles: return "Hai tay được ẩn; gạch và lane được random.";
                 case LevelPhaseAction.PunchObjects: return "Random mục tiêu, tay đấm và lane.";
                 case LevelPhaseAction.SlashObjects: return "Random mục tiêu, hướng chém và lane.";
-                default: return "Random hướng né trái hoặc phải.";
+                case LevelPhaseAction.DodgeWalls: return "Random hướng né trái, phải, cúi hoặc nhảy.";
+                default: return "Mỗi wave random một action cụ thể đang có trong Level.";
             }
         }
 
         private static bool SupportsMultipleObjects(LevelPhaseAction action)
         {
-            return action == LevelPhaseAction.PunchObjects || action == LevelPhaseAction.SlashObjects;
+            return action == LevelPhaseAction.PunchObjects ||
+                   action == LevelPhaseAction.SlashObjects ||
+                   action == LevelPhaseAction.RandomMixed;
         }
 
         private void CreateLevelAsset()

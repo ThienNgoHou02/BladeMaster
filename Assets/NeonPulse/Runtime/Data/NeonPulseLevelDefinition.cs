@@ -10,7 +10,8 @@ namespace NeonPulse
         RhythmTiles,
         PunchObjects,
         SlashObjects,
-        DodgeWalls
+        DodgeWalls,
+        RandomMixed
     }
 
     [Serializable]
@@ -59,6 +60,7 @@ namespace NeonPulse
                 case LevelPhaseAction.PunchObjects: return "Đấm vật thể";
                 case LevelPhaseAction.SlashObjects: return "Chém vật thể";
                 case LevelPhaseAction.DodgeWalls: return "Né tường";
+                case LevelPhaseAction.RandomMixed: return "Tổng hợp ngẫu nhiên";
                 default: return "Phase chưa xác định";
             }
         }
@@ -90,6 +92,8 @@ namespace NeonPulse
                 return false;
             }
 
+            bool hasRandomMixedPhase = false;
+            bool hasConcreteAction = false;
             for (int index = 0; index < phases.Count; index++)
             {
                 NeonPulseLevelPhase phase = phases[index];
@@ -100,6 +104,21 @@ namespace NeonPulse
                               " cần có thời lượng, tốc độ bay và khoảng spawn lớn hơn 0.";
                     return false;
                 }
+
+                if (phase.Action == LevelPhaseAction.RandomMixed)
+                {
+                    hasRandomMixedPhase = true;
+                }
+                else
+                {
+                    hasConcreteAction = true;
+                }
+            }
+
+            if (hasRandomMixedPhase && !hasConcreteAction)
+            {
+                message = "Action Tổng hợp ngẫu nhiên cần ít nhất một phase action cụ thể khác trong Level.";
+                return false;
             }
 
             message = "Level hợp lệ. Object sẽ được random lại ở mỗi lượt chơi.";

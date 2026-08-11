@@ -680,6 +680,12 @@ namespace NeonPulse
 
             if (runPlan.TryGetPhase(songTime, out NeonPulseLevelPhase phase, out _))
             {
+                // Mixed phases switch punch/slash presentation from the closest spawned cue.
+                if (phase.Action == LevelPhaseAction.RandomMixed)
+                {
+                    return;
+                }
+
                 CombatGameplayMode mode = phase.Action == LevelPhaseAction.SlashObjects
                     ? CombatGameplayMode.Slash
                     : CombatGameplayMode.Punch;
