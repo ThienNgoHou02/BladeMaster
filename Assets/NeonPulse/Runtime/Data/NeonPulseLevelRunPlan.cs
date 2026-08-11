@@ -23,15 +23,13 @@ namespace NeonPulse
     /// <summary>Converts a level asset into absolute-time spawn events while preserving the existing object pools.</summary>
     public sealed class NeonPulseLevelRunPlan
     {
-        private const float MinimumEventSpacing = 0.78f;
-        private const float MaximumEventSpacing = 1.25f;
-
         private readonly List<PlannedGameplayEvent> targetEvents = new List<PlannedGameplayEvent>(48);
         private readonly List<PlannedGameplayEvent> obstacleEvents = new List<PlannedGameplayEvent>(24);
         private readonly List<PlannedRhythmTileEvent> rhythmTileEvents = new List<PlannedRhythmTileEvent>(48);
         private readonly List<float> phaseStartTimes = new List<float>(8);
         private readonly List<float> phaseEndTimes = new List<float>(8);
         private readonly List<NeonPulseLevelPhase> phases = new List<NeonPulseLevelPhase>(8);
+        private float legacyFlySpeed;
 
         public IReadOnlyList<PlannedGameplayEvent> TargetEvents => targetEvents;
         public IReadOnlyList<PlannedGameplayEvent> ObstacleEvents => obstacleEvents;
@@ -82,6 +80,19 @@ namespace NeonPulse
             return phaseEndTimes.Count - 1;
         }
 
+        /// <summary>Returns the authored object speed for the active phase, or zero during rests.</summary>
+        public float GetFlySpeed(float time)
+        {
+            if (phases.Count == 0)
+            {
+                return time >= 0f && time <= Duration ? legacyFlySpeed : 0f;
+            }
+
+            return TryGetPhase(time, out NeonPulseLevelPhase phase, out _)
+                ? phase.FlySpeed
+                : 0f;
+        }
+
         public bool TryGetPhase(float time, out NeonPulseLevelPhase phase, out float normalizedProgress)
         {
             int index = GetPhaseIndex(time);
@@ -107,7 +118,7 @@ namespace NeonPulse
         {
             float distance = Mathf.Max(0.1f, config.Rhythm.SpawnZ - config.Rhythm.HitZ);
             float travelDuration = distance / phase.FlySpeed;
-            float spacing = Mathf.Clamp(travelDuration * 0.52f, MinimumEventSpacing, MaximumEventSpacing);
+            float spacing = phase.SpawnIntervalSeconds;
             if (phase.Action == LevelPhaseAction.DodgeWalls)
             {
                 // Do not overlap hold windows: changing direction while a wall is still active
@@ -125,10 +136,10 @@ namespace NeonPulse
                         AddRhythmTilePair(targetTime, spawnTime, ref randomState);
                         break;
                     case LevelPhaseAction.PunchObjects:
-                        AddTarget(targetTime, spawnTime, false, ref randomState);
+                        AddTargetWave(phase.ObjectsPerWave, targetTime, spawnTime, false, ref randomState);
                         break;
                     case LevelPhaseAction.SlashObjects:
-                        AddTarget(targetTime, spawnTime, true, ref randomState);
+                        AddTargetWave(phase.ObjectsPerWave, targetTime, spawnTime, true, ref randomState);
                         break;
                     case LevelPhaseAction.DodgeWalls:
                         AddDodgeWall(targetTime, spawnTime, ref randomState);
@@ -139,11 +150,42 @@ namespace NeonPulse
             }
         }
 
-        private void AddTarget(float targetTime, float spawnTime, bool useSlashVisual, ref uint randomState)
+        private void AddTargetWave(
+            int objectsPerWave,
+            float targetTime,
+            float spawnTime,
+            bool useSlashVisual,
+            ref uint randomState)
+        {
+            if (objectsPerWave <= 1)
+            {
+                AddRandomTarget(targetTime, spawnTime, useSlashVisual, ref randomState);
+                return;
+            }
+
+            // A two-object wave is always a complementary pair so the player can hit
+            // both targets at the same time without receiving an impossible pattern.
+            AddTarget(targetTime, spawnTime, useSlashVisual, GameplayAction.LeftPunch,
+                NextRandomInt(ref randomState, 0, 2));
+            AddTarget(targetTime, spawnTime, useSlashVisual, GameplayAction.RightPunch,
+                NextRandomInt(ref randomState, 2, 4));
+        }
+
+        private void AddRandomTarget(float targetTime, float spawnTime, bool useSlashVisual, ref uint randomState)
         {
             GameplayAction action = (GameplayAction)NextRandomInt(ref randomState, (int)GameplayAction.LeftPunch, (int)GameplayAction.BothPunch + 1);
             int lane = action == GameplayAction.LeftPunch ? NextRandomInt(ref randomState, 0, 2) :
                 action == GameplayAction.RightPunch ? NextRandomInt(ref randomState, 2, 4) : NextRandomInt(ref randomState, 1, 3);
+            AddTarget(targetTime, spawnTime, useSlashVisual, action, lane);
+        }
+
+        private void AddTarget(
+            float targetTime,
+            float spawnTime,
+            bool useSlashVisual,
+            GameplayAction action,
+            int lane)
+        {
             targetEvents.Add(new PlannedGameplayEvent
             {
                 Event = new BeatmapEvent(0f, lane, action),
@@ -194,6 +236,8 @@ namespace NeonPulse
         {
             float secondsPerBeat = config.Rhythm.SecondsPerBeat;
             float travelDuration = config.Rhythm.TravelBeats * secondsPerBeat;
+            float travelDistance = Mathf.Max(0.1f, config.Rhythm.SpawnZ - config.Rhythm.HitZ);
+            legacyFlySpeed = travelDistance / Mathf.Max(0.01f, travelDuration);
             for (int index = 0; index < config.PunchEvents.Count; index++)
             {
                 BeatmapEvent chartEvent = config.PunchEvents[index];

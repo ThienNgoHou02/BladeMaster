@@ -8,6 +8,8 @@ namespace NeonPulse
     /// <summary>A pooled note or obstacle whose Z position is derived from absolute song time.</summary>
     public sealed class BeatTraveller : MonoBehaviour
     {
+        public const float PostTargetTravelDuration = 0.45f;
+
         private static readonly float[] LaneX = { -2.7f, -0.9f, 0.9f, 2.7f };
 
         private readonly GameObject[] punchVariants = new GameObject[7];
@@ -123,7 +125,7 @@ namespace NeonPulse
             float normalized = travelDuration > 0.001f ? (songTime - spawnTime) / travelDuration : 1f;
             float z = normalized <= 1f
                 ? Mathf.LerpUnclamped(spawnZ, hitZ, normalized)
-                : Mathf.LerpUnclamped(hitZ, despawnZ, (songTime - targetTime) / 0.45f);
+                : Mathf.LerpUnclamped(hitZ, despawnZ, (songTime - targetTime) / PostTargetTravelDuration);
 
             Vector3 position = transform.position;
             position.z = z;

@@ -119,7 +119,10 @@ namespace NeonPulse
 
             slashDebris?.Tick(Time.deltaTime);
             screenFlash?.Tick(Time.unscaledDeltaTime);
-            motionFeedback?.Tick(Time.deltaTime, runFinished ? 0f : 24f);
+
+            float songTime = (float)(AudioSettings.dspTime - dspStartTime);
+            float flySpeed = runFinished || runPlan == null ? 0f : runPlan.GetFlySpeed(songTime);
+            motionFeedback?.Tick(Time.deltaTime, flySpeed);
 
             if (runFinished)
             {
@@ -128,7 +131,6 @@ namespace NeonPulse
                 return;
             }
 
-            float songTime = (float)(AudioSettings.dspTime - dspStartTime);
             float beatPhase = Mathf.Repeat(songTime / config.Rhythm.SecondsPerBeat, 1f);
             materials?.SetBeatPulse(Mathf.Pow(1f - beatPhase, 4f));
             judgementLineFeedback?.Tick(Time.deltaTime);
@@ -154,7 +156,7 @@ namespace NeonPulse
 
             UpdateUpcomingCue(songTime);
             hud.SetCountdown(-songTime);
-            UpdateLevelProgress(songTime);
+            UpdatePhasePresentation(songTime);
 
             if (songTime >= songDuration + config.Rhythm.ResultDelay)
             {
@@ -450,6 +452,8 @@ namespace NeonPulse
                 return false;
             }
 
+            float jumpApexOffset = CalculateObstacleCameraCrossingDelay();
+            float jumpLeadTime = playerVisuals.JumpLeadTime;
             for (int index = 0; index < activeObstacles.Count; index++)
             {
                 BeatTraveller traveller = activeObstacles[index];
@@ -459,13 +463,28 @@ namespace NeonPulse
                 }
 
                 float relativeTime = songTime - traveller.TargetTime;
-                if (relativeTime >= -playerVisuals.JumpLeadTime && relativeTime <= playerVisuals.JumpLeadTime)
+                if (relativeTime >= jumpApexOffset - jumpLeadTime &&
+                    relativeTime <= jumpApexOffset + jumpLeadTime)
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private float CalculateObstacleCameraCrossingDelay()
+        {
+            float postTargetDistance = config.Rhythm.HitZ - config.Rhythm.DespawnZ;
+            if (postTargetDistance <= 0.001f)
+            {
+                return 0f;
+            }
+
+            float distanceFromHitLineToCamera = Mathf.Min(
+                config.CameraFeel.DistanceToJudgementLine,
+                postTargetDistance);
+            return distanceFromHitLineToCamera / postTargetDistance * BeatTraveller.PostTargetTravelDuration;
         }
 
         private PlayerInputFrame CreateAutoPlayInput(float songTime)
@@ -652,7 +671,7 @@ namespace NeonPulse
             hud?.SetScore(snapshot);
         }
 
-        private void UpdateLevelProgress(float songTime)
+        private void UpdatePhasePresentation(float songTime)
         {
             if (runPlan == null || runPlan.PhaseCount == 0)
             {
@@ -667,13 +686,8 @@ namespace NeonPulse
                 playerVisuals?.SetHandsVisible(phase.Action != LevelPhaseAction.RhythmTiles);
                 playerVisuals?.SetCombatMode(mode);
                 hud.SetActionMode(mode);
-                hud.SetLevelProgress(runPlan.GetPhaseIndex(songTime) + 1, runPlan.PhaseCount, phase.DisplayName,
-                    Mathf.Clamp01(songTime / Mathf.Max(0.01f, songDuration)));
                 return;
             }
-
-            hud.SetLevelProgress(runPlan.PhaseCount, runPlan.PhaseCount, "Nghỉ chuyển phase",
-                Mathf.Clamp01(songTime / Mathf.Max(0.01f, songDuration)));
         }
 
         private int GetAudioBeatCount()

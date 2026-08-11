@@ -16,24 +16,39 @@ namespace NeonPulse
     [Serializable]
     public sealed class NeonPulseLevelPhase
     {
+        private const float DefaultSpawnIntervalSeconds = 1f;
+
         [SerializeField] private LevelPhaseAction action = LevelPhaseAction.PunchObjects;
         [SerializeField, Min(1f)] private float durationSeconds = 12f;
         [SerializeField, Min(1f)] private float flySpeed = 12f;
+        [SerializeField, Min(0.1f)] private float spawnIntervalSeconds = DefaultSpawnIntervalSeconds;
+        [SerializeField, Range(1, 2)] private int objectsPerWave = 1;
 
         public string DisplayName => GetDisplayName(action);
         public LevelPhaseAction Action => action;
         public float DurationSeconds => durationSeconds;
         public float FlySpeed => flySpeed;
+        public float SpawnIntervalSeconds => spawnIntervalSeconds > 0f
+            ? spawnIntervalSeconds
+            : DefaultSpawnIntervalSeconds;
+        public int ObjectsPerWave => Mathf.Clamp(objectsPerWave, 1, 2);
 
         public NeonPulseLevelPhase()
         {
         }
 
-        public NeonPulseLevelPhase(LevelPhaseAction phaseAction, float duration, float speed)
+        public NeonPulseLevelPhase(
+            LevelPhaseAction phaseAction,
+            float duration,
+            float speed,
+            float spawnInterval = DefaultSpawnIntervalSeconds,
+            int waveSize = 1)
         {
             action = phaseAction;
             durationSeconds = duration;
             flySpeed = speed;
+            spawnIntervalSeconds = spawnInterval;
+            objectsPerWave = waveSize;
         }
 
         public static string GetDisplayName(LevelPhaseAction value)
@@ -78,9 +93,11 @@ namespace NeonPulse
             for (int index = 0; index < phases.Count; index++)
             {
                 NeonPulseLevelPhase phase = phases[index];
-                if (phase == null || phase.DurationSeconds <= 0f || phase.FlySpeed <= 0f)
+                if (phase == null || phase.DurationSeconds <= 0f || phase.FlySpeed <= 0f ||
+                    phase.SpawnIntervalSeconds <= 0f)
                 {
-                    message = "Phase " + (index + 1) + " cần có thời lượng và tốc độ bay lớn hơn 0.";
+                    message = "Phase " + (index + 1) +
+                              " cần có thời lượng, tốc độ bay và khoảng spawn lớn hơn 0.";
                     return false;
                 }
             }

@@ -11,7 +11,6 @@ namespace NeonPulse
         private const float DespawnZ = -8f;
 
         private readonly Transform[] sideProps = new Transform[PropsPerSide * 2];
-        private readonly float[] propSpeeds = new float[PropsPerSide * 2];
         private readonly ParticleSystem wind;
 
         public NeonMotionFeedback(Transform parent, Camera camera, RuntimeMaterialLibrary materials)
@@ -29,7 +28,7 @@ namespace NeonPulse
             {
                 Transform prop = sideProps[index];
                 Vector3 position = prop.position;
-                position.z -= (safeSpeed + propSpeeds[index]) * deltaTime;
+                position.z -= safeSpeed * deltaTime;
                 if (position.z < DespawnZ)
                 {
                     position.z = ResetZ + (index % PropsPerSide) * 2.7f;
@@ -69,7 +68,6 @@ namespace NeonPulse
                 }
 
                 sideProps[index] = prop.transform;
-                propSpeeds[index] = 4f + (sequence % 4) * 1.8f;
             }
         }
 

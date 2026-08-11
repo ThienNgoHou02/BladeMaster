@@ -4,25 +4,26 @@ using UnityEngine.UI;
 
 namespace NeonPulse
 {
-    /// <summary>Runtime-built TextMeshPro HUD with score, combo, feedback, controls and results.</summary>
+    /// <summary>Runtime-built HUD with combo, action cues, feedback, controls and results.</summary>
     public sealed class NeonHud : MonoBehaviour
     {
-        private const float ProgressBarWidth = 720f;
-        private const float LevelProgressBarHeight = 13f;
+        private const int RadialTextureSize = 128;
+        private const float ActionIconSlotSpacing = 96f;
 
         private TMP_FontAsset fontAsset;
         private Font sourceFont;
         private bool ownsFontAsset;
-        private TextMeshProUGUI scoreText;
         private TextMeshProUGUI comboText;
         private TextMeshProUGUI feedbackText;
         private TextMeshProUGUI statusText;
-        private TextMeshProUGUI levelProgressText;
-        private TextMeshProUGUI phaseProgressText;
-        private Image levelProgressFill;
         private GameObject nextActionPanel;
         private TextMeshProUGUI nextActionText;
         private Image nextActionFill;
+        private Image secondaryActionFill;
+        private RectTransform primaryActionSlot;
+        private RectTransform secondaryActionSlot;
+        private RawImage primaryActionIcon;
+        private RawImage secondaryActionIcon;
         private GameObject countdownPanel;
         private TextMeshProUGUI countdownText;
         private GameObject resultPanel;
@@ -32,7 +33,9 @@ namespace NeonPulse
         private Color comboPulseColor = Color.white;
         private int lastScoreValue;
         private bool nextActionReady;
+        private bool currentCueHasIcon;
         private GameplayAction lastNextAction;
+        private bool lastCueUsesSlashMode;
         private bool hasNextAction;
         private int lastCountdownValue = -1;
         private RhythmSettings timing;
@@ -40,15 +43,16 @@ namespace NeonPulse
         private string restartLabel;
         private bool showGuidance;
         private bool isSlashMode;
-        private int displayedPhaseIndex = -1;
-        private int displayedPhaseCount = -1;
-        private string displayedPhaseName;
+        private VisualSettings visualSettings;
+        private Texture2D radialProgressTexture;
+        private Sprite radialProgressSprite;
 
         /// <summary>Creates all HUD objects and runtime font resources.</summary>
         public void Build(RuntimeMaterialLibrary materials, NeonPulseGameConfig config)
         {
             timing = config.Rhythm;
             bindings = config.Input;
+            visualSettings = config.Visuals;
             restartLabel = GetKeyLabel(bindings.Restart);
             showGuidance = !config.AutoPlay;
             isSlashMode = config.GameplayMode == CombatGameplayMode.Slash;
@@ -64,9 +68,6 @@ namespace NeonPulse
 
             CreateRuntimeFont();
 
-            scoreText = CreateText("Score", transform, "ĐIỂM 000000\nTRÚNG 0/0", 32f, TextAlignmentOptions.TopLeft, Color.white);
-            SetRect(scoreText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(38f, -48f), new Vector2(560f, 115f));
-
             comboText = CreateText("Combo", transform, "0\nCOMBO\nMAX 0", 52f, TextAlignmentOptions.TopRight, Color.white);
             comboText.lineSpacing = -18f;
             SetRect(comboText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-210f, -52f), new Vector2(380f, 190f));
@@ -74,7 +75,7 @@ namespace NeonPulse
             feedbackText = CreateText("Feedback", transform, string.Empty, 58f, TextAlignmentOptions.Center, materials.CyanColor);
             feedbackText.fontStyle = FontStyles.Bold | FontStyles.Italic;
             feedbackText.lineSpacing = -12f;
-            SetRect(feedbackText.rectTransform, new Vector2(0.5f, 0.76f), new Vector2(0.5f, 0.76f), Vector2.zero, new Vector2(950f, 155f));
+            SetRect(feedbackText.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(950f, 155f));
 
             if (showGuidance)
             {
@@ -85,47 +86,20 @@ namespace NeonPulse
             }
 
             CreateNextActionPanel(materials);
-            CreateLevelProgressPanel(materials);
             CreateCountdownPanel(materials);
             CreateResultPanel(materials);
         }
 
-        /// <summary>Updates the score and combo labels only when score state changes.</summary>
+        /// <summary>Updates the combo label and cached score only when score state changes.</summary>
         public void SetScore(ScoreSnapshot snapshot)
         {
-            if (scoreText == null || comboText == null)
+            if (comboText == null)
             {
                 return;
             }
 
-            int hitCount = snapshot.Perfect + snapshot.Great + snapshot.Good;
-            int totalCount = hitCount + snapshot.Miss;
-            float weightedHits = snapshot.Perfect + snapshot.Great * 0.75f + snapshot.Good * 0.5f;
-            float accuracy = totalCount > 0 ? weightedHits / totalCount * 100f : 100f;
-            scoreText.SetText("ĐIỂM {0:000000}\nTRÚNG {1}/{2}  •  {3:0}%", snapshot.Score, hitCount, totalCount, accuracy);
             comboText.SetText("{0}\nCOMBO\nMAX {1}", snapshot.Combo, snapshot.MaxCombo);
             lastScoreValue = snapshot.Score;
-        }
-
-        /// <summary>Updates level and phase progress without creating formatted strings each frame.</summary>
-        public void SetLevelProgress(int phaseIndex, int phaseCount, string phaseName, float levelProgress)
-        {
-            if (levelProgressText == null || phaseProgressText == null || levelProgressFill == null)
-            {
-                return;
-            }
-
-            levelProgressText.SetText("LEVEL  {0:0}%", levelProgress * 100f);
-            bool phaseChanged = displayedPhaseIndex != phaseIndex || displayedPhaseCount != phaseCount || displayedPhaseName != phaseName;
-            if (phaseChanged)
-            {
-                displayedPhaseIndex = phaseIndex;
-                displayedPhaseCount = phaseCount;
-                displayedPhaseName = phaseName;
-                phaseProgressText.text = "PHASE " + phaseIndex + "/" + phaseCount + "  •  " + phaseName;
-            }
-
-            SetProgressBarWidth(levelProgressFill, levelProgress, LevelProgressBarHeight, 31f);
         }
 
         /// <summary>Switches labels between punch and slash phases while keeping a single HUD instance.</summary>
@@ -156,15 +130,15 @@ namespace NeonPulse
             switch (grade)
             {
                 case AccuracyGrade.Perfect:
-                    feedbackText.SetText("CHÍNH XÁC  +{0}\nCOMBO {1}", gainedScore, snapshot.Combo);
+                    feedbackText.SetText("+{0}", gainedScore);
                     feedbackText.color = materials.YellowColor;
                     break;
                 case AccuracyGrade.Great:
-                    feedbackText.SetText("TRÚNG  +{0}\nCOMBO {1}", gainedScore, snapshot.Combo);
+                    feedbackText.SetText("TRÚNG  +{0}", gainedScore);
                     feedbackText.color = materials.CyanColor;
                     break;
                 case AccuracyGrade.Good:
-                    feedbackText.SetText("TRÚNG  +{0}\nCOMBO {1}", gainedScore, snapshot.Combo);
+                    feedbackText.SetText("TRÚNG  +{0}", gainedScore);
                     feedbackText.color = Color.white;
                     break;
                 default:
@@ -198,12 +172,6 @@ namespace NeonPulse
         /// <summary>Shows the closest required action and fills toward its hit time.</summary>
         public void SetUpcomingAction(GameplayAction action, float secondsUntilHit, float approachDuration, RuntimeMaterialLibrary materials)
         {
-            if (!showGuidance)
-            {
-                HideUpcomingAction();
-                return;
-            }
-
             if (nextActionPanel == null || nextActionText == null || nextActionFill == null || materials == null)
             {
                 return;
@@ -213,17 +181,39 @@ namespace NeonPulse
             bool ready = holdAction
                 ? secondsUntilHit <= timing.HoldWindowLead && secondsUntilHit >= -timing.HoldWindowTrail - 0.02f
                 : Mathf.Abs(secondsUntilHit) <= timing.GoodWindow;
-            if (!hasNextAction || lastNextAction != action || nextActionReady != ready)
+            bool cueChanged = !hasNextAction || lastNextAction != action || lastCueUsesSlashMode != isSlashMode;
+            if (cueChanged)
             {
-                nextActionText.text = GetActionPrompt(action, ready);
+                currentCueHasIcon = ConfigureActionIcons(action);
+                nextActionText.gameObject.SetActive(!currentCueHasIcon && showGuidance);
+                lastCueUsesSlashMode = isSlashMode;
+            }
+
+            if (!currentCueHasIcon && !showGuidance)
+            {
+                HideUpcomingAction();
+                return;
+            }
+
+            if (cueChanged || nextActionReady != ready)
+            {
+                if (!currentCueHasIcon)
+                {
+                    nextActionText.text = GetActionPrompt(action, ready);
+                }
+
                 nextActionText.color = GetActionColor(action, materials);
                 lastNextAction = action;
                 nextActionReady = ready;
                 hasNextAction = true;
             }
 
-            nextActionFill.color = ready ? materials.YellowColor : GetActionColor(action, materials);
-            nextActionFill.fillAmount = 1f - Mathf.Clamp01(secondsUntilHit / Mathf.Max(0.01f, approachDuration));
+            Color progressColor = ready ? materials.YellowColor : GetActionColor(action, materials);
+            float progress = 1f - Mathf.Clamp01(secondsUntilHit / Mathf.Max(0.01f, approachDuration));
+            nextActionFill.color = progressColor;
+            nextActionFill.fillAmount = progress;
+            secondaryActionFill.color = progressColor;
+            secondaryActionFill.fillAmount = progress;
             nextActionPanel.SetActive(true);
         }
 
@@ -326,11 +316,6 @@ namespace NeonPulse
 
             HideUpcomingAction();
 
-            if (levelProgressFill != null)
-            {
-                SetProgressBarWidth(levelProgressFill, 0f, LevelProgressBarHeight, 31f);
-            }
-
         }
 
         private void Update()
@@ -373,6 +358,16 @@ namespace NeonPulse
             if (sourceFont != null)
             {
                 Destroy(sourceFont);
+            }
+
+            if (radialProgressSprite != null)
+            {
+                Destroy(radialProgressSprite);
+            }
+
+            if (radialProgressTexture != null)
+            {
+                Destroy(radialProgressTexture);
             }
         }
 
@@ -436,71 +431,175 @@ namespace NeonPulse
 
         private void CreateNextActionPanel(RuntimeMaterialLibrary materials)
         {
-            nextActionPanel = new GameObject("Next Action Cue", typeof(RectTransform), typeof(Image));
+            CreateRadialProgressSprite();
+
+            nextActionPanel = new GameObject("Next Action Cue", typeof(RectTransform));
             nextActionPanel.transform.SetParent(transform, false);
-            Image background = nextActionPanel.GetComponent<Image>();
-            background.color = new Color(0.015f, 0.005f, 0.04f, 0.88f);
-            background.raycastTarget = false;
-            SetRect(nextActionPanel.GetComponent<RectTransform>(), new Vector2(0.5f, 0.31f), new Vector2(0.5f, 0.31f), Vector2.zero, new Vector2(650f, 112f));
+            SetRect(nextActionPanel.GetComponent<RectTransform>(), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0f, -205f), new Vector2(390f, 190f));
+
+            primaryActionSlot = CreateActionIconSlot("Primary Action Icon", nextActionPanel.transform,
+                out primaryActionIcon, out nextActionFill);
+            secondaryActionSlot = CreateActionIconSlot("Secondary Action Icon", nextActionPanel.transform,
+                out secondaryActionIcon, out secondaryActionFill);
 
             nextActionText = CreateText("Next Action Text", nextActionPanel.transform, string.Empty, 40f, TextAlignmentOptions.Center, materials.CyanColor);
-            RectTransform textRect = nextActionText.rectTransform;
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(16f, 16f);
-            textRect.offsetMax = new Vector2(-16f, -4f);
-
-            GameObject fillObject = new GameObject("Approach Fill", typeof(RectTransform), typeof(Image));
-            fillObject.transform.SetParent(nextActionPanel.transform, false);
-            nextActionFill = fillObject.GetComponent<Image>();
-            nextActionFill.type = Image.Type.Filled;
-            nextActionFill.fillMethod = Image.FillMethod.Horizontal;
-            nextActionFill.fillOrigin = 0;
-            nextActionFill.raycastTarget = false;
-            SetRect(fillObject.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 5f), new Vector2(620f, 9f));
+            SetRect(nextActionText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(650f, 112f));
+            nextActionText.gameObject.SetActive(false);
             nextActionPanel.SetActive(false);
         }
 
-        private void CreateLevelProgressPanel(RuntimeMaterialLibrary materials)
+        private RectTransform CreateActionIconSlot(string objectName, Transform parent, out RawImage icon, out Image progressFill)
         {
-            GameObject panel = new GameObject("Level Progress", typeof(RectTransform), typeof(Image));
-            panel.transform.SetParent(transform, false);
-            Image background = panel.GetComponent<Image>();
-            background.color = new Color(0.015f, 0.005f, 0.04f, 0.82f);
-            background.raycastTarget = false;
-            SetRect(panel.GetComponent<RectTransform>(), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                new Vector2(0f, -56f), new Vector2(760f, 96f));
+            GameObject slotObject = new GameObject(objectName, typeof(RectTransform));
+            slotObject.transform.SetParent(parent, false);
+            RectTransform slot = slotObject.GetComponent<RectTransform>();
+            SetRect(slot, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(184f, 184f));
 
-            levelProgressText = CreateText("Level Progress Value", panel.transform, "LEVEL  0%", 24f,
-                TextAlignmentOptions.Left, materials.YellowColor);
-            SetRect(levelProgressText.rectTransform, new Vector2(0f, 0.76f), new Vector2(0f, 0.76f),
-                new Vector2(18f, 0f), new Vector2(210f, 30f));
+            GameObject ringBackgroundObject = new GameObject("Ring Background", typeof(RectTransform), typeof(Image));
+            ringBackgroundObject.transform.SetParent(slot, false);
+            Image ringBackground = ringBackgroundObject.GetComponent<Image>();
+            ringBackground.sprite = radialProgressSprite;
+            ringBackground.color = new Color(1f, 1f, 1f, 0.18f);
+            ringBackground.raycastTarget = false;
+            SetRect(ringBackground.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(184f, 184f));
 
-            phaseProgressText = CreateText("Phase Progress Value", panel.transform, "PHASE 1/1", 21f,
-                TextAlignmentOptions.Right, Color.white);
-            SetRect(phaseProgressText.rectTransform, new Vector2(1f, 0.76f), new Vector2(1f, 0.76f),
-                new Vector2(-18f, 0f), new Vector2(440f, 30f));
+            GameObject progressObject = new GameObject("Radial Progress", typeof(RectTransform), typeof(Image));
+            progressObject.transform.SetParent(slot, false);
+            progressFill = progressObject.GetComponent<Image>();
+            progressFill.sprite = radialProgressSprite;
+            progressFill.type = Image.Type.Filled;
+            progressFill.fillMethod = Image.FillMethod.Radial360;
+            progressFill.fillOrigin = (int)Image.Origin360.Top;
+            progressFill.fillClockwise = true;
+            progressFill.fillAmount = 0f;
+            progressFill.raycastTarget = false;
+            SetRect(progressFill.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(184f, 184f));
 
-            GameObject bar = new GameObject("Level Progress Fill", typeof(RectTransform), typeof(Image));
-            bar.transform.SetParent(panel.transform, false);
-            levelProgressFill = bar.GetComponent<Image>();
-            levelProgressFill.type = Image.Type.Simple;
-            levelProgressFill.color = materials.CyanColor;
-            levelProgressFill.raycastTarget = false;
-            SetRect(levelProgressFill.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
-                new Vector2(0f, 31f), new Vector2(ProgressBarWidth, LevelProgressBarHeight));
-            SetProgressBarWidth(levelProgressFill, 0f, LevelProgressBarHeight, 31f);
+            GameObject iconObject = new GameObject("Icon", typeof(RectTransform), typeof(RawImage));
+            iconObject.transform.SetParent(slot, false);
+            icon = iconObject.GetComponent<RawImage>();
+            icon.uvRect = new Rect(0f, 0f, 1f, 1f);
+            icon.color = Color.white;
+            icon.raycastTarget = false;
+            SetRect(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Vector2(148f, 148f));
 
+            return slot;
         }
 
-        private static void SetProgressBarWidth(Image progressBar, float progress, float height, float yPosition)
+        private void CreateRadialProgressSprite()
         {
-            RectTransform rect = progressBar.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.zero;
-            rect.pivot = new Vector2(0f, 0.5f);
-            rect.anchoredPosition = new Vector2(20f, yPosition);
-            rect.sizeDelta = new Vector2(ProgressBarWidth * Mathf.Clamp01(progress), height);
+            radialProgressTexture = new Texture2D(RadialTextureSize, RadialTextureSize, TextureFormat.RGBA32, false)
+            {
+                name = "Action Cue Radial Progress",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp
+            };
+
+            Color32[] pixels = new Color32[RadialTextureSize * RadialTextureSize];
+            float center = (RadialTextureSize - 1) * 0.5f;
+            float outerRadiusSquared = 62f * 62f;
+            float innerRadiusSquared = 53f * 53f;
+            for (int y = 0; y < RadialTextureSize; y++)
+            {
+                float deltaY = y - center;
+                for (int x = 0; x < RadialTextureSize; x++)
+                {
+                    float deltaX = x - center;
+                    float distanceSquared = deltaX * deltaX + deltaY * deltaY;
+                    byte alpha = distanceSquared <= outerRadiusSquared && distanceSquared >= innerRadiusSquared
+                        ? (byte)255
+                        : (byte)0;
+                    pixels[y * RadialTextureSize + x] = new Color32(255, 255, 255, alpha);
+                }
+            }
+
+            radialProgressTexture.SetPixels32(pixels);
+            radialProgressTexture.Apply(false, true);
+            radialProgressSprite = Sprite.Create(radialProgressTexture,
+                new Rect(0f, 0f, RadialTextureSize, RadialTextureSize), new Vector2(0.5f, 0.5f), 100f);
+            radialProgressSprite.name = "Action Cue Radial Progress Sprite";
+        }
+
+        private bool ConfigureActionIcons(GameplayAction action)
+        {
+            Texture2D primaryTexture = null;
+            Texture2D secondaryTexture = null;
+            switch (action)
+            {
+                case GameplayAction.LeftPunch when !isSlashMode:
+                    primaryTexture = visualSettings.LeftPunchActionIcon;
+                    break;
+                case GameplayAction.RightPunch when !isSlashMode:
+                    primaryTexture = visualSettings.RightPunchActionIcon;
+                    break;
+                case GameplayAction.BothPunch when !isSlashMode:
+                    primaryTexture = visualSettings.LeftPunchActionIcon;
+                    secondaryTexture = visualSettings.RightPunchActionIcon;
+                    break;
+                case GameplayAction.LeftPunch:
+                    primaryTexture = visualSettings.LeftSlashActionIcon;
+                    break;
+                case GameplayAction.RightPunch:
+                    primaryTexture = visualSettings.RightSlashActionIcon;
+                    break;
+                case GameplayAction.BothPunch:
+                    primaryTexture = visualSettings.LeftSlashActionIcon;
+                    secondaryTexture = visualSettings.RightSlashActionIcon;
+                    break;
+                case GameplayAction.DodgeLeft:
+                    primaryTexture = visualSettings.LeftDodgeActionIcon;
+                    break;
+                case GameplayAction.DodgeRight:
+                    primaryTexture = visualSettings.RightDodgeActionIcon;
+                    break;
+                case GameplayAction.Jump:
+                    primaryTexture = visualSettings.JumpActionIcon;
+                    break;
+                case GameplayAction.Duck:
+                    primaryTexture = visualSettings.DuckActionIcon;
+                    break;
+            }
+
+            bool hasPrimaryIcon = primaryTexture != null;
+            bool hasSecondaryIcon = secondaryTexture != null;
+            primaryActionSlot.gameObject.SetActive(hasPrimaryIcon);
+            secondaryActionSlot.gameObject.SetActive(hasSecondaryIcon);
+            if (!hasPrimaryIcon)
+            {
+                return false;
+            }
+
+            ConfigureIconTexture(primaryActionIcon, primaryTexture);
+            primaryActionSlot.anchoredPosition = hasSecondaryIcon
+                ? new Vector2(-ActionIconSlotSpacing, 0f)
+                : Vector2.zero;
+            if (hasSecondaryIcon)
+            {
+                ConfigureIconTexture(secondaryActionIcon, secondaryTexture);
+                secondaryActionSlot.anchoredPosition = new Vector2(ActionIconSlotSpacing, 0f);
+            }
+
+            return true;
+        }
+
+        private static void ConfigureIconTexture(RawImage icon, Texture2D texture)
+        {
+            icon.texture = texture;
+            float aspectRatio = (float)texture.width / texture.height;
+            if (aspectRatio > 1f)
+            {
+                float normalizedWidth = 1f / aspectRatio;
+                icon.uvRect = new Rect((1f - normalizedWidth) * 0.5f, 0f, normalizedWidth, 1f);
+                return;
+            }
+
+            float normalizedHeight = aspectRatio;
+            icon.uvRect = new Rect(0f, (1f - normalizedHeight) * 0.5f, 1f, normalizedHeight);
         }
 
         private void CreateCountdownPanel(RuntimeMaterialLibrary materials)
