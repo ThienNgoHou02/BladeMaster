@@ -531,6 +531,9 @@ namespace NeonPulse
             Texture2D secondaryTexture = null;
             switch (action)
             {
+                case GameplayAction.OverheadClap:
+                    primaryTexture = visualSettings.OverheadClapActionIcon;
+                    break;
                 case GameplayAction.LeftPunch when !isSlashMode:
                     primaryTexture = visualSettings.LeftPunchActionIcon;
                     break;
@@ -574,7 +577,7 @@ namespace NeonPulse
                 return false;
             }
 
-            ConfigureIconTexture(primaryActionIcon, primaryTexture);
+            ConfigureIconTexture(primaryActionIcon, primaryTexture, action == GameplayAction.OverheadClap);
             primaryActionSlot.anchoredPosition = hasSecondaryIcon
                 ? new Vector2(-ActionIconSlotSpacing, 0f)
                 : Vector2.zero;
@@ -587,10 +590,21 @@ namespace NeonPulse
             return true;
         }
 
-        private static void ConfigureIconTexture(RawImage icon, Texture2D texture)
+        private static void ConfigureIconTexture(RawImage icon, Texture2D texture, bool preserveFullTexture = false)
         {
             icon.texture = texture;
             float aspectRatio = (float)texture.width / texture.height;
+            if (preserveFullTexture)
+            {
+                const float MaxIconSize = 148f;
+                icon.uvRect = new Rect(0f, 0f, 1f, 1f);
+                icon.rectTransform.sizeDelta = aspectRatio > 1f
+                    ? new Vector2(MaxIconSize, MaxIconSize / aspectRatio)
+                    : new Vector2(MaxIconSize * aspectRatio, MaxIconSize);
+                return;
+            }
+
+            icon.rectTransform.sizeDelta = new Vector2(148f, 148f);
             if (aspectRatio > 1f)
             {
                 float normalizedWidth = 1f / aspectRatio;
@@ -643,6 +657,7 @@ namespace NeonPulse
 
             switch (action)
             {
+                case GameplayAction.OverheadClap: return (ready ? "VỖ TAY NGAY   " : "SẮP TỚI   ") + GetKeyLabel(bindings.OverheadClap) + " — TRÊN ĐẦU";
                 case GameplayAction.LeftPunch: return prefix + GetKeyLabel(bindings.LeftPunch) + (isSlashMode ? " — KIẾM TRÁI" : " — TAY TRÁI");
                 case GameplayAction.RightPunch: return prefix + GetKeyLabel(bindings.RightPunch) + (isSlashMode ? " — KIẾM PHẢI" : " — TAY PHẢI");
                 case GameplayAction.BothPunch: return prefix + GetKeyLabel(bindings.BothPunch) + (isSlashMode ? " — HAI KIẾM" : " — CẢ HAI TAY");
@@ -660,7 +675,8 @@ namespace NeonPulse
             string bothLabel = isSlashMode ? "HAI KIẾM" : "CẢ HAI TAY";
             return GetKeyLabel(bindings.LeftPunch) + " / " + GetKeyLabel(bindings.LeftPunchAlternative) + "  " + leftLabel + "     " +
                    GetKeyLabel(bindings.RightPunch) + " / " + GetKeyLabel(bindings.RightPunchAlternative) + "  " + rightLabel + "     " +
-                   GetKeyLabel(bindings.BothPunch) + "  " + bothLabel + "\nGIỮ " +
+                   GetKeyLabel(bindings.BothPunch) + "  " + bothLabel + "     " +
+                   GetKeyLabel(bindings.OverheadClap) + "  VỖ TAY TRÊN ĐẦU\nGIỮ " +
                    GetKeyLabel(bindings.DodgeLeft) + " / " + GetKeyLabel(bindings.DodgeRight) + "  NÉ     GIỮ " +
                    GetKeyLabel(bindings.Duck) + "  CÚI     GIỮ " + GetKeyLabel(bindings.Jump) + "  NHẢY     " +
                    restartLabel + "  CHƠI LẠI";
@@ -675,7 +691,8 @@ namespace NeonPulse
             return actionGuide + "\nGIỮ PHÍM CHO ĐẾN KHI CHƯỚNG NGẠI ĐI QUA\n\n<color=#00fff2>" +
                    GetKeyLabel(bindings.LeftPunch) + "  " + leftLabel + "</color>     <color=#ff08b8>" +
                    GetKeyLabel(bindings.RightPunch) + "  " + rightLabel + "</color>     <color=#ffd10d>" +
-                   GetKeyLabel(bindings.BothPunch) + "  " + bothLabel + "</color>\nGIỮ " + GetKeyLabel(bindings.Duck) +
+                   GetKeyLabel(bindings.BothPunch) + "  " + bothLabel + "</color>     <color=#b866ff>" +
+                   GetKeyLabel(bindings.OverheadClap) + "  VỖ TAY TRÊN ĐẦU</color>\nGIỮ " + GetKeyLabel(bindings.Duck) +
                    "  CÚI     GIỮ " + GetKeyLabel(bindings.Jump) + "  NHẢY     GIỮ " +
                    GetKeyLabel(bindings.DodgeLeft) + " / " + GetKeyLabel(bindings.DodgeRight) + "  NÉ";
         }
@@ -704,6 +721,11 @@ namespace NeonPulse
             if (action == GameplayAction.RightPunch || action == GameplayAction.DodgeRight)
             {
                 return materials.MagentaColor;
+            }
+
+            if (action == GameplayAction.OverheadClap)
+            {
+                return materials.PurpleColor;
             }
 
             return materials.YellowColor;

@@ -192,6 +192,7 @@ namespace NeonPulse.EditorTools
             DrawField(input, "rightPunch", "Đấm / chém phải");
             DrawField(input, "rightPunchAlternative", "Phím phụ phải");
             DrawField(input, "bothPunch", "Đấm / chém hai tay");
+            DrawField(input, "overheadClap", "Vỗ tay trên đầu");
 
             DrawSection("PHÍM NÉ — PHẢI GIỮ ĐẾN KHI VẬT CẢN QUA");
             DrawField(input, "duck", "Cúi");
@@ -249,11 +250,13 @@ namespace NeonPulse.EditorTools
             DrawField(visuals, "backgroundTexture", "Ảnh nền gameplay");
             DrawField(visuals, "showPunchHands", "Hiện nắm đấm góc nhìn thứ nhất");
             DrawField(visuals, "punchHitVfxPrefab", "VFX khi đấm vỡ khối");
+            DrawField(visuals, "overheadClapHitVfxPrefab", "VFX khi vỗ tay vỡ khối");
             DrawField(visuals, "showSlashWeapons", "Hiện kiếm góc nhìn thứ nhất");
             DrawField(visuals, "slashHitVfxPrefab", "VFX khi chém vỡ khối");
             DrawField(visuals, "rhythmTileHitVfxPrefab", "VFX khi dậm chân");
             DrawField(visuals, "footprintIconTexture", "Icon bàn chân trên gạch");
             DrawField(visuals, "punchIconTexture", "Icon trên khối đấm");
+            DrawField(visuals, "overheadClapTargetIcon", "Icon trên khối vỗ tay");
             DrawField(visuals, "swordIconTexture", "Icon trên khối chém");
             DrawField(visuals, "leftPunchActionIcon", "Icon động tác đấm trái");
             DrawField(visuals, "rightPunchActionIcon", "Icon động tác đấm phải");
@@ -263,6 +266,7 @@ namespace NeonPulse.EditorTools
             DrawField(visuals, "rightDodgeActionIcon", "Icon né tường phải");
             DrawField(visuals, "jumpActionIcon", "Icon động tác nhảy");
             DrawField(visuals, "duckActionIcon", "Icon động tác cúi");
+            DrawField(visuals, "overheadClapActionIcon", "Icon timing vỗ tay trên đầu");
             DrawField(visuals, "cyan", "Màu tay trái");
             DrawField(visuals, "magenta", "Màu tay phải");
             DrawField(visuals, "purple", "Màu đường hầm");
@@ -271,6 +275,7 @@ namespace NeonPulse.EditorTools
             DrawField(visuals, "neonIntensity", "Độ sáng Neon");
             DrawField(visuals, "beatPulseIntensity", "Độ nhấp nháy theo nhịp");
             DrawField(visuals, "targetGlowScale", "Độ lớn viền sáng vật thể");
+            DrawField(visuals, "overheadClapTargetHeight", "Độ cao khối vỗ tay");
             DrawField(visuals, "rhythmTileLength", "Độ dài viên gạch bay");
             DrawField(visuals, "judgementLinePulseStrength", "Độ đậm highlight ô tại vạch");
             DrawField(visuals, "screenFlashDuration", "Thời gian lóe màn hình");
@@ -354,6 +359,7 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.PunchObjects: return "Thời gian đấm";
                 case LevelPhaseAction.SlashObjects: return "Thời gian chém";
                 case LevelPhaseAction.DodgeWalls: return "Thời gian né";
+                case LevelPhaseAction.OverheadClap: return "Thời gian vỗ tay";
                 default: return "Thời gian tổng hợp";
             }
         }
@@ -366,6 +372,7 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.PunchObjects: return "Tốc độ vật thể";
                 case LevelPhaseAction.SlashObjects: return "Tốc độ vật thể";
                 case LevelPhaseAction.DodgeWalls: return "Tốc độ tường";
+                case LevelPhaseAction.OverheadClap: return "Tốc độ vật thể";
                 default: return "Tốc độ tổng hợp";
             }
         }
@@ -378,6 +385,7 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.PunchObjects: return "Random mục tiêu, tay đấm và lane.";
                 case LevelPhaseAction.SlashObjects: return "Random mục tiêu, hướng chém và lane.";
                 case LevelPhaseAction.DodgeWalls: return "Random hướng né trái, phải, cúi hoặc nhảy.";
+                case LevelPhaseAction.OverheadClap: return "Khối vỗ tay random lane trái/phải, cao vừa tầm hai tay trên đầu.";
                 default: return "Mỗi wave random một action cụ thể đang có trong Level.";
             }
         }
@@ -608,6 +616,7 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.RhythmTiles: return "Thời gian dậm chân";
                 case LevelPhaseAction.PunchObjects: return "Thời gian đấm";
                 case LevelPhaseAction.SlashObjects: return "Thời gian chém";
+                case LevelPhaseAction.OverheadClap: return "Thời gian vỗ tay";
                 default: return "Thời gian né";
             }
         }

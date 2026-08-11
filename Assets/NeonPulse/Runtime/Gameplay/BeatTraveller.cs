@@ -12,8 +12,8 @@ namespace NeonPulse
 
         private static readonly float[] LaneX = { -2.7f, -0.9f, 0.9f, 2.7f };
 
-        private readonly GameObject[] punchVariants = new GameObject[7];
-        private readonly GameObject[] slashVariants = new GameObject[7];
+        private readonly GameObject[] punchVariants = new GameObject[(int)GameplayAction.OverheadClap + 1];
+        private readonly GameObject[] slashVariants = new GameObject[(int)GameplayAction.OverheadClap + 1];
         private GameplayAction action;
         private float targetTime;
         private float spawnTime;
@@ -23,6 +23,7 @@ namespace NeonPulse
         private float despawnZ;
         private float labelVisibleZ;
         private float targetGlowScale;
+        private float overheadClapTargetHeight;
         private bool usesSlashVisual;
         private Transform leftSlashIcon;
         private Transform rightSlashIcon;
@@ -36,6 +37,7 @@ namespace NeonPulse
         public float SpawnTime => spawnTime;
         public float SlashDirection { get; private set; }
         public bool UsesSlashVisual => usesSlashVisual;
+        public float VisualCenterY => action == GameplayAction.OverheadClap ? overheadClapTargetHeight : 1.8f;
         public bool IsActive { get; private set; }
         public bool RequiresHold => IsObstacle(action);
         public bool HoldEvaluationStarted { get; private set; }
@@ -53,6 +55,7 @@ namespace NeonPulse
             despawnZ = config.Rhythm.DespawnZ;
             labelVisibleZ = config.Rhythm.LabelVisibleZ;
             targetGlowScale = config.Visuals.TargetGlowScale;
+            overheadClapTargetHeight = config.Visuals.OverheadClapTargetHeight;
             punchVariants[(int)GameplayAction.LeftPunch] = CreatePunchVariant("Left Punch", materials.Cyan, materials.CyanGlow, materials.PunchIconOnCyan, true);
             punchVariants[(int)GameplayAction.RightPunch] = CreatePunchVariant("Right Punch", materials.Magenta, materials.MagentaGlow, materials.PunchIconOnMagenta, false);
             punchVariants[(int)GameplayAction.BothPunch] = CreatePairVariant(
@@ -73,6 +76,11 @@ namespace NeonPulse
             punchVariants[(int)GameplayAction.Jump] = slashVariants[(int)GameplayAction.Jump] = jump;
             punchVariants[(int)GameplayAction.DodgeLeft] = slashVariants[(int)GameplayAction.DodgeLeft] = dodgeLeft;
             punchVariants[(int)GameplayAction.DodgeRight] = slashVariants[(int)GameplayAction.DodgeRight] = dodgeRight;
+            GameObject overheadClap = CreatePunchVariant(
+                "Overhead Clap", materials.Purple, materials.PurpleGlow, materials.OverheadClapIcon, false,
+                overheadClapTargetHeight);
+            punchVariants[(int)GameplayAction.OverheadClap] = overheadClap;
+            slashVariants[(int)GameplayAction.OverheadClap] = overheadClap;
 
             for (int i = 0; i < punchVariants.Length; i++)
             {
@@ -222,6 +230,11 @@ namespace NeonPulse
                     actionLabel.color = new Color(1f, 0.82f, 0.05f, 1f);
                     actionLabelTransform.localPosition = new Vector3(0f, 3.05f, -0.3f);
                     break;
+                case GameplayAction.OverheadClap:
+                    actionLabel.text = "C\nVO TAY TREN DAU";
+                    actionLabel.color = new Color(0.72f, 0.4f, 1f, 1f);
+                    actionLabelTransform.localPosition = new Vector3(0f, overheadClapTargetHeight + 1.25f, -0.3f);
+                    break;
                 case GameplayAction.Duck:
                     actionLabel.text = "GIU S\nCUI NGUOI";
                     actionLabel.color = Color.white;
@@ -247,11 +260,17 @@ namespace NeonPulse
             actionLabel.gameObject.SetActive(true);
         }
 
-        private GameObject CreatePunchVariant(string objectName, Material material, Material glowMaterial, Material iconMaterial, bool mirrorIcon)
+        private GameObject CreatePunchVariant(
+            string objectName,
+            Material material,
+            Material glowMaterial,
+            Material iconMaterial,
+            bool mirrorIcon,
+            float targetHeight = 1.8f)
         {
             GameObject root = new GameObject(objectName);
             root.transform.SetParent(transform, false);
-            root.transform.localPosition = new Vector3(0f, 1.8f, 0f);
+            root.transform.localPosition = new Vector3(0f, targetHeight, 0f);
 
             Vector3 cubeScale = new Vector3(1.15f, 1.15f, 0.72f);
             CreatePrimitive(root.transform, PrimitiveType.Cube, "Punch Cube Aura", Vector3.zero, cubeScale * targetGlowScale, glowMaterial);

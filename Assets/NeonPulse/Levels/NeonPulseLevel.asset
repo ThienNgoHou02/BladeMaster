@@ -15,6 +15,11 @@ MonoBehaviour:
   levelName: Level 01
   phaseTransitionRestSeconds: 1.25
   phases:
+  - action: 5
+    durationSeconds: 30
+    flySpeed: 30
+    spawnIntervalSeconds: 1
+    objectsPerWave: 1
   - action: 0
     durationSeconds: 30
     flySpeed: 10

@@ -33,6 +33,7 @@ namespace NeonPulse
         public Material FootprintIconOnYellow { get; }
         public Material PunchIconOnCyan { get; }
         public Material PunchIconOnMagenta { get; }
+        public Material OverheadClapIcon { get; }
         public Material SwordIconOnCyan { get; }
         public Material SwordIconOnMagenta { get; }
 
@@ -66,6 +67,7 @@ namespace NeonPulse
             FootprintIconOnYellow = CreateIcon("Footprint Icon On Yellow", safeSettings.FootprintIconTexture, PurpleColor, 1f);
             PunchIconOnCyan = CreateIcon("Punch Icon On Cyan", safeSettings.PunchIconTexture, MagentaColor, 1f);
             PunchIconOnMagenta = CreateIcon("Punch Icon On Magenta", safeSettings.PunchIconTexture, CyanColor, 1f);
+            OverheadClapIcon = CreateIcon("Overhead Clap Icon", safeSettings.OverheadClapTargetIcon, Color.white, 1f);
             SwordIconOnCyan = CreateIcon("Sword Icon On Cyan", safeSettings.SwordIconTexture, MagentaColor, 1f);
             SwordIconOnMagenta = CreateIcon("Sword Icon On Magenta", safeSettings.SwordIconTexture, CyanColor, 1f);
         }
@@ -103,6 +105,7 @@ namespace NeonPulse
             DestroyMaterial(FootprintIconOnYellow);
             DestroyMaterial(PunchIconOnCyan);
             DestroyMaterial(PunchIconOnMagenta);
+            DestroyMaterial(OverheadClapIcon);
             DestroyMaterial(SwordIconOnCyan);
             DestroyMaterial(SwordIconOnMagenta);
         }

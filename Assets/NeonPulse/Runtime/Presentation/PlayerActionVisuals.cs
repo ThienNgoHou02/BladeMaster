@@ -11,6 +11,8 @@ namespace NeonPulse
 
         private static readonly Vector3 LeftRestPosition = new Vector3(-0.92f, -0.67f, 1.45f);
         private static readonly Vector3 RightRestPosition = new Vector3(0.92f, -0.67f, 1.45f);
+        private static readonly Vector3 LeftOverheadClapPosition = new Vector3(-0.12f, 0.82f, 1.65f);
+        private static readonly Vector3 RightOverheadClapPosition = new Vector3(0.12f, 0.82f, 1.65f);
 
         private readonly Transform leftGlove;
         private readonly Transform rightGlove;
@@ -26,6 +28,7 @@ namespace NeonPulse
         private readonly GameObject rightSwordVisual;
         private float leftPunchTimer;
         private float rightPunchTimer;
+        private float overheadClapTimer;
         private float leftSlashDirection = 1f;
         private float rightSlashDirection = -1f;
         private float jumpTimer;
@@ -134,6 +137,12 @@ namespace NeonPulse
                     }
                     StartShake(feel.BothPunchShakeAmplitude, feel.BothPunchShakeDuration);
                     break;
+                case GameplayAction.OverheadClap:
+                    leftPunchTimer = 0f;
+                    rightPunchTimer = 0f;
+                    overheadClapTimer = feel.PunchDuration;
+                    StartShake(feel.BothPunchShakeAmplitude, feel.BothPunchShakeDuration);
+                    break;
             }
         }
 
@@ -186,6 +195,7 @@ namespace NeonPulse
 
             leftPunchTimer = Mathf.Max(0f, leftPunchTimer - deltaTime);
             rightPunchTimer = Mathf.Max(0f, rightPunchTimer - deltaTime);
+            overheadClapTimer = Mathf.Max(0f, overheadClapTimer - deltaTime);
             jumpTimer = Mathf.Max(0f, jumpTimer - deltaTime);
 
             Vector3 targetBodyOffset = CalculateHeldBodyOffset();
@@ -199,7 +209,21 @@ namespace NeonPulse
             jumpCameraOffset = jumpOffset;
             float leftThrust = CalculateThrust(leftPunchTimer);
             float rightThrust = CalculateThrust(rightPunchTimer);
-            if (usesSwords)
+            float overheadClapThrust = CalculateThrust(overheadClapTimer);
+            if (overheadClapThrust > 0f)
+            {
+                leftGlove.localPosition = Vector3.Lerp(
+                    LeftRestPosition + displayedBodyOffset,
+                    LeftOverheadClapPosition + displayedBodyOffset,
+                    overheadClapThrust);
+                rightGlove.localPosition = Vector3.Lerp(
+                    RightRestPosition + displayedBodyOffset,
+                    RightOverheadClapPosition + displayedBodyOffset,
+                    overheadClapThrust);
+                leftGlove.localRotation = Quaternion.Euler(-18f, 0f, Mathf.Lerp(-8f, -78f, overheadClapThrust));
+                rightGlove.localRotation = Quaternion.Euler(-18f, 0f, Mathf.Lerp(8f, 78f, overheadClapThrust));
+            }
+            else if (usesSwords)
             {
                 float leftSlashAngle = CalculateSlashAngle(leftPunchTimer, leftSlashDirection);
                 float rightSlashAngle = CalculateSlashAngle(rightPunchTimer, rightSlashDirection);

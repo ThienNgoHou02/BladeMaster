@@ -24,6 +24,7 @@ namespace NeonPulse
         private HitBurstPool hitBursts;
         private SlashDebrisPool slashDebris;
         private PrefabParticleVfxPool punchHitVfx;
+        private PrefabParticleVfxPool overheadClapHitVfx;
         private PrefabParticleVfxPool slashHitVfx;
         private PrefabParticleVfxPool rhythmTileHitVfx;
         private ScreenFlashFeedback screenFlash;
@@ -72,6 +73,11 @@ namespace NeonPulse
                 transform,
                 config.Visuals.PunchHitVfxPrefab,
                 "Punch Hit VFX Pool");
+            overheadClapHitVfx = new PrefabParticleVfxPool(
+                config.Visuals.HitVfxPoolCapacity,
+                transform,
+                config.Visuals.OverheadClapHitVfxPrefab,
+                "Overhead Clap Hit VFX Pool");
             slashHitVfx = new PrefabParticleVfxPool(
                 config.Visuals.HitVfxPoolCapacity,
                 transform,
@@ -195,6 +201,7 @@ namespace NeonPulse
             ReturnAllTravellers();
             slashDebris?.Clear();
             punchHitVfx?.Clear();
+            overheadClapHitVfx?.Clear();
             slashHitVfx?.Clear();
             rhythmTileHitVfx?.Clear();
             screenFlash?.Clear();
@@ -341,6 +348,14 @@ namespace NeonPulse
             bool hadInput = false;
             bool anyHit = false;
             bool hitBoth = false;
+
+            if (input.OverheadClap)
+            {
+                hadInput = true;
+                bool hitClap = TryJudge(GameplayAction.OverheadClap, songTime, out _);
+                playerVisuals?.Trigger(GameplayAction.OverheadClap);
+                anyHit |= hitClap;
+            }
 
             if (input.BothPunch)
             {
@@ -492,6 +507,7 @@ namespace NeonPulse
             bool leftPunch = false;
             bool rightPunch = false;
             bool bothPunch = false;
+            bool overheadClap = false;
             bool duck = false;
             bool jump = false;
             bool dodgeLeft = false;
@@ -511,6 +527,7 @@ namespace NeonPulse
                     case GameplayAction.LeftPunch: leftPunch = true; break;
                     case GameplayAction.RightPunch: rightPunch = true; break;
                     case GameplayAction.BothPunch: bothPunch = true; break;
+                    case GameplayAction.OverheadClap: overheadClap = true; break;
                 }
             }
 
@@ -532,7 +549,7 @@ namespace NeonPulse
                 }
             }
 
-            return new PlayerInputFrame(leftPunch, rightPunch, bothPunch, duck, jump, dodgeLeft, dodgeRight, false);
+            return new PlayerInputFrame(leftPunch, rightPunch, bothPunch, overheadClap, duck, jump, dodgeLeft, dodgeRight, false);
         }
 
         private void UpdateUpcomingCue(float songTime)
@@ -753,7 +770,7 @@ namespace NeonPulse
             if (grade != AccuracyGrade.Miss)
             {
                 if (action == GameplayAction.LeftPunch || action == GameplayAction.RightPunch ||
-                    action == GameplayAction.BothPunch)
+                    action == GameplayAction.BothPunch || action == GameplayAction.OverheadClap)
                 {
                     PlayCombatHitVfx(action);
                     screenFlash?.Play(color);
@@ -765,6 +782,12 @@ namespace NeonPulse
 
         private void PlayCombatHitVfx(GameplayAction action)
         {
+            if (action == GameplayAction.OverheadClap)
+            {
+                PlayCombatHitVfx(overheadClapHitVfx, 0f, false);
+                return;
+            }
+
             bool usesSlashVfx = playerVisuals != null && playerVisuals.UsesSlashVisual;
             PrefabParticleVfxPool pool = usesSlashVfx ? slashHitVfx : punchHitVfx;
             if (pool == null)
@@ -832,7 +855,7 @@ namespace NeonPulse
 
         private Vector3 CreateJudgementPosition(BeatTraveller traveller)
         {
-            return new Vector3(traveller.transform.position.x, 1.8f, config.Rhythm.HitZ);
+            return new Vector3(traveller.transform.position.x, traveller.VisualCenterY, config.Rhythm.HitZ);
         }
 
         private static void ConfigureApplication()

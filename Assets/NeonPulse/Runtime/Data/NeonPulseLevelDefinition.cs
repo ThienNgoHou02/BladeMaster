@@ -11,7 +11,8 @@ namespace NeonPulse
         PunchObjects,
         SlashObjects,
         DodgeWalls,
-        RandomMixed
+        RandomMixed,
+        OverheadClap
     }
 
     [Serializable]
@@ -61,6 +62,7 @@ namespace NeonPulse
                 case LevelPhaseAction.SlashObjects: return "Chém vật thể";
                 case LevelPhaseAction.DodgeWalls: return "Né tường";
                 case LevelPhaseAction.RandomMixed: return "Tổng hợp ngẫu nhiên";
+                case LevelPhaseAction.OverheadClap: return "Vỗ tay trên đầu";
                 default: return "Phase chưa xác định";
             }
         }
@@ -76,6 +78,7 @@ namespace NeonPulse
         {
             new NeonPulseLevelPhase(LevelPhaseAction.RhythmTiles, 14f, 10f),
             new NeonPulseLevelPhase(LevelPhaseAction.PunchObjects, 14f, 12f),
+            new NeonPulseLevelPhase(LevelPhaseAction.OverheadClap, 14f, 12f),
             new NeonPulseLevelPhase(LevelPhaseAction.SlashObjects, 14f, 14f),
             new NeonPulseLevelPhase(LevelPhaseAction.DodgeWalls, 12f, 16f)
         };

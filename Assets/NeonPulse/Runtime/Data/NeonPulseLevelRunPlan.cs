@@ -29,7 +29,7 @@ namespace NeonPulse
         private readonly List<float> phaseStartTimes = new List<float>(8);
         private readonly List<float> phaseEndTimes = new List<float>(8);
         private readonly List<NeonPulseLevelPhase> phases = new List<NeonPulseLevelPhase>(8);
-        private readonly List<LevelPhaseAction> randomMixedActions = new List<LevelPhaseAction>(4);
+        private readonly List<LevelPhaseAction> randomMixedActions = new List<LevelPhaseAction>(5);
         private float legacyFlySpeed;
 
         public IReadOnlyList<PlannedGameplayEvent> TargetEvents => targetEvents;
@@ -140,6 +140,9 @@ namespace NeonPulse
                     case LevelPhaseAction.DodgeWalls:
                         AddDodgeWall(targetTime, spawnTime, ref randomState);
                         break;
+                    case LevelPhaseAction.OverheadClap:
+                        AddOverheadClapTarget(targetTime, spawnTime, ref randomState);
+                        break;
                 }
 
                 float spacing = phase.SpawnIntervalSeconds;
@@ -223,6 +226,13 @@ namespace NeonPulse
                 SpawnTime = spawnTime,
                 UseSlashVisual = useSlashVisual
             });
+        }
+
+        private void AddOverheadClapTarget(float targetTime, float spawnTime, ref uint randomState)
+        {
+            // Hai lane trong giữ target vừa tầm hai tay nhưng vẫn đổi bên rõ ràng.
+            int lane = NextRandomInt(ref randomState, 0, 2) == 0 ? 1 : 2;
+            AddTarget(targetTime, spawnTime, false, GameplayAction.OverheadClap, lane);
         }
 
         private void AddDodgeWall(float targetTime, float spawnTime, ref uint randomState)

@@ -88,6 +88,7 @@ namespace NeonPulse
         [SerializeField] private KeyCode rightPunch = KeyCode.E;
         [SerializeField] private KeyCode rightPunchAlternative = KeyCode.RightArrow;
         [SerializeField] private KeyCode bothPunch = KeyCode.F;
+        [SerializeField] private KeyCode overheadClap = KeyCode.C;
         [SerializeField] private KeyCode duck = KeyCode.S;
         [SerializeField] private KeyCode duckAlternative = KeyCode.DownArrow;
         [SerializeField] private KeyCode jump = KeyCode.Space;
@@ -102,6 +103,7 @@ namespace NeonPulse
         public KeyCode RightPunch => rightPunch;
         public KeyCode RightPunchAlternative => rightPunchAlternative;
         public KeyCode BothPunch => bothPunch;
+        public KeyCode OverheadClap => overheadClap;
         public KeyCode Duck => duck;
         public KeyCode DuckAlternative => duckAlternative;
         public KeyCode Jump => jump;
@@ -158,11 +160,13 @@ namespace NeonPulse
         [SerializeField] private Texture2D backgroundTexture;
         [SerializeField] private bool showPunchHands;
         [SerializeField] private GameObject punchHitVfxPrefab;
+        [SerializeField] private GameObject overheadClapHitVfxPrefab;
         [SerializeField] private bool showSlashWeapons;
         [SerializeField] private GameObject slashHitVfxPrefab;
         [SerializeField] private GameObject rhythmTileHitVfxPrefab;
         [SerializeField] private Texture2D footprintIconTexture;
         [SerializeField] private Texture2D punchIconTexture;
+        [SerializeField] private Texture2D overheadClapTargetIcon;
         [SerializeField] private Texture2D swordIconTexture;
         [SerializeField] private Texture2D leftPunchActionIcon;
         [SerializeField] private Texture2D rightPunchActionIcon;
@@ -172,6 +176,7 @@ namespace NeonPulse
         [SerializeField] private Texture2D rightDodgeActionIcon;
         [SerializeField] private Texture2D jumpActionIcon;
         [SerializeField] private Texture2D duckActionIcon;
+        [SerializeField] private Texture2D overheadClapActionIcon;
         [SerializeField] private Color cyan = new Color(0.02f, 1f, 0.95f, 1f);
         [SerializeField] private Color magenta = new Color(1f, 0.03f, 0.72f, 1f);
         [SerializeField] private Color purple = new Color(0.48f, 0.05f, 1f, 1f);
@@ -180,6 +185,7 @@ namespace NeonPulse
         [SerializeField, Range(0.5f, 6f)] private float neonIntensity = 2.2f;
         [SerializeField, Range(0f, 4f)] private float beatPulseIntensity = 1.4f;
         [SerializeField, Range(1f, 1.8f)] private float targetGlowScale = 1.26f;
+        [SerializeField, Range(2.4f, 5f)] private float overheadClapTargetHeight = 3.8f;
         [SerializeField, Range(0.6f, 2.5f)] private float rhythmTileLength = 1.35f;
         [SerializeField, Range(0.05f, 0.6f)] private float judgementLinePulseStrength = 0.28f;
         [SerializeField, Range(0.05f, 0.4f)] private float screenFlashDuration = 0.12f;
@@ -193,11 +199,13 @@ namespace NeonPulse
         public Texture2D BackgroundTexture => backgroundTexture;
         public bool ShowPunchHands => showPunchHands;
         public GameObject PunchHitVfxPrefab => punchHitVfxPrefab;
+        public GameObject OverheadClapHitVfxPrefab => overheadClapHitVfxPrefab;
         public bool ShowSlashWeapons => showSlashWeapons;
         public GameObject SlashHitVfxPrefab => slashHitVfxPrefab;
         public GameObject RhythmTileHitVfxPrefab => rhythmTileHitVfxPrefab;
         public Texture2D FootprintIconTexture => footprintIconTexture;
         public Texture2D PunchIconTexture => punchIconTexture;
+        public Texture2D OverheadClapTargetIcon => overheadClapTargetIcon;
         public Texture2D SwordIconTexture => swordIconTexture;
         public Texture2D LeftPunchActionIcon => leftPunchActionIcon;
         public Texture2D RightPunchActionIcon => rightPunchActionIcon;
@@ -207,6 +215,7 @@ namespace NeonPulse
         public Texture2D RightDodgeActionIcon => rightDodgeActionIcon;
         public Texture2D JumpActionIcon => jumpActionIcon;
         public Texture2D DuckActionIcon => duckActionIcon;
+        public Texture2D OverheadClapActionIcon => overheadClapActionIcon;
         public Color Cyan => cyan;
         public Color Magenta => magenta;
         public Color Purple => purple;
@@ -215,6 +224,7 @@ namespace NeonPulse
         public float NeonIntensity => neonIntensity;
         public float BeatPulseIntensity => beatPulseIntensity;
         public float TargetGlowScale => targetGlowScale;
+        public float OverheadClapTargetHeight => overheadClapTargetHeight;
         public float RhythmTileLength => rhythmTileLength;
         public float JudgementLinePulseStrength => judgementLinePulseStrength;
         public float ScreenFlashDuration => screenFlashDuration;
@@ -448,7 +458,7 @@ namespace NeonPulse
                 bool validAction = expectObstacle
                     ? isObstacle
                     : chartEvent.Action == GameplayAction.LeftPunch || chartEvent.Action == GameplayAction.RightPunch ||
-                      chartEvent.Action == GameplayAction.BothPunch;
+                      chartEvent.Action == GameplayAction.BothPunch || chartEvent.Action == GameplayAction.OverheadClap;
                 if (chartEvent.Beat < previousBeat || chartEvent.Beat < 0f || chartEvent.Beat >= rhythm.SongBeats ||
                     chartEvent.Lane < 0 || chartEvent.Lane > 3 || !validAction)
                 {

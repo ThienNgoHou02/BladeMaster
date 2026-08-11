@@ -272,6 +272,11 @@ namespace NeonPulse
                     return materials.Magenta;
                 }
 
+                if (action == GameplayAction.OverheadClap)
+                {
+                    return materials.Purple;
+                }
+
                 return materials.Cyan;
             }
 

@@ -11,6 +11,7 @@ namespace NeonPulse
         public readonly bool LeftPunch;
         public readonly bool RightPunch;
         public readonly bool BothPunch;
+        public readonly bool OverheadClap;
         public readonly bool Duck;
         public readonly bool Jump;
         public readonly bool DodgeLeft;
@@ -21,6 +22,7 @@ namespace NeonPulse
             bool leftPunch,
             bool rightPunch,
             bool bothPunch,
+            bool overheadClap,
             bool duck,
             bool jump,
             bool dodgeLeft,
@@ -30,6 +32,7 @@ namespace NeonPulse
             LeftPunch = leftPunch;
             RightPunch = rightPunch;
             BothPunch = bothPunch;
+            OverheadClap = overheadClap;
             Duck = duck;
             Jump = jump;
             DodgeLeft = dodgeLeft;
@@ -66,6 +69,7 @@ namespace NeonPulse
                 left,
                 right,
                 explicitBoth || (left && right),
+                Input.GetKeyDown(bindings.OverheadClap),
                 Input.GetKey(bindings.Duck) || Input.GetKey(bindings.DuckAlternative),
                 Input.GetKey(bindings.Jump) || Input.GetKey(bindings.JumpAlternative),
                 Input.GetKey(bindings.DodgeLeft),
