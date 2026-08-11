@@ -53,6 +53,8 @@ MonoBehaviour:
     jumpAlternative: 119
     dodgeLeft: 97
     dodgeRight: 100
+    leftLegDrawUp: 122
+    rightLegDrawUp: 120
     restart: 114
     restartAlternative: 13
   cameraFeel:
@@ -94,6 +96,9 @@ MonoBehaviour:
     jumpActionIcon: {fileID: 2800000, guid: cfdc1fab9dd948349a7d177d67ef2026, type: 3}
     duckActionIcon: {fileID: 2800000, guid: a9ef24dd47e649843bb7e62cb692b39d, type: 3}
     overheadClapActionIcon: {fileID: 2800000, guid: b478b2c0d4aaed848ace932dee68d831, type: 3}
+    leftLegDrawUpActionIcon: {fileID: 2800000, guid: 9981b7e4efc22454698c8124aff9612f, type: 3}
+    rightLegDrawUpActionIcon: {fileID: 2800000, guid: 79d69ca90ba8032499a3892c3f992c2e, type: 3}
+    legDrawUpTileIcon: {fileID: 2800000, guid: 8eba9bfe104fd444080b3f7ef46b2c3f, type: 3}
     cyan: {r: 0.02, g: 1, b: 0.95, a: 1}
     magenta: {r: 1, g: 0.03, b: 0.72, a: 1}
     purple: {r: 0.48, g: 0.05, b: 1, a: 1}

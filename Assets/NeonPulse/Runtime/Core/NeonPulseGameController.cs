@@ -256,7 +256,7 @@ namespace NeonPulse
 
                 PlannedGameplayEvent plannedEvent = chart[nextIndex];
                 traveller.Spawn(plannedEvent.Event, plannedEvent.TargetTime, plannedEvent.SpawnTime,
-                    config.Rhythm.SpawnZ, plannedEvent.UseSlashVisual);
+                    config.Rhythm.SpawnZ, plannedEvent.UseSlashVisual, plannedEvent.HoldDuration);
                 traveller.Tick(songTime);
                 activeList.Add(traveller);
                 nextIndex++;
@@ -430,7 +430,7 @@ namespace NeonPulse
                     continue;
                 }
 
-                if (relativeTime >= config.Rhythm.HoldWindowTrail)
+                if (relativeTime >= traveller.RequiredHoldDuration)
                 {
                     judgementPosition = CreateJudgementPosition(traveller);
                     score.RegisterHit(0f, traveller.Action);
@@ -456,6 +456,8 @@ namespace NeonPulse
                 case GameplayAction.Jump: return input.Jump;
                 case GameplayAction.DodgeLeft: return input.DodgeLeft;
                 case GameplayAction.DodgeRight: return input.DodgeRight;
+                case GameplayAction.LeftLegDrawUp: return input.LeftLegDrawUp;
+                case GameplayAction.RightLegDrawUp: return input.RightLegDrawUp;
                 default: return false;
             }
         }
@@ -512,6 +514,8 @@ namespace NeonPulse
             bool jump = false;
             bool dodgeLeft = false;
             bool dodgeRight = false;
+            bool leftLegDrawUp = false;
+            bool rightLegDrawUp = false;
 
             for (int index = 0; index < activePunchTargets.Count; index++)
             {
@@ -546,10 +550,23 @@ namespace NeonPulse
                     case GameplayAction.Jump: jump = true; break;
                     case GameplayAction.DodgeLeft: dodgeLeft = true; break;
                     case GameplayAction.DodgeRight: dodgeRight = true; break;
+                    case GameplayAction.LeftLegDrawUp: leftLegDrawUp = true; break;
+                    case GameplayAction.RightLegDrawUp: rightLegDrawUp = true; break;
                 }
             }
 
-            return new PlayerInputFrame(leftPunch, rightPunch, bothPunch, overheadClap, duck, jump, dodgeLeft, dodgeRight, false);
+            return new PlayerInputFrame(
+                leftPunch,
+                rightPunch,
+                bothPunch,
+                overheadClap,
+                duck,
+                jump,
+                dodgeLeft,
+                dodgeRight,
+                leftLegDrawUp,
+                rightLegDrawUp,
+                false);
         }
 
         private void UpdateUpcomingCue(float songTime)
@@ -583,10 +600,16 @@ namespace NeonPulse
             }
 
             playerVisuals?.SetCombatMode(closest.UsesSlashVisual ? CombatGameplayMode.Slash : CombatGameplayMode.Punch);
-            playerVisuals?.SetHandsVisible(true);
+            playerVisuals?.SetHandsVisible(!closest.RequiresHold ||
+                                           (closest.Action != GameplayAction.LeftLegDrawUp &&
+                                            closest.Action != GameplayAction.RightLegDrawUp));
             hud.SetActionMode(closest.UsesSlashVisual ? CombatGameplayMode.Slash : CombatGameplayMode.Punch);
-            hud.SetUpcomingAction(closest.Action, closest.TargetTime - songTime,
-                Mathf.Max(0.01f, closest.TargetTime - closest.SpawnTime), materials);
+            hud.SetUpcomingAction(
+                closest.Action,
+                closest.TargetTime - songTime,
+                Mathf.Max(0.01f, closest.TargetTime - closest.SpawnTime),
+                materials,
+                closest.RequiredHoldDuration);
         }
 
         private bool TryJudge(GameplayAction requestedAction, float songTime, out float slashDirection)
@@ -706,7 +729,8 @@ namespace NeonPulse
                 CombatGameplayMode mode = phase.Action == LevelPhaseAction.SlashObjects
                     ? CombatGameplayMode.Slash
                     : CombatGameplayMode.Punch;
-                playerVisuals?.SetHandsVisible(phase.Action != LevelPhaseAction.RhythmTiles);
+                playerVisuals?.SetHandsVisible(phase.Action != LevelPhaseAction.RhythmTiles &&
+                                               phase.Action != LevelPhaseAction.LegDrawUp);
                 playerVisuals?.SetCombatMode(mode);
                 hud.SetActionMode(mode);
                 return;
@@ -835,12 +859,12 @@ namespace NeonPulse
                 return new Color(1f, 0.08f, 0.18f, 1f);
             }
 
-            if (action == GameplayAction.LeftPunch)
+            if (action == GameplayAction.LeftPunch || action == GameplayAction.LeftLegDrawUp)
             {
                 return materials.CyanColor;
             }
 
-            if (action == GameplayAction.RightPunch)
+            if (action == GameplayAction.RightPunch || action == GameplayAction.RightLegDrawUp)
             {
                 return materials.MagentaColor;
             }

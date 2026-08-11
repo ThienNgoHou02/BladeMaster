@@ -95,6 +95,8 @@ namespace NeonPulse
         [SerializeField] private KeyCode jumpAlternative = KeyCode.W;
         [SerializeField] private KeyCode dodgeLeft = KeyCode.A;
         [SerializeField] private KeyCode dodgeRight = KeyCode.D;
+        [SerializeField] private KeyCode leftLegDrawUp = KeyCode.Z;
+        [SerializeField] private KeyCode rightLegDrawUp = KeyCode.X;
         [SerializeField] private KeyCode restart = KeyCode.R;
         [SerializeField] private KeyCode restartAlternative = KeyCode.Return;
 
@@ -110,6 +112,8 @@ namespace NeonPulse
         public KeyCode JumpAlternative => jumpAlternative;
         public KeyCode DodgeLeft => dodgeLeft;
         public KeyCode DodgeRight => dodgeRight;
+        public KeyCode LeftLegDrawUp => leftLegDrawUp;
+        public KeyCode RightLegDrawUp => rightLegDrawUp;
         public KeyCode Restart => restart;
         public KeyCode RestartAlternative => restartAlternative;
     }
@@ -177,6 +181,9 @@ namespace NeonPulse
         [SerializeField] private Texture2D jumpActionIcon;
         [SerializeField] private Texture2D duckActionIcon;
         [SerializeField] private Texture2D overheadClapActionIcon;
+        [SerializeField] private Texture2D leftLegDrawUpActionIcon;
+        [SerializeField] private Texture2D rightLegDrawUpActionIcon;
+        [SerializeField] private Texture2D legDrawUpTileIcon;
         [SerializeField] private Color cyan = new Color(0.02f, 1f, 0.95f, 1f);
         [SerializeField] private Color magenta = new Color(1f, 0.03f, 0.72f, 1f);
         [SerializeField] private Color purple = new Color(0.48f, 0.05f, 1f, 1f);
@@ -216,6 +223,9 @@ namespace NeonPulse
         public Texture2D JumpActionIcon => jumpActionIcon;
         public Texture2D DuckActionIcon => duckActionIcon;
         public Texture2D OverheadClapActionIcon => overheadClapActionIcon;
+        public Texture2D LeftLegDrawUpActionIcon => leftLegDrawUpActionIcon;
+        public Texture2D RightLegDrawUpActionIcon => rightLegDrawUpActionIcon;
+        public Texture2D LegDrawUpTileIcon => legDrawUpTileIcon;
         public Color Cyan => cyan;
         public Color Magenta => magenta;
         public Color Purple => purple;
@@ -565,7 +575,8 @@ namespace NeonPulse
         private static bool IsObstacleAction(GameplayAction action)
         {
             return action == GameplayAction.Duck || action == GameplayAction.Jump ||
-                   action == GameplayAction.DodgeLeft || action == GameplayAction.DodgeRight;
+                   action == GameplayAction.DodgeLeft || action == GameplayAction.DodgeRight ||
+                   action == GameplayAction.LeftLegDrawUp || action == GameplayAction.RightLegDrawUp;
         }
     }
 }

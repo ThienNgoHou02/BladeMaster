@@ -170,7 +170,12 @@ namespace NeonPulse
         }
 
         /// <summary>Shows the closest required action and fills toward its hit time.</summary>
-        public void SetUpcomingAction(GameplayAction action, float secondsUntilHit, float approachDuration, RuntimeMaterialLibrary materials)
+        public void SetUpcomingAction(
+            GameplayAction action,
+            float secondsUntilHit,
+            float approachDuration,
+            RuntimeMaterialLibrary materials,
+            float holdDuration = 0f)
         {
             if (nextActionPanel == null || nextActionText == null || nextActionFill == null || materials == null)
             {
@@ -178,8 +183,9 @@ namespace NeonPulse
             }
 
             bool holdAction = RequiresHold(action);
+            float effectiveHoldDuration = holdDuration > 0f ? holdDuration : timing.HoldWindowTrail;
             bool ready = holdAction
-                ? secondsUntilHit <= timing.HoldWindowLead && secondsUntilHit >= -timing.HoldWindowTrail - 0.02f
+                ? secondsUntilHit <= timing.HoldWindowLead && secondsUntilHit >= -effectiveHoldDuration - 0.02f
                 : Mathf.Abs(secondsUntilHit) <= timing.GoodWindow;
             bool cueChanged = !hasNextAction || lastNextAction != action || lastCueUsesSlashMode != isSlashMode;
             if (cueChanged)
@@ -235,7 +241,9 @@ namespace NeonPulse
                 case GameplayAction.Duck: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.Duck) + " — ĐỪNG THẢ"; break;
                 case GameplayAction.Jump: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.Jump) + " — ĐỪNG THẢ"; break;
                 case GameplayAction.DodgeLeft: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.DodgeLeft) + " — ĐỪNG THẢ"; break;
-                default: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.DodgeRight) + " — ĐỪNG THẢ"; break;
+                case GameplayAction.DodgeRight: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.DodgeRight) + " — ĐỪNG THẢ"; break;
+                case GameplayAction.LeftLegDrawUp: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.LeftLegDrawUp) + " — CO CHÂN TRÁI"; break;
+                default: nextActionText.text = "ĐANG GIỮ " + GetKeyLabel(bindings.RightLegDrawUp) + " — CO CHÂN PHẢI"; break;
             }
 
             nextActionText.color = materials.YellowColor;
@@ -566,6 +574,12 @@ namespace NeonPulse
                 case GameplayAction.Duck:
                     primaryTexture = visualSettings.DuckActionIcon;
                     break;
+                case GameplayAction.LeftLegDrawUp:
+                    primaryTexture = visualSettings.LeftLegDrawUpActionIcon;
+                    break;
+                case GameplayAction.RightLegDrawUp:
+                    primaryTexture = visualSettings.RightLegDrawUpActionIcon;
+                    break;
             }
 
             bool hasPrimaryIcon = primaryTexture != null;
@@ -577,7 +591,10 @@ namespace NeonPulse
                 return false;
             }
 
-            ConfigureIconTexture(primaryActionIcon, primaryTexture, action == GameplayAction.OverheadClap);
+            ConfigureIconTexture(primaryActionIcon, primaryTexture,
+                action == GameplayAction.OverheadClap ||
+                action == GameplayAction.LeftLegDrawUp ||
+                action == GameplayAction.RightLegDrawUp);
             primaryActionSlot.anchoredPosition = hasSecondaryIcon
                 ? new Vector2(-ActionIconSlotSpacing, 0f)
                 : Vector2.zero;
@@ -652,6 +669,8 @@ namespace NeonPulse
                     case GameplayAction.Jump: return "GIỮ NGAY   " + GetKeyLabel(bindings.Jump) + " — NHẢY";
                     case GameplayAction.DodgeLeft: return "GIỮ NGAY   " + GetKeyLabel(bindings.DodgeLeft) + " — NÉ TRÁI";
                     case GameplayAction.DodgeRight: return "GIỮ NGAY   " + GetKeyLabel(bindings.DodgeRight) + " — NÉ PHẢI";
+                    case GameplayAction.LeftLegDrawUp: return "GIỮ NGAY   " + GetKeyLabel(bindings.LeftLegDrawUp) + " — CO CHÂN TRÁI";
+                    case GameplayAction.RightLegDrawUp: return "GIỮ NGAY   " + GetKeyLabel(bindings.RightLegDrawUp) + " — CO CHÂN PHẢI";
                 }
             }
 
@@ -664,7 +683,9 @@ namespace NeonPulse
                 case GameplayAction.Duck: return "SẮP TỚI   " + GetKeyLabel(bindings.Duck) + " — CÚI NGƯỜI";
                 case GameplayAction.Jump: return "SẮP TỚI   " + GetKeyLabel(bindings.Jump) + " — NHẢY";
                 case GameplayAction.DodgeLeft: return "SẮP TỚI   " + GetKeyLabel(bindings.DodgeLeft) + " — NÉ TRÁI";
-                default: return "SẮP TỚI   " + GetKeyLabel(bindings.DodgeRight) + " — NÉ PHẢI";
+                case GameplayAction.DodgeRight: return "SẮP TỚI   " + GetKeyLabel(bindings.DodgeRight) + " — NÉ PHẢI";
+                case GameplayAction.LeftLegDrawUp: return "SẮP TỚI   " + GetKeyLabel(bindings.LeftLegDrawUp) + " — CO CHÂN TRÁI";
+                default: return "SẮP TỚI   " + GetKeyLabel(bindings.RightLegDrawUp) + " — CO CHÂN PHẢI";
             }
         }
 
@@ -679,6 +700,7 @@ namespace NeonPulse
                    GetKeyLabel(bindings.OverheadClap) + "  VỖ TAY TRÊN ĐẦU\nGIỮ " +
                    GetKeyLabel(bindings.DodgeLeft) + " / " + GetKeyLabel(bindings.DodgeRight) + "  NÉ     GIỮ " +
                    GetKeyLabel(bindings.Duck) + "  CÚI     GIỮ " + GetKeyLabel(bindings.Jump) + "  NHẢY     " +
+                   "GIỮ " + GetKeyLabel(bindings.LeftLegDrawUp) + " / " + GetKeyLabel(bindings.RightLegDrawUp) + "  CO CHÂN     " +
                    restartLabel + "  CHƠI LẠI";
         }
 
@@ -694,7 +716,9 @@ namespace NeonPulse
                    GetKeyLabel(bindings.BothPunch) + "  " + bothLabel + "</color>     <color=#b866ff>" +
                    GetKeyLabel(bindings.OverheadClap) + "  VỖ TAY TRÊN ĐẦU</color>\nGIỮ " + GetKeyLabel(bindings.Duck) +
                    "  CÚI     GIỮ " + GetKeyLabel(bindings.Jump) + "  NHẢY     GIỮ " +
-                   GetKeyLabel(bindings.DodgeLeft) + " / " + GetKeyLabel(bindings.DodgeRight) + "  NÉ";
+                   GetKeyLabel(bindings.DodgeLeft) + " / " + GetKeyLabel(bindings.DodgeRight) + "  NÉ\nGIỮ " +
+                   GetKeyLabel(bindings.LeftLegDrawUp) + "  CO CHÂN TRÁI     GIỮ " +
+                   GetKeyLabel(bindings.RightLegDrawUp) + "  CO CHÂN PHẢI";
         }
 
         private static string GetKeyLabel(KeyCode key)
@@ -713,12 +737,14 @@ namespace NeonPulse
 
         private static Color GetActionColor(GameplayAction action, RuntimeMaterialLibrary materials)
         {
-            if (action == GameplayAction.LeftPunch || action == GameplayAction.DodgeLeft)
+            if (action == GameplayAction.LeftPunch || action == GameplayAction.DodgeLeft ||
+                action == GameplayAction.LeftLegDrawUp)
             {
                 return materials.CyanColor;
             }
 
-            if (action == GameplayAction.RightPunch || action == GameplayAction.DodgeRight)
+            if (action == GameplayAction.RightPunch || action == GameplayAction.DodgeRight ||
+                action == GameplayAction.RightLegDrawUp)
             {
                 return materials.MagentaColor;
             }
@@ -734,7 +760,8 @@ namespace NeonPulse
         private static bool RequiresHold(GameplayAction action)
         {
             return action == GameplayAction.Duck || action == GameplayAction.Jump ||
-                   action == GameplayAction.DodgeLeft || action == GameplayAction.DodgeRight;
+                   action == GameplayAction.DodgeLeft || action == GameplayAction.DodgeRight ||
+                   action == GameplayAction.LeftLegDrawUp || action == GameplayAction.RightLegDrawUp;
         }
 
         private static void SetRect(RectTransform rect, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 size)

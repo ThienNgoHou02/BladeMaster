@@ -201,6 +201,8 @@ namespace NeonPulse.EditorTools
             DrawField(input, "jumpAlternative", "Phím phụ nhảy");
             DrawField(input, "dodgeLeft", "Né trái");
             DrawField(input, "dodgeRight", "Né phải");
+            DrawField(input, "leftLegDrawUp", "Co chân trái");
+            DrawField(input, "rightLegDrawUp", "Co chân phải");
 
             DrawSection("HỆ THỐNG");
             DrawField(input, "restart", "Chơi lại");
@@ -267,6 +269,9 @@ namespace NeonPulse.EditorTools
             DrawField(visuals, "jumpActionIcon", "Icon động tác nhảy");
             DrawField(visuals, "duckActionIcon", "Icon động tác cúi");
             DrawField(visuals, "overheadClapActionIcon", "Icon timing vỗ tay trên đầu");
+            DrawField(visuals, "leftLegDrawUpActionIcon", "Icon timing co chân trái");
+            DrawField(visuals, "rightLegDrawUpActionIcon", "Icon timing co chân phải");
+            DrawField(visuals, "legDrawUpTileIcon", "Icon co chân trên viên gạch");
             DrawField(visuals, "cyan", "Màu tay trái");
             DrawField(visuals, "magenta", "Màu tay phải");
             DrawField(visuals, "purple", "Màu đường hầm");
@@ -314,7 +319,7 @@ namespace NeonPulse.EditorTools
             SerializedProperty phases = serializedLevel.FindProperty("phases");
             phaseList = new ReorderableList(serializedLevel, phases, true, true, true, true)
             {
-                elementHeight = 116f
+                elementHeight = 140f
             };
             phaseList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "PHASE — action quyết định tên và gameplay");
             phaseList.drawElementCallback = (rect, index, active, focused) =>
@@ -325,6 +330,7 @@ namespace NeonPulse.EditorTools
                 SerializedProperty flySpeed = phase.FindPropertyRelative("flySpeed");
                 SerializedProperty spawnInterval = phase.FindPropertyRelative("spawnIntervalSeconds");
                 SerializedProperty objectsPerWave = phase.FindPropertyRelative("objectsPerWave");
+                SerializedProperty holdDuration = phase.FindPropertyRelative("holdDurationSeconds");
                 rect.y += 3f;
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), action,
                     new GUIContent("Action"));
@@ -346,7 +352,13 @@ namespace NeonPulse.EditorTools
                         objectsPerWave, new GUIContent("Object mỗi wave"));
                 }
 
-                EditorGUI.LabelField(new Rect(rect.x, rect.y + 91f, rect.width, EditorGUIUtility.singleLineHeight),
+                if (phaseAction == LevelPhaseAction.LegDrawUp)
+                {
+                    EditorGUI.PropertyField(new Rect(rect.x, rect.y + 91f, rect.width, EditorGUIUtility.singleLineHeight),
+                        holdDuration, new GUIContent("Thời gian co chân (giây)"));
+                }
+
+                EditorGUI.LabelField(new Rect(rect.x, rect.y + (phaseAction == LevelPhaseAction.LegDrawUp ? 115f : 91f), rect.width, EditorGUIUtility.singleLineHeight),
                     GetPhaseDescription(phaseAction), EditorStyles.miniLabel);
             };
         }
@@ -360,6 +372,7 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.SlashObjects: return "Thời gian chém";
                 case LevelPhaseAction.DodgeWalls: return "Thời gian né";
                 case LevelPhaseAction.OverheadClap: return "Thời gian vỗ tay";
+                case LevelPhaseAction.LegDrawUp: return "Thời gian phase co chân";
                 default: return "Thời gian tổng hợp";
             }
         }
@@ -373,6 +386,7 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.SlashObjects: return "Tốc độ vật thể";
                 case LevelPhaseAction.DodgeWalls: return "Tốc độ tường";
                 case LevelPhaseAction.OverheadClap: return "Tốc độ vật thể";
+                case LevelPhaseAction.LegDrawUp: return "Tốc độ gạch co chân";
                 default: return "Tốc độ tổng hợp";
             }
         }
@@ -386,6 +400,7 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.SlashObjects: return "Random mục tiêu, hướng chém và lane.";
                 case LevelPhaseAction.DodgeWalls: return "Random hướng né trái, phải, cúi hoặc nhảy.";
                 case LevelPhaseAction.OverheadClap: return "Khối vỗ tay random lane trái/phải, cao vừa tầm hai tay trên đầu.";
+                case LevelPhaseAction.LegDrawUp: return "Random chân trái/phải; chiều dài gạch = tốc độ × thời gian co chân.";
                 default: return "Mỗi wave random một action cụ thể đang có trong Level.";
             }
         }
@@ -569,6 +584,7 @@ namespace NeonPulse.EditorTools
                 SerializedProperty speed = phase.FindPropertyRelative("flySpeed");
                 SerializedProperty spawnInterval = phase.FindPropertyRelative("spawnIntervalSeconds");
                 SerializedProperty objectsPerWave = phase.FindPropertyRelative("objectsPerWave");
+                SerializedProperty holdDuration = phase.FindPropertyRelative("holdDurationSeconds");
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 EditorGUILayout.PropertyField(action, new GUIContent("Action"));
                 LevelPhaseAction phaseAction = (LevelPhaseAction)action.enumValueIndex;
@@ -579,6 +595,10 @@ namespace NeonPulse.EditorTools
                 using (new EditorGUI.DisabledScope(!SupportsMultipleObjects(phaseAction)))
                 {
                     EditorGUILayout.PropertyField(objectsPerWave, new GUIContent("Object mỗi wave"));
+                }
+                if (phaseAction == LevelPhaseAction.LegDrawUp)
+                {
+                    EditorGUILayout.PropertyField(holdDuration, new GUIContent("Thời gian co chân (giây)"));
                 }
                 if (GUILayout.Button("XÓA PHASE " + (index + 1)))
                 {
@@ -599,6 +619,7 @@ namespace NeonPulse.EditorTools
                 newPhase.FindPropertyRelative("flySpeed").floatValue = 12f;
                 newPhase.FindPropertyRelative("spawnIntervalSeconds").floatValue = 1f;
                 newPhase.FindPropertyRelative("objectsPerWave").intValue = 1;
+                newPhase.FindPropertyRelative("holdDurationSeconds").floatValue = 1.2f;
             }
 
             serializedObject.ApplyModifiedProperties();
@@ -617,6 +638,7 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.PunchObjects: return "Thời gian đấm";
                 case LevelPhaseAction.SlashObjects: return "Thời gian chém";
                 case LevelPhaseAction.OverheadClap: return "Thời gian vỗ tay";
+                case LevelPhaseAction.LegDrawUp: return "Thời gian phase co chân";
                 default: return "Thời gian né";
             }
         }
@@ -627,6 +649,7 @@ namespace NeonPulse.EditorTools
             {
                 case LevelPhaseAction.RhythmTiles: return "Tốc độ gạch";
                 case LevelPhaseAction.DodgeWalls: return "Tốc độ tường";
+                case LevelPhaseAction.LegDrawUp: return "Tốc độ gạch co chân";
                 default: return "Tốc độ vật thể";
             }
         }

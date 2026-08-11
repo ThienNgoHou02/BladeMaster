@@ -36,6 +36,7 @@ namespace NeonPulse
         public Material OverheadClapIcon { get; }
         public Material SwordIconOnCyan { get; }
         public Material SwordIconOnMagenta { get; }
+        public Material LegDrawUpTileIcon { get; }
 
         public RuntimeMaterialLibrary(VisualSettings settings)
         {
@@ -70,6 +71,7 @@ namespace NeonPulse
             OverheadClapIcon = CreateIcon("Overhead Clap Icon", safeSettings.OverheadClapTargetIcon, Color.white, 1f);
             SwordIconOnCyan = CreateIcon("Sword Icon On Cyan", safeSettings.SwordIconTexture, MagentaColor, 1f);
             SwordIconOnMagenta = CreateIcon("Sword Icon On Magenta", safeSettings.SwordIconTexture, CyanColor, 1f);
+            LegDrawUpTileIcon = CreateIcon("Leg Draw Up Tile Icon", safeSettings.LegDrawUpTileIcon, Color.white, 1f);
         }
 
         /// <summary>Pulses shared emission on the beat without creating material instances per renderer.</summary>
@@ -108,6 +110,7 @@ namespace NeonPulse
             DestroyMaterial(OverheadClapIcon);
             DestroyMaterial(SwordIconOnCyan);
             DestroyMaterial(SwordIconOnMagenta);
+            DestroyMaterial(LegDrawUpTileIcon);
         }
 
         public Material GetFootprintIcon(RhythmTileColor tileColor)

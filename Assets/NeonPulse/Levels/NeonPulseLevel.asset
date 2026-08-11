@@ -15,68 +15,87 @@ MonoBehaviour:
   levelName: Level 01
   phaseTransitionRestSeconds: 1.25
   phases:
-  - action: 5
-    durationSeconds: 30
-    flySpeed: 30
-    spawnIntervalSeconds: 1
+  - action: 6
+    durationSeconds: 20
+    flySpeed: 12
+    spawnIntervalSeconds: 2
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 0
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 1
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 2
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 3
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 0
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 1
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 2
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 3
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 0
     durationSeconds: 30
     flySpeed: 30
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 1
     durationSeconds: 30
     flySpeed: 30
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 2
     durationSeconds: 30
     flySpeed: 30
     spawnIntervalSeconds: 1
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 4
     durationSeconds: 10
     flySpeed: 30
     spawnIntervalSeconds: 0.5
     objectsPerWave: 1
+    holdDurationSeconds: 1.2
+  - action: 5
+    durationSeconds: 30
+    flySpeed: 30
+    spawnIntervalSeconds: 1
+    objectsPerWave: 1
+    holdDurationSeconds: 1.2

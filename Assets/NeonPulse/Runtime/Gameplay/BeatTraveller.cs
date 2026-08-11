@@ -12,8 +12,11 @@ namespace NeonPulse
 
         private static readonly float[] LaneX = { -2.7f, -0.9f, 0.9f, 2.7f };
 
-        private readonly GameObject[] punchVariants = new GameObject[(int)GameplayAction.OverheadClap + 1];
-        private readonly GameObject[] slashVariants = new GameObject[(int)GameplayAction.OverheadClap + 1];
+        private readonly GameObject[] punchVariants = new GameObject[(int)GameplayAction.RightLegDrawUp + 1];
+        private readonly GameObject[] slashVariants = new GameObject[(int)GameplayAction.RightLegDrawUp + 1];
+        private readonly Transform[] legTileBodies = new Transform[(int)GameplayAction.RightLegDrawUp + 1];
+        private readonly Transform[] legTileGlows = new Transform[(int)GameplayAction.RightLegDrawUp + 1];
+        private readonly Transform[] legTileIcons = new Transform[(int)GameplayAction.RightLegDrawUp + 1];
         private GameplayAction action;
         private float targetTime;
         private float spawnTime;
@@ -24,6 +27,9 @@ namespace NeonPulse
         private float labelVisibleZ;
         private float targetGlowScale;
         private float overheadClapTargetHeight;
+        private float defaultHoldDuration;
+        private float requiredHoldDuration;
+        private float travelSpeed;
         private bool usesSlashVisual;
         private Transform leftSlashIcon;
         private Transform rightSlashIcon;
@@ -37,11 +43,14 @@ namespace NeonPulse
         public float SpawnTime => spawnTime;
         public float SlashDirection { get; private set; }
         public bool UsesSlashVisual => usesSlashVisual;
-        public float VisualCenterY => action == GameplayAction.OverheadClap ? overheadClapTargetHeight : 1.8f;
+        public float VisualCenterY => action == GameplayAction.OverheadClap
+            ? overheadClapTargetHeight
+            : IsLegDrawUp(action) ? 0.42f : 1.8f;
         public bool IsActive { get; private set; }
         public bool RequiresHold => IsObstacle(action);
         public bool HoldEvaluationStarted { get; private set; }
         public bool HoldInputConfirmed { get; private set; }
+        public float RequiredHoldDuration => requiredHoldDuration;
 
         /// <summary>Builds all visual variants once so pooled reuse only toggles cached objects.</summary>
         public void Initialize(RuntimeMaterialLibrary materials, NeonPulseGameConfig config)
@@ -56,6 +65,7 @@ namespace NeonPulse
             labelVisibleZ = config.Rhythm.LabelVisibleZ;
             targetGlowScale = config.Visuals.TargetGlowScale;
             overheadClapTargetHeight = config.Visuals.OverheadClapTargetHeight;
+            defaultHoldDuration = config.Rhythm.HoldWindowTrail;
             punchVariants[(int)GameplayAction.LeftPunch] = CreatePunchVariant("Left Punch", materials.Cyan, materials.CyanGlow, materials.PunchIconOnCyan, true);
             punchVariants[(int)GameplayAction.RightPunch] = CreatePunchVariant("Right Punch", materials.Magenta, materials.MagentaGlow, materials.PunchIconOnMagenta, false);
             punchVariants[(int)GameplayAction.BothPunch] = CreatePairVariant(
@@ -81,6 +91,7 @@ namespace NeonPulse
                 overheadClapTargetHeight);
             punchVariants[(int)GameplayAction.OverheadClap] = overheadClap;
             slashVariants[(int)GameplayAction.OverheadClap] = overheadClap;
+            CreateLegDrawUpVariants(materials);
 
             for (int i = 0; i < punchVariants.Length; i++)
             {
@@ -104,21 +115,28 @@ namespace NeonPulse
         }
 
         /// <summary>Activates this object for a chart event without allocating memory.</summary>
-        public void Spawn(BeatmapEvent chartEvent, float eventTime, float eventSpawnTime, float startZ, bool useSlashVisual)
+        public void Spawn(
+            BeatmapEvent chartEvent,
+            float eventTime,
+            float eventSpawnTime,
+            float startZ,
+            bool useSlashVisual,
+            float holdDuration = 0f)
         {
             action = chartEvent.Action;
             targetTime = eventTime;
             spawnTime = eventSpawnTime;
             spawnZ = startZ;
+            requiredHoldDuration = holdDuration > 0f ? holdDuration : defaultHoldDuration;
+            travelSpeed = (spawnZ - hitZ) / Mathf.Max(0.01f, targetTime - spawnTime);
             HoldEvaluationStarted = false;
             HoldInputConfirmed = false;
             SlashDirection = 0f;
             usesSlashVisual = useSlashVisual && !IsObstacle(action);
 
-            float x = IsObstacle(action) || action == GameplayAction.BothPunch
-                ? 0f
-                : LaneX[Mathf.Clamp(chartEvent.Lane, 0, 3)];
+            float x = GetSpawnX(chartEvent);
             transform.SetPositionAndRotation(new Vector3(x, 0f, startZ), Quaternion.identity);
+            ConfigureLegDrawUpTile();
             ConfigureSlashIcons();
             GetActiveVariant().SetActive(true);
             ConfigureActionLabel(action);
@@ -131,9 +149,17 @@ namespace NeonPulse
         {
             float travelDuration = targetTime - spawnTime;
             float normalized = travelDuration > 0.001f ? (songTime - spawnTime) / travelDuration : 1f;
-            float z = normalized <= 1f
-                ? Mathf.LerpUnclamped(spawnZ, hitZ, normalized)
-                : Mathf.LerpUnclamped(hitZ, despawnZ, (songTime - targetTime) / PostTargetTravelDuration);
+            float z;
+            if (IsLegDrawUp(action) && normalized > 1f)
+            {
+                z = hitZ - (songTime - targetTime) * travelSpeed;
+            }
+            else
+            {
+                z = normalized <= 1f
+                    ? Mathf.LerpUnclamped(spawnZ, hitZ, normalized)
+                    : Mathf.LerpUnclamped(hitZ, despawnZ, (songTime - targetTime) / PostTargetTravelDuration);
+            }
 
             Vector3 position = transform.position;
             position.z = z;
@@ -249,6 +275,16 @@ namespace NeonPulse
                     actionLabel.text = "GIU A   <<<\nNE TRAI";
                     actionLabel.color = new Color(0.02f, 1f, 0.95f, 1f);
                     actionLabelTransform.localPosition = new Vector3(-1.8f, 4.6f, -0.45f);
+                    break;
+                case GameplayAction.LeftLegDrawUp:
+                    actionLabel.text = "GIU Z\nCO CHAN TRAI";
+                    actionLabel.color = new Color(0.02f, 1f, 0.95f, 1f);
+                    actionLabelTransform.localPosition = new Vector3(0f, 1.65f, 0f);
+                    break;
+                case GameplayAction.RightLegDrawUp:
+                    actionLabel.text = "GIU X\nCO CHAN PHAI";
+                    actionLabel.color = new Color(1f, 0.03f, 0.72f, 1f);
+                    actionLabelTransform.localPosition = new Vector3(0f, 1.65f, 0f);
                     break;
                 default:
                     actionLabel.text = ">>>   GIU D\nNE PHAI";
@@ -412,6 +448,96 @@ namespace NeonPulse
             return usesSlashVisual ? slashVariants[(int)action] : punchVariants[(int)action];
         }
 
+        private float GetSpawnX(BeatmapEvent chartEvent)
+        {
+            if (action == GameplayAction.LeftLegDrawUp)
+            {
+                return -1.8f;
+            }
+
+            if (action == GameplayAction.RightLegDrawUp)
+            {
+                return 1.8f;
+            }
+
+            return IsObstacle(action) || action == GameplayAction.BothPunch
+                ? 0f
+                : LaneX[Mathf.Clamp(chartEvent.Lane, 0, LaneX.Length - 1)];
+        }
+
+        private void CreateLegDrawUpVariants(RuntimeMaterialLibrary materials)
+        {
+            GameObject left = CreateLegDrawUpVariant(
+                "Left Leg Draw Up Tile",
+                GameplayAction.LeftLegDrawUp,
+                materials.Cyan,
+                materials.CyanGlow,
+                materials.LegDrawUpTileIcon);
+            GameObject right = CreateLegDrawUpVariant(
+                "Right Leg Draw Up Tile",
+                GameplayAction.RightLegDrawUp,
+                materials.Magenta,
+                materials.MagentaGlow,
+                materials.LegDrawUpTileIcon);
+            punchVariants[(int)GameplayAction.LeftLegDrawUp] = slashVariants[(int)GameplayAction.LeftLegDrawUp] = left;
+            punchVariants[(int)GameplayAction.RightLegDrawUp] = slashVariants[(int)GameplayAction.RightLegDrawUp] = right;
+        }
+
+        private GameObject CreateLegDrawUpVariant(
+            string objectName,
+            GameplayAction legAction,
+            Material bodyMaterial,
+            Material glowMaterial,
+            Material iconMaterial)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(transform, false);
+            int actionIndex = (int)legAction;
+            legTileGlows[actionIndex] = CreatePrimitive(
+                root.transform,
+                PrimitiveType.Cube,
+                "Leg Tile Glow",
+                Vector3.zero,
+                Vector3.one,
+                glowMaterial).transform;
+            legTileBodies[actionIndex] = CreatePrimitive(
+                root.transform,
+                PrimitiveType.Cube,
+                "Leg Tile Body",
+                Vector3.zero,
+                Vector3.one,
+                bodyMaterial).transform;
+            legTileIcons[actionIndex] = CreatePrimitive(
+                root.transform,
+                PrimitiveType.Quad,
+                "Leg Up Icon",
+                Vector3.zero,
+                Vector3.one,
+                iconMaterial).transform;
+            return root;
+        }
+
+        private void ConfigureLegDrawUpTile()
+        {
+            if (!IsLegDrawUp(action))
+            {
+                return;
+            }
+
+            int actionIndex = (int)action;
+            float tileLength = Mathf.Max(1.6f, travelSpeed * requiredHoldDuration);
+            Transform glow = legTileGlows[actionIndex];
+            Transform body = legTileBodies[actionIndex];
+            Transform icon = legTileIcons[actionIndex];
+            glow.localPosition = new Vector3(0f, 0.38f, tileLength * 0.5f);
+            glow.localScale = new Vector3(3.36f, 0.72f, tileLength + 0.18f);
+            body.localPosition = new Vector3(0f, 0.4f, tileLength * 0.5f);
+            body.localScale = new Vector3(3.15f, 0.62f, tileLength);
+            icon.localPosition = new Vector3(0f, 0.725f, Mathf.Min(tileLength * 0.5f, 1.2f));
+            icon.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            icon.localScale = new Vector3(action == GameplayAction.LeftLegDrawUp ? -1.35f : 1.35f, 1.35f, 1f);
+        }
+
         private GameObject CreateBarVariant(string objectName, Material material, Material glowMaterial, Vector3 scale, Vector3 localPosition)
         {
             GameObject root = new GameObject(objectName);
@@ -467,7 +593,13 @@ namespace NeonPulse
         private static bool IsObstacle(GameplayAction value)
         {
             return value == GameplayAction.Duck || value == GameplayAction.Jump ||
-                   value == GameplayAction.DodgeLeft || value == GameplayAction.DodgeRight;
+                   value == GameplayAction.DodgeLeft || value == GameplayAction.DodgeRight ||
+                   IsLegDrawUp(value);
+        }
+
+        private static bool IsLegDrawUp(GameplayAction value)
+        {
+            return value == GameplayAction.LeftLegDrawUp || value == GameplayAction.RightLegDrawUp;
         }
     }
 

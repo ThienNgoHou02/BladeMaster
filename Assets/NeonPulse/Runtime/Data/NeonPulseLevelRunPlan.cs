@@ -11,6 +11,7 @@ namespace NeonPulse
         public float SpawnTime;
         public bool IsObstacle;
         public bool UseSlashVisual;
+        public float HoldDuration;
     }
 
     public struct PlannedRhythmTileEvent
@@ -126,6 +127,12 @@ namespace NeonPulse
             {
                 float spawnTime = targetTime - travelDuration;
                 LevelPhaseAction action = ResolveSpawnAction(phase.Action, ref randomState);
+                if (action == LevelPhaseAction.LegDrawUp && targetTime + phase.HoldDurationSeconds > phaseEndTime)
+                {
+                    targetTime += phase.SpawnIntervalSeconds;
+                    continue;
+                }
+
                 switch (action)
                 {
                     case LevelPhaseAction.RhythmTiles:
@@ -143,14 +150,20 @@ namespace NeonPulse
                     case LevelPhaseAction.OverheadClap:
                         AddOverheadClapTarget(targetTime, spawnTime, ref randomState);
                         break;
+                    case LevelPhaseAction.LegDrawUp:
+                        AddLegDrawUpTile(targetTime, spawnTime, phase.HoldDurationSeconds, ref randomState);
+                        break;
                 }
 
                 float spacing = phase.SpawnIntervalSeconds;
-                if (action == LevelPhaseAction.DodgeWalls)
+                if (action == LevelPhaseAction.DodgeWalls || action == LevelPhaseAction.LegDrawUp)
                 {
                     // Do not overlap hold windows: changing direction while a wall is still active
                     // made the dodge phase feel jerky and could generate impossible inputs.
-                    spacing = Mathf.Max(spacing, config.Rhythm.HoldWindowLead + config.Rhythm.HoldWindowTrail + 0.12f);
+                    float holdDuration = action == LevelPhaseAction.LegDrawUp
+                        ? phase.HoldDurationSeconds
+                        : config.Rhythm.HoldWindowTrail;
+                    spacing = Mathf.Max(spacing, config.Rhythm.HoldWindowLead + holdDuration + 0.12f);
                 }
 
                 targetTime += spacing;
@@ -251,6 +264,22 @@ namespace NeonPulse
                 TargetTime = targetTime,
                 SpawnTime = spawnTime,
                 IsObstacle = true
+            });
+        }
+
+        private void AddLegDrawUpTile(float targetTime, float spawnTime, float holdDuration, ref uint randomState)
+        {
+            bool useLeftLeg = NextRandomInt(ref randomState, 0, 2) == 0;
+            obstacleEvents.Add(new PlannedGameplayEvent
+            {
+                Event = new BeatmapEvent(
+                    0f,
+                    useLeftLeg ? 0 : 3,
+                    useLeftLeg ? GameplayAction.LeftLegDrawUp : GameplayAction.RightLegDrawUp),
+                TargetTime = targetTime,
+                SpawnTime = spawnTime,
+                IsObstacle = true,
+                HoldDuration = Mathf.Max(0.2f, holdDuration)
             });
         }
 

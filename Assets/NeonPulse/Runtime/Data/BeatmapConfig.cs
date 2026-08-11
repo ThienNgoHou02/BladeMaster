@@ -19,7 +19,9 @@ namespace NeonPulse
         DodgeLeft,
         DodgeRight,
         RhythmTile,
-        OverheadClap
+        OverheadClap,
+        LeftLegDrawUp,
+        RightLegDrawUp
     }
 
     public enum RhythmTileColor

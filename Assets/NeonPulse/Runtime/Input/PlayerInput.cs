@@ -16,6 +16,8 @@ namespace NeonPulse
         public readonly bool Jump;
         public readonly bool DodgeLeft;
         public readonly bool DodgeRight;
+        public readonly bool LeftLegDrawUp;
+        public readonly bool RightLegDrawUp;
         public readonly bool Restart;
 
         public PlayerInputFrame(
@@ -27,6 +29,8 @@ namespace NeonPulse
             bool jump,
             bool dodgeLeft,
             bool dodgeRight,
+            bool leftLegDrawUp,
+            bool rightLegDrawUp,
             bool restart)
         {
             LeftPunch = leftPunch;
@@ -37,6 +41,8 @@ namespace NeonPulse
             Jump = jump;
             DodgeLeft = dodgeLeft;
             DodgeRight = dodgeRight;
+            LeftLegDrawUp = leftLegDrawUp;
+            RightLegDrawUp = rightLegDrawUp;
             Restart = restart;
         }
     }
@@ -74,6 +80,8 @@ namespace NeonPulse
                 Input.GetKey(bindings.Jump) || Input.GetKey(bindings.JumpAlternative),
                 Input.GetKey(bindings.DodgeLeft),
                 Input.GetKey(bindings.DodgeRight),
+                Input.GetKey(bindings.LeftLegDrawUp),
+                Input.GetKey(bindings.RightLegDrawUp),
                 Input.GetKeyDown(bindings.Restart) || Input.GetKeyDown(bindings.RestartAlternative));
         }
     }
