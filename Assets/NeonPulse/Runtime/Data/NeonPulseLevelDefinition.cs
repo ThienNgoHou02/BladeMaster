@@ -26,7 +26,7 @@ namespace NeonPulse
         [SerializeField, Min(1f)] private float flySpeed = 12f;
         [SerializeField, Min(0.1f)] private float spawnIntervalSeconds = DefaultSpawnIntervalSeconds;
         [SerializeField, Range(1, 2)] private int objectsPerWave = 1;
-        [SerializeField, Min(0.2f)] private float holdDurationSeconds = 1.2f;
+        [SerializeField, Min(1f)] private float holdDurationSeconds = 1.2f;
 
         public string DisplayName => GetDisplayName(action);
         public LevelPhaseAction Action => action;
@@ -36,7 +36,7 @@ namespace NeonPulse
             ? spawnIntervalSeconds
             : DefaultSpawnIntervalSeconds;
         public int ObjectsPerWave => Mathf.Clamp(objectsPerWave, 1, 2);
-        public float HoldDurationSeconds => Mathf.Max(0.2f, holdDurationSeconds);
+        public float HoldDurationSeconds => Mathf.Max(1f, holdDurationSeconds);
 
         public NeonPulseLevelPhase()
         {

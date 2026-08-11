@@ -355,7 +355,7 @@ namespace NeonPulse.EditorTools
                 if (phaseAction == LevelPhaseAction.LegDrawUp)
                 {
                     EditorGUI.PropertyField(new Rect(rect.x, rect.y + 91f, rect.width, EditorGUIUtility.singleLineHeight),
-                        holdDuration, new GUIContent("Thời gian co chân (giây)"));
+                        holdDuration, new GUIContent("Thời gian co chân tối đa n (random 1→n giây)"));
                 }
 
                 EditorGUI.LabelField(new Rect(rect.x, rect.y + (phaseAction == LevelPhaseAction.LegDrawUp ? 115f : 91f), rect.width, EditorGUIUtility.singleLineHeight),
@@ -598,7 +598,7 @@ namespace NeonPulse.EditorTools
                 }
                 if (phaseAction == LevelPhaseAction.LegDrawUp)
                 {
-                    EditorGUILayout.PropertyField(holdDuration, new GUIContent("Thời gian co chân (giây)"));
+                    EditorGUILayout.PropertyField(holdDuration, new GUIContent("Thời gian co chân tối đa n (random 1→n giây)"));
                 }
                 if (GUILayout.Button("XÓA PHASE " + (index + 1)))
                 {

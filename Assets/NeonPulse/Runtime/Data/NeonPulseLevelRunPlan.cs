@@ -267,9 +267,10 @@ namespace NeonPulse
             });
         }
 
-        private void AddLegDrawUpTile(float targetTime, float spawnTime, float holdDuration, ref uint randomState)
+        private void AddLegDrawUpTile(float targetTime, float spawnTime, float maximumHoldDuration, ref uint randomState)
         {
             bool useLeftLeg = NextRandomInt(ref randomState, 0, 2) == 0;
+            float holdDuration = NextRandomFloat(ref randomState, 1f, Mathf.Max(1f, maximumHoldDuration));
             obstacleEvents.Add(new PlannedGameplayEvent
             {
                 Event = new BeatmapEvent(
@@ -279,7 +280,7 @@ namespace NeonPulse
                 TargetTime = targetTime,
                 SpawnTime = spawnTime,
                 IsObstacle = true,
-                HoldDuration = Mathf.Max(0.2f, holdDuration)
+                HoldDuration = holdDuration
             });
         }
 
@@ -360,6 +361,16 @@ namespace NeonPulse
             state ^= state << 5;
             uint range = (uint)Mathf.Max(1, maximumExclusive - minimumInclusive);
             return minimumInclusive + (int)(state % range);
+        }
+
+        private static float NextRandomFloat(ref uint state, float minimumInclusive, float maximumInclusive)
+        {
+            state ^= state << 13;
+            state ^= state >> 17;
+            state ^= state << 5;
+            const float InverseMaximum24BitValue = 1f / 16777215f;
+            float normalized = (state & 0x00FFFFFFu) * InverseMaximum24BitValue;
+            return Mathf.Lerp(minimumInclusive, maximumInclusive, normalized);
         }
     }
 }

@@ -20,7 +20,7 @@ MonoBehaviour:
     flySpeed: 12
     spawnIntervalSeconds: 2
     objectsPerWave: 1
-    holdDurationSeconds: 1.2
+    holdDurationSeconds: 2
   - action: 0
     durationSeconds: 30
     flySpeed: 10
