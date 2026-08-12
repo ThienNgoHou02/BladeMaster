@@ -45,3 +45,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 745d4f7348c0eda41aaddece376914f1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  backgroundVideo: {fileID: 32900000, guid: 6579e1ea88b663b49985ca03d6fe3198, type: 3}

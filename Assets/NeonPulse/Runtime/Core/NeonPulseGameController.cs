@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Video;
 
 namespace NeonPulse
 {
@@ -10,6 +11,9 @@ namespace NeonPulse
         private const float RhythmTileVfxSurfaceY = 0.42f;
         private const float CombatVfxFrontOffset = 0.65f;
         private const float DualTargetOffsetX = 1.25f;
+
+        [Header("Background")]
+        [SerializeField] private VideoClip backgroundVideo;
 
         private readonly List<BeatTraveller> activePunchTargets = new List<BeatTraveller>(24);
         private readonly List<BeatTraveller> activeObstacles = new List<BeatTraveller>(12);
@@ -59,6 +63,7 @@ namespace NeonPulse
             score.Judged += OnJudged;
 
             Camera gameplayCamera = NeonWorldBuilder.Build(transform, materials, config, out judgementLineFeedback);
+            LoopingVideoBackground.Create(transform, gameplayCamera, backgroundVideo);
             playerVisuals = new PlayerActionVisuals(gameplayCamera, materials, config);
             motionFeedback = new NeonMotionFeedback(transform, gameplayCamera, materials);
             int punchPoolCapacity = Mathf.Max(8, config.Visuals.TravellerPoolCapacity * 2 / 3);
