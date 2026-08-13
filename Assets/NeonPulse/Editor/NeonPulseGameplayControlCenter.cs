@@ -140,6 +140,29 @@ namespace NeonPulse.EditorTools
             serializedLevel.UpdateIfRequiredOrScript();
             EditorGUILayout.PropertyField(serializedLevel.FindProperty("levelName"), new GUIContent("Tên Level"));
             EditorGUILayout.PropertyField(serializedLevel.FindProperty("phaseTransitionRestSeconds"), new GUIContent("Nghỉ khi chuyển phase (giây)"));
+
+            DrawSection("DỮ LIỆU GEN NHẠC BẰNG AI");
+            SerializedProperty musicGeneration = serializedLevel.FindProperty("musicGeneration");
+            EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("beatsPerBar"), new GUIContent("Số beat mỗi bar"));
+            EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("genre"), new GUIContent("Thể loại nhạc"));
+            EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("mood"), new GUIContent("Mood"));
+            EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("musicalKey"), new GUIContent("Tông nhạc dùng chung"));
+            EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("maximumSegmentDurationSeconds"),
+                new GUIContent("Giới hạn mỗi đoạn (giây)", "Exporter tự chia level thành nhiều đoạn không vượt quá giới hạn này."));
+            EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("additionalPrompt"), new GUIContent("Yêu cầu thêm"));
+            EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("instrumentalOnly"), new GUIContent("Chỉ nhạc không lời"));
+            EditorGUILayout.HelpBox(
+                "File JSON tự chia level thành nhiều clip dưới giới hạn, ưu tiên cắt đúng bar, tạo prompt riêng từng clip và hướng dẫn ghép lại.",
+                MessageType.Info);
+            if (GUILayout.Button("XUẤT FILE DATA CHO AI GEN NHẠC", GUILayout.Height(34f)))
+            {
+                serializedConfig.ApplyModifiedProperties();
+                serializedLevel.ApplyModifiedProperties();
+                EditorUtility.SetDirty(config);
+                EditorUtility.SetDirty(serializedLevel.targetObject);
+                NeonPulseMusicDataExporter.Export(serializedLevel.targetObject as NeonPulseLevelDefinition, config);
+            }
+
             EditorGUILayout.Space(6f);
             phaseList.DoLayoutList();
 
@@ -574,6 +597,8 @@ namespace NeonPulse.EditorTools
             EditorGUILayout.PropertyField(serializedObject.FindProperty("levelName"), new GUIContent("Tên Level"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("phaseTransitionRestSeconds"),
                 new GUIContent("Nghỉ khi chuyển phase (giây)"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("musicGeneration"),
+                new GUIContent("Cấu hình AI Gen nhạc"), true);
             EditorGUILayout.Space(8f);
 
             SerializedProperty phases = serializedObject.FindProperty("phases");

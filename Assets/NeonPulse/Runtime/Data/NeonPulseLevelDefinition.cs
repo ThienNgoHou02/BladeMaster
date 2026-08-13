@@ -4,6 +4,27 @@ using UnityEngine;
 
 namespace NeonPulse
 {
+    [Serializable]
+    public sealed class MusicGenerationSettings
+    {
+        [SerializeField, Min(1)] private int beatsPerBar = 4;
+        [SerializeField] private string genre = "Cyberpunk EDM, synthwave, electronic workout music";
+        [SerializeField] private string mood = "Energetic, futuristic, motivational and powerful";
+        [SerializeField] private string musicalKey = "E minor";
+        [SerializeField, Range(10f, 120f)] private float maximumSegmentDurationSeconds = 30f;
+        [SerializeField, TextArea(2, 5)] private string additionalPrompt =
+            "Use punchy drums, a clear rhythmic pulse and strong transitions between gameplay phases.";
+        [SerializeField] private bool instrumentalOnly = true;
+
+        public int BeatsPerBar => Mathf.Max(1, beatsPerBar);
+        public string Genre => genre;
+        public string Mood => mood;
+        public string MusicalKey => string.IsNullOrWhiteSpace(musicalKey) ? "E minor" : musicalKey;
+        public float MaximumSegmentDurationSeconds => Mathf.Max(10f, maximumSegmentDurationSeconds);
+        public string AdditionalPrompt => additionalPrompt;
+        public bool InstrumentalOnly => instrumentalOnly;
+    }
+
     /// <summary>High-level activity selected for one level phase. Add new activities here, then teach the run planner how to spawn them.</summary>
     public enum LevelPhaseAction
     {
@@ -78,6 +99,7 @@ namespace NeonPulse
     {
         [SerializeField] private string levelName = "Level 01";
         [SerializeField, Range(0f, 5f)] private float phaseTransitionRestSeconds = 1.25f;
+        [SerializeField] private MusicGenerationSettings musicGeneration = new MusicGenerationSettings();
         [SerializeField] private List<NeonPulseLevelPhase> phases = new List<NeonPulseLevelPhase>
         {
             new NeonPulseLevelPhase(LevelPhaseAction.RhythmTiles, 14f, 10f),
@@ -89,6 +111,7 @@ namespace NeonPulse
 
         public string LevelName => string.IsNullOrWhiteSpace(levelName) ? name : levelName;
         public float PhaseTransitionRestSeconds => phaseTransitionRestSeconds;
+        public MusicGenerationSettings MusicGeneration => musicGeneration;
         public IReadOnlyList<NeonPulseLevelPhase> Phases => phases;
 
         public bool ValidateDefinition(out string message)
