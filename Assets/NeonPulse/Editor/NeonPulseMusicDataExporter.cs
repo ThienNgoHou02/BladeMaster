@@ -8,43 +8,41 @@ using UnityEngine;
 
 namespace NeonPulse.EditorTools
 {
-    /// <summary>Exports a self-contained, vendor-neutral music brief for generative music tools.</summary>
+    /// <summary>Exports one self-contained AI music generation brief for each gameplay phase.</summary>
     public static class NeonPulseMusicDataExporter
     {
-        private const string SchemaVersion = "2.0";
+        private const string SchemaVersion = "3.0";
         private const string DefaultConfigPath = "Assets/NeonPulse/Resources/NeonPulseGameConfig.asset";
         private const float BeatGridTolerance = 0.02f;
+        private const int MaximumExportedCues = 2048;
 
         [Serializable]
-        private sealed class MusicGenerationDocument
+        private sealed class PhaseMusicGenerationDocument
         {
             public string schemaVersion;
             public string documentType;
             public string generatedAtUtc;
             public string usage;
-            public string copyPastePrompt;
-            public LevelSummary level;
+            public PhaseIdentity phase;
             public MusicDirection musicDirection;
+            public PhaseTimingConfiguration timing;
+            public GameplayConfiguration gameplay;
             public TechnicalRequirements technicalRequirements;
-            public SegmentGenerationPlan segmentGenerationPlan;
-            public List<PhaseMusicData> phaseTimeline;
-            public List<MusicGenerationSegment> generationSegments;
+            public List<BeatActionCue> actionCues;
+            public string copyPastePrompt;
             public List<string> timingWarnings;
         }
 
         [Serializable]
-        private sealed class LevelSummary
+        private sealed class PhaseIdentity
         {
-            public string name;
-            public float bpm;
-            public int beatsPerBar;
-            public string timeSignature;
-            public float secondsPerBeat;
-            public float totalDurationSeconds;
-            public float approximateTotalBeats;
+            public string levelName;
+            public int phaseNumber;
             public int phaseCount;
-            public float transitionRestSeconds;
-            public string sourceTimingMode;
+            public string gameplayAction;
+            public string gameplayDescription;
+            public string suggestedSection;
+            public int energyLevel;
         }
 
         [Serializable]
@@ -54,8 +52,45 @@ namespace NeonPulse.EditorTools
             public string mood;
             public string musicalKey;
             public bool instrumentalOnly;
+            public string musicalTreatment;
             public string additionalPrompt;
-            public string arrangementGoal;
+        }
+
+        [Serializable]
+        private sealed class PhaseTimingConfiguration
+        {
+            public float bpm;
+            public int beatsPerBar;
+            public string timeSignature;
+            public float secondsPerBeat;
+            public float exactDurationSeconds;
+            public float exactDurationBeats;
+            public int completeBars;
+            public float remainingBeats;
+            public bool durationEndsOnBeat;
+            public bool durationEndsOnBar;
+            public int firstActionBeatIndex;
+            public int firstActionMusicalBeatNumber;
+            public float firstActionSecond;
+            public int actionIntervalBeats;
+            public float beatAlignedActionIntervalSeconds;
+            public int actionCueCount;
+        }
+
+        [Serializable]
+        private sealed class GameplayConfiguration
+        {
+            public float authoredSpawnIntervalSeconds;
+            public float authoredSpawnIntervalBeats;
+            public float recommendedSpawnIntervalSeconds;
+            public int recommendedSpawnIntervalBeats;
+            public int objectsPerWave;
+            public float flySpeed;
+            public float travelDurationSeconds;
+            public float firstSpawnSecond;
+            public float authoredHoldDurationSeconds;
+            public float holdDurationBeats;
+            public string synchronizationRule;
         }
 
         [Serializable]
@@ -67,77 +102,20 @@ namespace NeonPulse.EditorTools
             public bool allowIntroSilence;
             public int recommendedSampleRate;
             public string exportFormat;
-            public string synchronizationRule;
+            public string trimmingRule;
         }
 
         [Serializable]
-        private sealed class PhaseMusicData
+        private sealed class BeatActionCue
         {
-            public int phaseNumber;
-            public string gameplayAction;
-            public string gameplayDescription;
-            public float startSecond;
-            public float endSecond;
-            public float durationSeconds;
-            public float startBeat;
-            public float endBeat;
-            public float startBar;
-            public float endBar;
-            public float gameplayPulseSeconds;
-            public float gameplayPulseBeats;
-            public float estimatedGameplayCuesPerMinute;
-            public int objectsPerWave;
-            public float flySpeed;
-            public float travelDurationSeconds;
-            public float firstGameplayCueSecond;
-            public int energyLevel;
-            public string suggestedSection;
-            public string musicalTreatment;
-            public bool pulseAlignedToQuarterBeatGrid;
-        }
-
-        [Serializable]
-        private sealed class SegmentGenerationPlan
-        {
-            public float configuredMaximumDurationSeconds;
-            public float longestGeneratedSegmentSeconds;
-            public int segmentCount;
-            public bool boundariesPreferFullBars;
-            public string fileNamingPattern;
-            public string generationWorkflow;
-            public string assemblyInstructions;
-            public string continuityRules;
-        }
-
-        [Serializable]
-        private sealed class MusicGenerationSegment
-        {
-            public int segmentNumber;
-            public string suggestedFileName;
-            public float globalStartSecond;
-            public float globalEndSecond;
-            public float exactDurationSeconds;
-            public float startBeat;
-            public float endBeat;
-            public float approximateBarCount;
-            public bool startsOnBarBoundary;
-            public bool isFirstSegment;
-            public bool isFinalSegment;
-            public string copyPastePrompt;
-            public List<SegmentTimelineSlice> timeline;
-        }
-
-        [Serializable]
-        private sealed class SegmentTimelineSlice
-        {
-            public string type;
-            public int phaseNumber;
-            public string gameplayAction;
-            public float relativeStartSecond;
-            public float relativeEndSecond;
-            public float durationSeconds;
-            public int energyLevel;
-            public string musicalTreatment;
+            public int cueNumber;
+            public int beatIndex;
+            public int musicalBeatNumber;
+            public int bar;
+            public int beatInBar;
+            public float hitSecond;
+            public float spawnSecond;
+            public string accent;
         }
 
         public static void Export(NeonPulseLevelDefinition level, NeonPulseGameConfig config)
@@ -148,66 +126,26 @@ namespace NeonPulse.EditorTools
                 return;
             }
 
+            if (!level.ValidateDefinition(out string validationMessage))
+            {
+                EditorUtility.DisplayDialog("Không thể xuất", validationMessage, "OK");
+                return;
+            }
+
             string defaultDirectory = Path.Combine(Application.dataPath, "NeonPulse", "MusicGeneration");
             Directory.CreateDirectory(defaultDirectory);
-            string path = EditorUtility.SaveFilePanel(
-                "Xuất data cho AI Gen nhạc",
+            string directory = EditorUtility.SaveFolderPanel(
+                "Chọn thư mục xuất data nhạc theo phase",
                 defaultDirectory,
-                SanitizeFileName(level.LevelName) + "_MusicBrief",
-                "json");
-            if (string.IsNullOrEmpty(path))
+                SanitizeFileName(level.LevelName) + "_MusicPhases");
+            if (string.IsNullOrEmpty(directory))
             {
                 return;
             }
 
-            string json = BuildJson(level, config);
-            File.WriteAllText(path, json, new UTF8Encoding(false));
-            AssetDatabase.Refresh();
-
-            UnityEngine.Object exportedAsset = TryLoadExportedAsset(path);
-            if (exportedAsset != null)
-            {
-                Selection.activeObject = exportedAsset;
-                EditorGUIUtility.PingObject(exportedAsset);
-            }
-
-            EditorUtility.DisplayDialog(
-                "Đã xuất data Gen nhạc",
-                "File đã được tạo tại:\n" + path +
-                "\n\nMỗi phần tử trong generationSegments có prompt riêng để tạo clip dưới giới hạn thời lượng.",
-                "OK");
-        }
-
-        public static string BuildJson(NeonPulseLevelDefinition level, NeonPulseGameConfig config)
-        {
-            MusicGenerationDocument document = BuildDocument(level, config);
-            return JsonUtility.ToJson(document, true);
-        }
-
-        [MenuItem("Assets/Neon Pulse/Export AI Music Data", true)]
-        private static bool CanExportSelectedLevel()
-        {
-            return Selection.activeObject is NeonPulseLevelDefinition;
-        }
-
-        [MenuItem("Assets/Neon Pulse/Export AI Music Data", priority = 2100)]
-        private static void ExportSelectedLevel()
-        {
-            NeonPulseLevelDefinition level = Selection.activeObject as NeonPulseLevelDefinition;
-            NeonPulseGameConfig config = AssetDatabase.LoadAssetAtPath<NeonPulseGameConfig>(DefaultConfigPath);
-            Export(level, config);
-        }
-
-        private static MusicGenerationDocument BuildDocument(NeonPulseLevelDefinition level, NeonPulseGameConfig config)
-        {
-            float bpm = Mathf.Max(1f, config.Rhythm.Bpm);
-            float secondsPerBeat = 60f / bpm;
-            MusicGenerationSettings settings = level.MusicGeneration ?? new MusicGenerationSettings();
-            int beatsPerBar = settings.BeatsPerBar;
-            List<PhaseMusicData> phases = new List<PhaseMusicData>(level.Phases.Count);
-            List<string> warnings = new List<string>(level.Phases.Count + 2);
-            float cursor = 0f;
-
+            Directory.CreateDirectory(directory);
+            int exportedCount = 0;
+            string firstExportedPath = null;
             for (int index = 0; index < level.Phases.Count; index++)
             {
                 NeonPulseLevelPhase phase = level.Phases[index];
@@ -216,76 +154,111 @@ namespace NeonPulse.EditorTools
                     continue;
                 }
 
-                float endSecond = cursor + phase.DurationSeconds;
-                float pulseBeats = phase.SpawnIntervalSeconds / secondsPerBeat;
-                float travelDistance = Mathf.Max(0.1f, config.Rhythm.SpawnZ - config.Rhythm.HitZ);
-                float travelDuration = travelDistance / Mathf.Max(0.01f, phase.FlySpeed);
-                bool pulseAligned = IsQuarterBeatAligned(pulseBeats);
-                if (!pulseAligned)
-                {
-                    warnings.Add(string.Format(
-                        CultureInfo.InvariantCulture,
-                        "Phase {0} ({1}) has a gameplay pulse of {2:0.###} beats; it is not aligned to a 1/4-beat grid.",
-                        index + 1,
-                        phase.Action,
-                        pulseBeats));
-                }
-
-                phases.Add(new PhaseMusicData
-                {
-                    phaseNumber = index + 1,
-                    gameplayAction = phase.Action.ToString(),
-                    gameplayDescription = NeonPulseLevelPhase.GetDisplayName(phase.Action),
-                    startSecond = Round(cursor),
-                    endSecond = Round(endSecond),
-                    durationSeconds = Round(phase.DurationSeconds),
-                    startBeat = Round(cursor / secondsPerBeat),
-                    endBeat = Round(endSecond / secondsPerBeat),
-                    startBar = Round(cursor / secondsPerBeat / beatsPerBar + 1f),
-                    endBar = Round(endSecond / secondsPerBeat / beatsPerBar + 1f),
-                    gameplayPulseSeconds = Round(phase.SpawnIntervalSeconds),
-                    gameplayPulseBeats = Round(pulseBeats),
-                    estimatedGameplayCuesPerMinute = Round(60f / phase.SpawnIntervalSeconds),
-                    objectsPerWave = phase.ObjectsPerWave,
-                    flySpeed = Round(phase.FlySpeed),
-                    travelDurationSeconds = Round(travelDuration),
-                    firstGameplayCueSecond = Round(cursor + travelDuration),
-                    energyLevel = GetEnergyLevel(phase),
-                    suggestedSection = GetSuggestedSection(phase.Action, index, level.Phases.Count),
-                    musicalTreatment = GetMusicalTreatment(phase.Action),
-                    pulseAlignedToQuarterBeatGrid = pulseAligned
-                });
-
-                cursor = endSecond + (index < level.Phases.Count - 1 ? level.PhaseTransitionRestSeconds : 0f);
+                string fileName = BuildPhaseFileName(level, phase, index);
+                string path = Path.Combine(directory, fileName);
+                File.WriteAllText(path, BuildPhaseJson(level, config, index), new UTF8Encoding(false));
+                firstExportedPath = firstExportedPath ?? path;
+                exportedCount++;
             }
 
-            float transitionBeats = level.PhaseTransitionRestSeconds / secondsPerBeat;
-            if (level.Phases.Count > 1 && !IsQuarterBeatAligned(transitionBeats))
+            AssetDatabase.Refresh();
+            UnityEngine.Object exportedAsset = TryLoadExportedAsset(firstExportedPath);
+            if (exportedAsset != null)
             {
-                warnings.Add(string.Format(
-                    CultureInfo.InvariantCulture,
-                    "The phase transition rest is {0:0.###} beats and is not aligned to a 1/4-beat grid.",
-                    transitionBeats));
+                Selection.activeObject = exportedAsset;
+                EditorGUIUtility.PingObject(exportedAsset);
             }
 
-            MusicGenerationDocument document = new MusicGenerationDocument
+            EditorUtility.DisplayDialog(
+                "Đã xuất data Gen nhạc theo phase",
+                "Đã tạo " + exportedCount + " file JSON tại:\n" + directory +
+                "\n\nMỗi file tương ứng đúng một phase và chứa danh sách beat action cue riêng.",
+                "OK");
+        }
+
+        public static string BuildPhaseJson(
+            NeonPulseLevelDefinition level,
+            NeonPulseGameConfig config,
+            int phaseIndex)
+        {
+            if (level == null)
+            {
+                throw new ArgumentNullException(nameof(level));
+            }
+
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+
+            if (phaseIndex < 0 || phaseIndex >= level.Phases.Count || level.Phases[phaseIndex] == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(phaseIndex));
+            }
+
+            PhaseMusicGenerationDocument document = BuildPhaseDocument(level, config, phaseIndex);
+            return JsonUtility.ToJson(document, true);
+        }
+
+        [MenuItem("Assets/Neon Pulse/Export AI Music Data By Phase", true)]
+        private static bool CanExportSelectedLevel()
+        {
+            return Selection.activeObject is NeonPulseLevelDefinition;
+        }
+
+        [MenuItem("Assets/Neon Pulse/Export AI Music Data By Phase", priority = 2100)]
+        private static void ExportSelectedLevel()
+        {
+            NeonPulseLevelDefinition level = Selection.activeObject as NeonPulseLevelDefinition;
+            NeonPulseGameConfig config = AssetDatabase.LoadAssetAtPath<NeonPulseGameConfig>(DefaultConfigPath);
+            Export(level, config);
+        }
+
+        private static PhaseMusicGenerationDocument BuildPhaseDocument(
+            NeonPulseLevelDefinition level,
+            NeonPulseGameConfig config,
+            int phaseIndex)
+        {
+            NeonPulseLevelPhase phase = level.Phases[phaseIndex];
+            RhythmSettings rhythm = config.Rhythm;
+            MusicGenerationSettings settings = level.MusicGeneration ?? new MusicGenerationSettings();
+            float secondsPerBeat = rhythm.SecondsPerBeat;
+            float durationBeats = phase.DurationSeconds / secondsPerBeat;
+            int beatsPerBar = settings.BeatsPerBar;
+            int firstActionBeat = NeonPulsePhaseBeatTiming.GetFirstActionBeat(phase, rhythm);
+            int actionIntervalBeats = NeonPulsePhaseBeatTiming.GetActionIntervalBeats(phase, phase.Action, rhythm);
+            float travelDuration = NeonPulsePhaseBeatTiming.GetTravelDurationSeconds(phase, rhythm);
+            List<BeatActionCue> cues = BuildActionCues(
+                phase,
+                firstActionBeat,
+                actionIntervalBeats,
+                secondsPerBeat,
+                beatsPerBar,
+                travelDuration);
+            List<string> warnings = BuildTimingWarnings(
+                phase,
+                settings,
+                durationBeats,
+                actionIntervalBeats,
+                secondsPerBeat);
+
+            PhaseMusicGenerationDocument document = new PhaseMusicGenerationDocument
             {
                 schemaVersion = SchemaVersion,
-                documentType = "NeonPulseAIMusicGenerationBrief",
+                documentType = "NeonPulseAIPhaseMusicGenerationBrief",
                 generatedAtUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
-                usage = "Upload this JSON to an AI agent. For a duration-limited music generator, generate each generationSegments item separately with its copyPastePrompt, then assemble the clips using segmentGenerationPlan.",
-                level = new LevelSummary
+                usage = phase.Action == LevelPhaseAction.RandomMixed
+                    ? "Generate exactly one standalone music clip for this phase. Beat index 0 is the first downbeat at 0.000s. actionCues define the nominal accent grid; randomized actions may use a subset of whole beats."
+                    : "Generate exactly one standalone music clip for this phase. Beat index 0 is the first downbeat at 0.000s. Use actionCues as the authoritative hit/accent timeline.",
+                phase = new PhaseIdentity
                 {
-                    name = level.LevelName,
-                    bpm = Round(bpm),
-                    beatsPerBar = beatsPerBar,
-                    timeSignature = beatsPerBar + "/4",
-                    secondsPerBeat = Round(secondsPerBeat),
-                    totalDurationSeconds = Round(cursor),
-                    approximateTotalBeats = Round(cursor / secondsPerBeat),
-                    phaseCount = phases.Count,
-                    transitionRestSeconds = Round(level.PhaseTransitionRestSeconds),
-                    sourceTimingMode = "seconds; use phaseTimeline timestamps as the authoritative structure"
+                    levelName = level.LevelName,
+                    phaseNumber = phaseIndex + 1,
+                    phaseCount = level.Phases.Count,
+                    gameplayAction = phase.Action.ToString(),
+                    gameplayDescription = NeonPulseLevelPhase.GetDisplayName(phase.Action),
+                    suggestedSection = GetSuggestedSection(phase.Action, phaseIndex, level.Phases.Count),
+                    energyLevel = GetEnergyLevel(phase)
                 },
                 musicDirection = new MusicDirection
                 {
@@ -293,8 +266,41 @@ namespace NeonPulse.EditorTools
                     mood = settings.Mood,
                     musicalKey = settings.MusicalKey,
                     instrumentalOnly = settings.InstrumentalOnly,
-                    additionalPrompt = settings.AdditionalPrompt,
-                    arrangementGoal = "Music intensity and instrumentation should follow the ordered gameplay phases. Preserve a clearly audible beat for player timing."
+                    musicalTreatment = GetMusicalTreatment(phase.Action),
+                    additionalPrompt = settings.AdditionalPrompt
+                },
+                timing = new PhaseTimingConfiguration
+                {
+                    bpm = Round(rhythm.Bpm),
+                    beatsPerBar = beatsPerBar,
+                    timeSignature = beatsPerBar + "/4",
+                    secondsPerBeat = Round(secondsPerBeat),
+                    exactDurationSeconds = Round(phase.DurationSeconds),
+                    exactDurationBeats = Round(durationBeats),
+                    completeBars = Mathf.FloorToInt(durationBeats / beatsPerBar),
+                    remainingBeats = Round(Mathf.Repeat(durationBeats, beatsPerBar)),
+                    durationEndsOnBeat = IsWholeBeatAligned(durationBeats),
+                    durationEndsOnBar = IsWholeBeatAligned(durationBeats / beatsPerBar),
+                    firstActionBeatIndex = firstActionBeat,
+                    firstActionMusicalBeatNumber = firstActionBeat + 1,
+                    firstActionSecond = Round(firstActionBeat * secondsPerBeat),
+                    actionIntervalBeats = actionIntervalBeats,
+                    beatAlignedActionIntervalSeconds = Round(actionIntervalBeats * secondsPerBeat),
+                    actionCueCount = cues.Count
+                },
+                gameplay = new GameplayConfiguration
+                {
+                    authoredSpawnIntervalSeconds = Round(phase.SpawnIntervalSeconds),
+                    authoredSpawnIntervalBeats = Round(phase.SpawnIntervalSeconds / secondsPerBeat),
+                    recommendedSpawnIntervalSeconds = Round(actionIntervalBeats * secondsPerBeat),
+                    recommendedSpawnIntervalBeats = actionIntervalBeats,
+                    objectsPerWave = phase.ObjectsPerWave,
+                    flySpeed = Round(phase.FlySpeed),
+                    travelDurationSeconds = Round(travelDuration),
+                    firstSpawnSecond = cues.Count > 0 ? cues[0].spawnSecond : -1f,
+                    authoredHoldDurationSeconds = Round(phase.HoldDurationSeconds),
+                    holdDurationBeats = Round(phase.HoldDurationSeconds / secondsPerBeat),
+                    synchronizationRule = "Spawn time compensates for object travel. Player hit/action time is on a whole local beat; spawn time may be off-beat."
                 },
                 technicalRequirements = new TechnicalRequirements
                 {
@@ -303,331 +309,174 @@ namespace NeonPulse.EditorTools
                     firstDownbeatAtSecond = 0f,
                     allowIntroSilence = false,
                     recommendedSampleRate = 48000,
-                    exportFormat = "WAV preferred; OGG allowed for the final Unity import",
-                    synchronizationRule = "Keep the beat grid stable at the specified BPM. Do not add silence, pickup notes or tempo drift before the first downbeat."
+                    exportFormat = "WAV preferred; OGG allowed for Unity import",
+                    trimmingRule = "Return audio with no leading silence. Trim the usable clip to exactDurationSeconds without changing BPM."
                 },
-                phaseTimeline = phases,
+                actionCues = cues,
                 timingWarnings = warnings
             };
             document.copyPastePrompt = BuildCopyPastePrompt(document);
-            document.generationSegments = BuildGenerationSegments(
-                document,
-                settings.MaximumSegmentDurationSeconds,
-                secondsPerBeat);
-
-            float longestSegment = 0f;
-            bool allSegmentStartsAlignToBars = true;
-            for (int index = 0; index < document.generationSegments.Count; index++)
-            {
-                longestSegment = Mathf.Max(longestSegment, document.generationSegments[index].exactDurationSeconds);
-                allSegmentStartsAlignToBars &= document.generationSegments[index].startsOnBarBoundary;
-            }
-
-            document.segmentGenerationPlan = new SegmentGenerationPlan
-            {
-                configuredMaximumDurationSeconds = Round(settings.MaximumSegmentDurationSeconds),
-                longestGeneratedSegmentSeconds = Round(longestSegment),
-                segmentCount = document.generationSegments.Count,
-                boundariesPreferFullBars = allSegmentStartsAlignToBars,
-                fileNamingPattern = SanitizeFileName(level.LevelName) + "_Music_Segment_XX.wav",
-                generationWorkflow = "Generate every item in generationSegments separately, using that item's copyPastePrompt. Keep the same BPM, musical key, sound palette and mix across all segments.",
-                assemblyInstructions = "Remove any silence added by the generator, trim or time-warp each result to exactDurationSeconds, then place it at globalStartSecond on one DAW timeline. Export the assembled timeline as one WAV file starting at 0.000 seconds.",
-                continuityRules = "Middle segments must not contain an intro, outro or fade. Start on the next bar downbeat and continue the harmony, groove and instrumentation of the previous segment. Only the final segment may resolve and end."
-            };
             return document;
         }
 
-        private static List<MusicGenerationSegment> BuildGenerationSegments(
-            MusicGenerationDocument document,
-            float configuredMaximumDuration,
-            float secondsPerBeat)
-        {
-            float totalDuration = document.level.totalDurationSeconds;
-            float maximumDuration = Mathf.Max(1f, configuredMaximumDuration);
-            float secondsPerBar = secondsPerBeat * document.level.beatsPerBar;
-            int maximumFullBars = Mathf.FloorToInt((maximumDuration + 0.0001f) / secondsPerBar);
-
-            if (maximumFullBars <= 0)
-            {
-                return BuildFixedDurationSegments(document, maximumDuration, secondsPerBeat);
-            }
-
-            float maximumBarAlignedDuration = maximumFullBars * secondsPerBar;
-            int segmentCount = Mathf.Max(1, Mathf.CeilToInt(totalDuration / maximumBarAlignedDuration));
-            int totalFullBars = Mathf.FloorToInt(totalDuration / secondsPerBar);
-            int baseBarsPerSegment = totalFullBars / segmentCount;
-            int extraBars = totalFullBars % segmentCount;
-            List<MusicGenerationSegment> segments = new List<MusicGenerationSegment>(segmentCount);
-            float cursor = 0f;
-
-            for (int index = 0; index < segmentCount; index++)
-            {
-                int barsInSegment = baseBarsPerSegment + (index < extraBars ? 1 : 0);
-                float endSecond = index == segmentCount - 1
-                    ? totalDuration
-                    : cursor + barsInSegment * secondsPerBar;
-
-                if (endSecond <= cursor + 0.001f)
-                {
-                    endSecond = Mathf.Min(totalDuration, cursor + maximumDuration);
-                }
-
-                segments.Add(CreateGenerationSegment(
-                    document,
-                    index,
-                    segmentCount,
-                    cursor,
-                    endSecond,
-                    secondsPerBeat,
-                    secondsPerBar));
-                cursor = endSecond;
-            }
-
-            return segments;
-        }
-
-        private static List<MusicGenerationSegment> BuildFixedDurationSegments(
-            MusicGenerationDocument document,
-            float maximumDuration,
-            float secondsPerBeat)
-        {
-            int segmentCount = Mathf.Max(1, Mathf.CeilToInt(document.level.totalDurationSeconds / maximumDuration));
-            float secondsPerBar = secondsPerBeat * document.level.beatsPerBar;
-            List<MusicGenerationSegment> segments = new List<MusicGenerationSegment>(segmentCount);
-            float cursor = 0f;
-            for (int index = 0; index < segmentCount; index++)
-            {
-                float endSecond = Mathf.Min(document.level.totalDurationSeconds, cursor + maximumDuration);
-                segments.Add(CreateGenerationSegment(
-                    document,
-                    index,
-                    segmentCount,
-                    cursor,
-                    endSecond,
-                    secondsPerBeat,
-                    secondsPerBar));
-                cursor = endSecond;
-            }
-
-            return segments;
-        }
-
-        private static MusicGenerationSegment CreateGenerationSegment(
-            MusicGenerationDocument document,
-            int zeroBasedIndex,
-            int segmentCount,
-            float startSecond,
-            float endSecond,
+        private static List<BeatActionCue> BuildActionCues(
+            NeonPulseLevelPhase phase,
+            int firstActionBeat,
+            int actionIntervalBeats,
             float secondsPerBeat,
-            float secondsPerBar)
+            int beatsPerBar,
+            float travelDuration)
         {
-            List<SegmentTimelineSlice> timeline = BuildSegmentTimeline(document.phaseTimeline, startSecond, endSecond);
-            MusicGenerationSegment segment = new MusicGenerationSegment
+            int capacity = Mathf.Min(
+                MaximumExportedCues,
+                Mathf.Max(0, Mathf.CeilToInt(phase.DurationSeconds / (actionIntervalBeats * secondsPerBeat))));
+            List<BeatActionCue> cues = new List<BeatActionCue>(capacity);
+            int beat = firstActionBeat;
+            while (cues.Count < MaximumExportedCues)
             {
-                segmentNumber = zeroBasedIndex + 1,
-                suggestedFileName = SanitizeFileName(document.level.name) + "_Music_Segment_" +
-                                    (zeroBasedIndex + 1).ToString("D2", CultureInfo.InvariantCulture) + ".wav",
-                globalStartSecond = Round(startSecond),
-                globalEndSecond = Round(endSecond),
-                exactDurationSeconds = Round(endSecond - startSecond),
-                startBeat = Round(startSecond / secondsPerBeat),
-                endBeat = Round(endSecond / secondsPerBeat),
-                approximateBarCount = Round((endSecond - startSecond) / secondsPerBar),
-                startsOnBarBoundary = IsBarBoundary(startSecond, secondsPerBar),
-                isFirstSegment = zeroBasedIndex == 0,
-                isFinalSegment = zeroBasedIndex == segmentCount - 1,
-                timeline = timeline
-            };
-            segment.copyPastePrompt = BuildSegmentPrompt(document, segment, segmentCount);
-            return segment;
-        }
-
-        private static List<SegmentTimelineSlice> BuildSegmentTimeline(
-            List<PhaseMusicData> phases,
-            float segmentStart,
-            float segmentEnd)
-        {
-            List<SegmentTimelineSlice> slices = new List<SegmentTimelineSlice>(4);
-            float coveredUntil = segmentStart;
-            for (int index = 0; index < phases.Count; index++)
-            {
-                PhaseMusicData phase = phases[index];
-                if (phase.endSecond <= segmentStart || phase.startSecond >= segmentEnd)
+                float hitSecond = beat * secondsPerBeat;
+                if (hitSecond > phase.DurationSeconds + BeatGridTolerance)
                 {
-                    continue;
+                    break;
                 }
 
-                float intersectionStart = Mathf.Max(segmentStart, phase.startSecond);
-                float intersectionEnd = Mathf.Min(segmentEnd, phase.endSecond);
-                if (intersectionStart > coveredUntil + 0.001f)
+                if (phase.Action == LevelPhaseAction.LegDrawUp &&
+                    hitSecond + phase.HoldDurationSeconds > phase.DurationSeconds + BeatGridTolerance)
                 {
-                    AddTransitionSlice(slices, segmentStart, coveredUntil, intersectionStart);
+                    break;
                 }
 
-                slices.Add(new SegmentTimelineSlice
+                int beatInBar = beat % beatsPerBar + 1;
+                cues.Add(new BeatActionCue
                 {
-                    type = "gameplayPhase",
-                    phaseNumber = phase.phaseNumber,
-                    gameplayAction = phase.gameplayAction,
-                    relativeStartSecond = Round(intersectionStart - segmentStart),
-                    relativeEndSecond = Round(intersectionEnd - segmentStart),
-                    durationSeconds = Round(intersectionEnd - intersectionStart),
-                    energyLevel = phase.energyLevel,
-                    musicalTreatment = phase.musicalTreatment
+                    cueNumber = cues.Count + 1,
+                    beatIndex = beat,
+                    musicalBeatNumber = beat + 1,
+                    bar = beat / beatsPerBar + 1,
+                    beatInBar = beatInBar,
+                    hitSecond = Round(hitSecond),
+                    spawnSecond = Round(Mathf.Max(0f, hitSecond - travelDuration)),
+                    accent = beatInBar == 1 ? "strong downbeat accent" : "clear rhythmic accent"
                 });
-                coveredUntil = Mathf.Max(coveredUntil, intersectionEnd);
+                beat += actionIntervalBeats;
             }
 
-            if (coveredUntil < segmentEnd - 0.001f)
+            return cues;
+        }
+
+        private static List<string> BuildTimingWarnings(
+            NeonPulseLevelPhase phase,
+            MusicGenerationSettings settings,
+            float durationBeats,
+            int actionIntervalBeats,
+            float secondsPerBeat)
+        {
+            List<string> warnings = new List<string>(3);
+            float authoredIntervalBeats = phase.SpawnIntervalSeconds / secondsPerBeat;
+            if (Mathf.Abs(authoredIntervalBeats - actionIntervalBeats) > BeatGridTolerance)
             {
-                AddTransitionSlice(slices, segmentStart, coveredUntil, segmentEnd);
+                warnings.Add(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Authored spawn interval {0:0.###}s equals {1:0.###} beats. Runtime/export use {2} beats ({3:0.###}s) so player actions land on beats.",
+                    phase.SpawnIntervalSeconds,
+                    authoredIntervalBeats,
+                    actionIntervalBeats,
+                    actionIntervalBeats * secondsPerBeat));
             }
 
-            return slices;
-        }
-
-        private static void AddTransitionSlice(
-            List<SegmentTimelineSlice> slices,
-            float segmentStart,
-            float startSecond,
-            float endSecond)
-        {
-            slices.Add(new SegmentTimelineSlice
+            if (phase.Action == LevelPhaseAction.RandomMixed)
             {
-                type = "transitionRest",
-                phaseNumber = 0,
-                gameplayAction = "TransitionRest",
-                relativeStartSecond = Round(startSecond - segmentStart),
-                relativeEndSecond = Round(endSecond - segmentStart),
-                durationSeconds = Round(endSecond - startSecond),
-                energyLevel = 4,
-                musicalTreatment = "short transition fill, riser or breathing space; keep the tempo and beat grid unchanged"
-            });
+                warnings.Add(
+                    "RandomMixed resolves each action at runtime. Every player action stays on a whole beat, but hold actions may advance to a later beat than the nominal actionCues grid.");
+            }
+
+            if (!IsWholeBeatAligned(durationBeats))
+            {
+                warnings.Add(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Phase duration ends at beat {0:0.###}, not a whole beat. Keep the requested duration; do not place an action after the last whole beat.",
+                    durationBeats));
+            }
+
+            if (phase.DurationSeconds > settings.MaximumSegmentDurationSeconds + BeatGridTolerance)
+            {
+                warnings.Add(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Phase duration {0:0.###}s exceeds the configured generator limit {1:0.###}s. Use a generator that supports the full phase duration or extend the result before trimming.",
+                    phase.DurationSeconds,
+                    settings.MaximumSegmentDurationSeconds));
+            }
+
+            return warnings;
         }
 
-        private static string BuildSegmentPrompt(
-            MusicGenerationDocument document,
-            MusicGenerationSegment segment,
-            int segmentCount)
+        private static string BuildCopyPastePrompt(PhaseMusicGenerationDocument document)
         {
-            StringBuilder builder = new StringBuilder(768);
-            builder.Append("Generate music segment ");
-            builder.Append(segment.segmentNumber);
-            builder.Append(" of ");
-            builder.Append(segmentCount);
-            builder.Append(" for one continuous rhythm fitness game track. Style: ");
+            StringBuilder builder = new StringBuilder(1024);
+            builder.Append("Generate one standalone ");
+            if (document.musicDirection.instrumentalOnly)
+            {
+                builder.Append("instrumental ");
+            }
+
+            builder.Append("gameplay music clip for phase ");
+            builder.Append(document.phase.phaseNumber);
+            builder.Append("/");
+            builder.Append(document.phase.phaseCount);
+            builder.Append(" (action: ");
+            builder.Append(document.phase.gameplayAction);
+            builder.Append("). Style: ");
             builder.Append(document.musicDirection.genre);
             builder.Append(". Mood: ");
             builder.Append(document.musicDirection.mood);
-            builder.Append(". Musical key: ");
+            builder.Append(". Key: ");
             builder.Append(document.musicDirection.musicalKey);
             builder.Append(". Keep exactly ");
-            builder.Append(document.level.bpm.ToString("0.###", CultureInfo.InvariantCulture));
+            builder.Append(document.timing.bpm.ToString("0.###", CultureInfo.InvariantCulture));
             builder.Append(" BPM in ");
-            builder.Append(document.level.timeSignature);
-            builder.Append(". Generate exactly ");
-            builder.Append(segment.exactDurationSeconds.ToString("0.###", CultureInfo.InvariantCulture));
-            builder.Append(" seconds, not the generator's default duration. No leading or trailing silence. ");
+            builder.Append(document.timing.timeSignature);
+            builder.Append(" with no tempo drift. Start the first downbeat at 0.000s with no pickup or intro silence. Exact usable duration: ");
+            builder.Append(document.timing.exactDurationSeconds.ToString("0.###", CultureInfo.InvariantCulture));
+            builder.Append("s. Energy ");
+            builder.Append(document.phase.energyLevel);
+            builder.Append("/10. Musical treatment: ");
+            builder.Append(document.musicDirection.musicalTreatment);
+            builder.Append(". Make every beat clearly audible. Add a synchronized transient/accent at these player action beats: ");
 
-            if (segment.isFirstSegment)
+            if (document.actionCues.Count == 0)
             {
-                builder.Append("This is the first segment: start immediately on the first downbeat with no pickup or fade-in. ");
+                builder.Append("none; keep a clear beat grid throughout");
             }
             else
             {
-                builder.Append("This is a continuation: begin on the next bar downbeat, preserve the previous segment's harmony, groove, instruments and mix, with no new intro or fade-in. ");
-            }
-
-            if (segment.isFinalSegment)
-            {
-                builder.Append("This is the final segment: create a resolved ending exactly at the requested duration. ");
-            }
-            else
-            {
-                builder.Append("Do not add an outro, cadence or fade-out; leave the music ready to continue seamlessly. ");
-            }
-
-            builder.Append("Relative timeline inside this segment: ");
-            for (int index = 0; index < segment.timeline.Count; index++)
-            {
-                SegmentTimelineSlice slice = segment.timeline[index];
-                if (index > 0)
+                for (int index = 0; index < document.actionCues.Count; index++)
                 {
-                    builder.Append("; ");
-                }
+                    if (index > 0)
+                    {
+                        builder.Append(", ");
+                    }
 
-                builder.Append('[');
-                builder.Append(slice.relativeStartSecond.ToString("0.###", CultureInfo.InvariantCulture));
-                builder.Append('-');
-                builder.Append(slice.relativeEndSecond.ToString("0.###", CultureInfo.InvariantCulture));
-                builder.Append("s] ");
-                builder.Append(slice.gameplayAction);
-                builder.Append(", energy ");
-                builder.Append(slice.energyLevel);
-                builder.Append("/10, ");
-                builder.Append(slice.musicalTreatment);
+                    BeatActionCue cue = document.actionCues[index];
+                    builder.Append("bar ");
+                    builder.Append(cue.bar);
+                    builder.Append(" beat ");
+                    builder.Append(cue.beatInBar);
+                    builder.Append(" [beat index ");
+                    builder.Append(cue.beatIndex);
+                    builder.Append("] (");
+                    builder.Append(cue.hitSecond.ToString("0.###", CultureInfo.InvariantCulture));
+                    builder.Append("s)");
+                }
             }
 
+            builder.Append(". Do not shift, swing or humanize these cue positions. ");
             if (!string.IsNullOrWhiteSpace(document.musicDirection.additionalPrompt))
             {
-                builder.Append(". Additional direction: ");
                 builder.Append(document.musicDirection.additionalPrompt.Trim());
+                builder.Append(" ");
             }
 
-            return builder.ToString();
-        }
-
-        private static bool IsBarBoundary(float time, float secondsPerBar)
-        {
-            float barPosition = time / secondsPerBar;
-            return Mathf.Abs(barPosition - Mathf.Round(barPosition)) <= BeatGridTolerance;
-        }
-
-        private static string BuildCopyPastePrompt(MusicGenerationDocument document)
-        {
-            StringBuilder builder = new StringBuilder(1024);
-            builder.Append("Create ");
-            builder.Append(document.musicDirection.instrumentalOnly ? "an instrumental " : "a ");
-            builder.Append(document.musicDirection.genre);
-            builder.Append(" track for a rhythm fitness game. Mood: ");
-            builder.Append(document.musicDirection.mood);
-            builder.Append(". Keep exactly ");
-            builder.Append(document.level.bpm.ToString("0.###", CultureInfo.InvariantCulture));
-            builder.Append(" BPM in ");
-            builder.Append(document.level.timeSignature);
-            builder.Append(" with no tempo changes or tempo drift. The first downbeat must be exactly at 0.000 seconds with no intro silence. Target usable duration: ");
-            builder.Append(document.level.totalDurationSeconds.ToString("0.###", CultureInfo.InvariantCulture));
-            builder.Append(" seconds. Follow this structure: ");
-
-            for (int index = 0; index < document.phaseTimeline.Count; index++)
-            {
-                PhaseMusicData phase = document.phaseTimeline[index];
-                if (index > 0)
-                {
-                    builder.Append("; ");
-                }
-
-                builder.Append('[');
-                builder.Append(phase.startSecond.ToString("0.###", CultureInfo.InvariantCulture));
-                builder.Append('-');
-                builder.Append(phase.endSecond.ToString("0.###", CultureInfo.InvariantCulture));
-                builder.Append("s] ");
-                builder.Append(phase.suggestedSection);
-                builder.Append(", energy ");
-                builder.Append(phase.energyLevel);
-                builder.Append("/10, ");
-                builder.Append(phase.musicalTreatment);
-            }
-
-            builder.Append(". Treat every gap between listed phases as a short transition fill or breathing section without changing tempo");
-
-            if (!string.IsNullOrWhiteSpace(document.musicDirection.additionalPrompt))
-            {
-                builder.Append(". Additional direction: ");
-                builder.Append(document.musicDirection.additionalPrompt.Trim());
-            }
-
-            builder.Append(". Export without leading or trailing silence so Unity can schedule it sample-accurately.");
+            builder.Append("Export without leading/trailing silence and trim exactly to the requested duration without changing BPM.");
             return builder.ToString();
         }
 
@@ -642,11 +491,13 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.DodgeWalls: baseEnergy = 7; break;
                 case LevelPhaseAction.RandomMixed: baseEnergy = 9; break;
                 case LevelPhaseAction.OverheadClap: baseEnergy = 6; break;
+                case LevelPhaseAction.LegDrawUp: baseEnergy = 4; break;
                 default: baseEnergy = 5; break;
             }
 
-            int speedEnergy = Mathf.RoundToInt(Mathf.InverseLerp(8f, 30f, phase.FlySpeed) * 2f);
-            return Mathf.Clamp(baseEnergy + speedEnergy, 1, 10);
+            int densityBonus = phase.SpawnIntervalSeconds <= 0.5f ? 2 : phase.SpawnIntervalSeconds <= 1f ? 1 : 0;
+            int waveBonus = phase.ObjectsPerWave > 1 ? 1 : 0;
+            return Mathf.Clamp(baseEnergy + densityBonus + waveBonus, 1, 10);
         }
 
         private static string GetSuggestedSection(LevelPhaseAction action, int index, int phaseCount)
@@ -658,7 +509,7 @@ namespace NeonPulse.EditorTools
 
             if (index == phaseCount - 1)
             {
-                return "final climax and resolved ending";
+                return "final peak with a clean ending at the exact phase duration";
             }
 
             switch (action)
@@ -669,7 +520,8 @@ namespace NeonPulse.EditorTools
                 case LevelPhaseAction.DodgeWalls: return "tension and movement section";
                 case LevelPhaseAction.RandomMixed: return "peak-energy drop";
                 case LevelPhaseAction.OverheadClap: return "anthemic accent section";
-                default: return "controlled breakdown with a strong pulse";
+                case LevelPhaseAction.LegDrawUp: return "controlled low-body groove";
+                default: return "rhythmic gameplay section";
             }
         }
 
@@ -678,54 +530,63 @@ namespace NeonPulse.EditorTools
             switch (action)
             {
                 case LevelPhaseAction.RhythmTiles:
-                    return "clear kick and hi-hat footwork pulse, stable bass groove";
+                    return "clear kick and hi-hat footwork pulse with a stable bass groove";
                 case LevelPhaseAction.PunchObjects:
                     return "heavy kick/snare impacts and short rhythmic stabs";
                 case LevelPhaseAction.SlashObjects:
                     return "sharp synth transients, distorted bass and sweeping accents";
                 case LevelPhaseAction.DodgeWalls:
-                    return "rising tension, stereo movement and impacts while keeping the beat obvious";
+                    return "rising tension, stereo movement and impacts while keeping every beat obvious";
                 case LevelPhaseAction.RandomMixed:
-                    return "full drums, layered synths and maximum rhythmic intensity";
+                    return "full drums, layered synths and maximum rhythmic clarity";
                 case LevelPhaseAction.OverheadClap:
                     return "wide clap accents, uplifting chords and strong downbeats";
                 case LevelPhaseAction.LegDrawUp:
-                    return "reduced arrangement, sustained pulse and clear hold/release tension";
+                    return "controlled bass pulses, grounded kick accents and sustained tension during holds";
                 default:
-                    return "clear electronic workout groove";
+                    return "clear rhythmic accents synchronized to gameplay cues";
             }
         }
 
-        private static bool IsQuarterBeatAligned(float beats)
+        private static bool IsWholeBeatAligned(float beats)
         {
-            return Mathf.Abs(beats * 4f - Mathf.Round(beats * 4f)) <= BeatGridTolerance;
+            return Mathf.Abs(beats - Mathf.Round(beats)) <= BeatGridTolerance;
         }
 
         private static float Round(float value)
         {
-            return (float)Math.Round(value, 3, MidpointRounding.AwayFromZero);
+            return (float)Math.Round(value, 4, MidpointRounding.AwayFromZero);
+        }
+
+        private static string BuildPhaseFileName(
+            NeonPulseLevelDefinition level,
+            NeonPulseLevelPhase phase,
+            int phaseIndex)
+        {
+            return SanitizeFileName(level.LevelName) + "_Phase_" +
+                   (phaseIndex + 1).ToString("D2", CultureInfo.InvariantCulture) + "_" +
+                   SanitizeFileName(phase.Action.ToString()) + "_MusicBrief.json";
         }
 
         private static string SanitizeFileName(string value)
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return "NeonPulseLevel";
-            }
-
+            string safeValue = string.IsNullOrWhiteSpace(value) ? "NeonPulse" : value.Trim();
             char[] invalidCharacters = Path.GetInvalidFileNameChars();
-            StringBuilder builder = new StringBuilder(value.Length);
-            for (int index = 0; index < value.Length; index++)
+            for (int index = 0; index < invalidCharacters.Length; index++)
             {
-                char character = value[index];
-                builder.Append(Array.IndexOf(invalidCharacters, character) >= 0 ? '_' : character);
+                safeValue = safeValue.Replace(invalidCharacters[index], '_');
             }
 
-            return builder.ToString();
+            return safeValue;
         }
 
         private static UnityEngine.Object TryLoadExportedAsset(string absolutePath)
         {
+            if (string.IsNullOrEmpty(absolutePath))
+            {
+                return null;
+            }
+
             string normalizedAssetsPath = Application.dataPath.Replace('\\', '/');
             string normalizedFilePath = absolutePath.Replace('\\', '/');
             if (!normalizedFilePath.StartsWith(normalizedAssetsPath, StringComparison.OrdinalIgnoreCase))

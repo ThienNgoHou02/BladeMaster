@@ -142,7 +142,9 @@ namespace NeonPulse
                 return;
             }
 
-            float beatPhase = Mathf.Repeat(songTime / config.Rhythm.SecondsPerBeat, 1f);
+            float beatPhase = runPlan != null
+                ? runPlan.GetBeatPhase(songTime, config.Rhythm.SecondsPerBeat)
+                : Mathf.Repeat(songTime / config.Rhythm.SecondsPerBeat, 1f);
             materials?.SetBeatPulse(Mathf.Pow(1f - beatPhase, 4f));
             judgementLineFeedback?.Tick(Time.deltaTime);
             SpawnDuePunchTargets(songTime);

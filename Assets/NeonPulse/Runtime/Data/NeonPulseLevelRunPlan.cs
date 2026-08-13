@@ -83,6 +83,25 @@ namespace NeonPulse
             return phaseEndTimes.Count - 1;
         }
 
+        /// <summary>Returns a phase-local beat phase so visual feedback follows independently generated phase clips.</summary>
+        public float GetBeatPhase(float time, float secondsPerBeat)
+        {
+            float safeSecondsPerBeat = Mathf.Max(0.0001f, secondsPerBeat);
+            if (phases.Count == 0)
+            {
+                return Mathf.Repeat(time / safeSecondsPerBeat, 1f);
+            }
+
+            int index = GetPhaseIndex(time);
+            if (index < 0 || index >= phaseStartTimes.Count ||
+                time < phaseStartTimes[index] || time > phaseEndTimes[index])
+            {
+                return 1f;
+            }
+
+            return Mathf.Repeat((time - phaseStartTimes[index]) / safeSecondsPerBeat, 1f);
+        }
+
         /// <summary>Returns the authored object speed for the active phase, or zero during rests.</summary>
         public float GetFlySpeed(float time)
         {
@@ -119,9 +138,10 @@ namespace NeonPulse
             NeonPulseGameConfig config,
             ref uint randomState)
         {
-            float distance = Mathf.Max(0.1f, config.Rhythm.SpawnZ - config.Rhythm.HitZ);
-            float travelDuration = distance / phase.FlySpeed;
-            float targetTime = phaseStartTime + travelDuration;
+            float travelDuration = NeonPulsePhaseBeatTiming.GetTravelDurationSeconds(phase, config.Rhythm);
+            float secondsPerBeat = config.Rhythm.SecondsPerBeat;
+            int localTargetBeat = NeonPulsePhaseBeatTiming.GetFirstActionBeat(phase, config.Rhythm);
+            float targetTime = phaseStartTime + localTargetBeat * secondsPerBeat;
 
             while (targetTime <= phaseEndTime)
             {
@@ -129,7 +149,8 @@ namespace NeonPulse
                 LevelPhaseAction action = ResolveSpawnAction(phase.Action, ref randomState);
                 if (action == LevelPhaseAction.LegDrawUp && targetTime + phase.HoldDurationSeconds > phaseEndTime)
                 {
-                    targetTime += phase.SpawnIntervalSeconds;
+                    localTargetBeat += NeonPulsePhaseBeatTiming.GetActionIntervalBeats(phase, action, config.Rhythm);
+                    targetTime = phaseStartTime + localTargetBeat * secondsPerBeat;
                     continue;
                 }
 
@@ -155,18 +176,9 @@ namespace NeonPulse
                         break;
                 }
 
-                float spacing = phase.SpawnIntervalSeconds;
-                if (action == LevelPhaseAction.DodgeWalls || action == LevelPhaseAction.LegDrawUp)
-                {
-                    // Do not overlap hold windows: changing direction while a wall is still active
-                    // made the dodge phase feel jerky and could generate impossible inputs.
-                    float holdDuration = action == LevelPhaseAction.LegDrawUp
-                        ? phase.HoldDurationSeconds
-                        : config.Rhythm.HoldWindowTrail;
-                    spacing = Mathf.Max(spacing, config.Rhythm.HoldWindowLead + holdDuration + 0.12f);
-                }
-
-                targetTime += spacing;
+                int intervalBeats = NeonPulsePhaseBeatTiming.GetActionIntervalBeats(phase, action, config.Rhythm);
+                localTargetBeat += intervalBeats;
+                targetTime = phaseStartTime + localTargetBeat * secondsPerBeat;
             }
         }
 

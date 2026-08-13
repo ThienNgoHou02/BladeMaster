@@ -136,7 +136,9 @@ namespace NeonPulse.EditorTools
                 return;
             }
 
-            EditorGUILayout.HelpBox("Khoảng spawn độc lập với tốc độ bay. Giảm khoảng spawn để có nhiều object đang bay cùng lúc; chọn 2 object/wave để sinh cặp trái + phải cùng thời điểm.", MessageType.Info);
+            EditorGUILayout.HelpBox(
+                "Khoảng spawn là giá trị mong muốn và được tự quy đổi sang số beat nguyên gần nhất theo BPM. Với action giữ tư thế, hệ thống tự tăng số beat nếu cần để tránh chồng input.",
+                MessageType.Info);
             serializedLevel.UpdateIfRequiredOrScript();
             EditorGUILayout.PropertyField(serializedLevel.FindProperty("levelName"), new GUIContent("Tên Level"));
             EditorGUILayout.PropertyField(serializedLevel.FindProperty("phaseTransitionRestSeconds"), new GUIContent("Nghỉ khi chuyển phase (giây)"));
@@ -148,13 +150,13 @@ namespace NeonPulse.EditorTools
             EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("mood"), new GUIContent("Mood"));
             EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("musicalKey"), new GUIContent("Tông nhạc dùng chung"));
             EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("maximumSegmentDurationSeconds"),
-                new GUIContent("Giới hạn mỗi đoạn (giây)", "Exporter tự chia level thành nhiều đoạn không vượt quá giới hạn này."));
+                new GUIContent("Giới hạn generator (giây)", "Chỉ dùng để cảnh báo khi một phase dài hơn giới hạn của công cụ gen nhạc."));
             EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("additionalPrompt"), new GUIContent("Yêu cầu thêm"));
             EditorGUILayout.PropertyField(musicGeneration.FindPropertyRelative("instrumentalOnly"), new GUIContent("Chỉ nhạc không lời"));
             EditorGUILayout.HelpBox(
-                "File JSON tự chia level thành nhiều clip dưới giới hạn, ưu tiên cắt đúng bar, tạo prompt riêng từng clip và hướng dẫn ghép lại.",
+                "Exporter tạo một JSON riêng cho mỗi phase. Mỗi file có duration, BPM, khoảng action theo beat, thời điểm spawn/hit và prompt gen một clip độc lập.",
                 MessageType.Info);
-            if (GUILayout.Button("XUẤT FILE DATA CHO AI GEN NHẠC", GUILayout.Height(34f)))
+            if (GUILayout.Button("XUẤT DATA GEN NHẠC THEO TỪNG PHASE", GUILayout.Height(34f)))
             {
                 serializedConfig.ApplyModifiedProperties();
                 serializedLevel.ApplyModifiedProperties();
@@ -368,7 +370,9 @@ namespace NeonPulse.EditorTools
                 EditorGUI.PropertyField(new Rect(rect.x + rect.width * 0.51f, rect.y + 45f, rect.width * 0.49f, EditorGUIUtility.singleLineHeight),
                     flySpeed, new GUIContent(GetSpeedLabel(phaseAction)));
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y + 67f, rect.width * 0.49f, EditorGUIUtility.singleLineHeight),
-                    spawnInterval, new GUIContent("Khoảng spawn (giây)"));
+                    spawnInterval, new GUIContent(
+                        "Khoảng spawn mong muốn (giây)",
+                        "Runtime và exporter sẽ quy đổi sang số beat nguyên gần nhất."));
 
                 using (new EditorGUI.DisabledScope(!SupportsMultipleObjects(phaseAction)))
                 {
@@ -617,7 +621,9 @@ namespace NeonPulse.EditorTools
                 EditorGUILayout.LabelField(NeonPulseLevelPhase.GetDisplayName(phaseAction), EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(duration, new GUIContent(GetDurationLabel(phaseAction)));
                 EditorGUILayout.PropertyField(speed, new GUIContent(GetSpeedLabel(phaseAction)));
-                EditorGUILayout.PropertyField(spawnInterval, new GUIContent("Khoảng spawn (giây)"));
+                EditorGUILayout.PropertyField(spawnInterval, new GUIContent(
+                    "Khoảng spawn mong muốn (giây)",
+                    "Runtime và exporter sẽ quy đổi sang số beat nguyên gần nhất."));
                 using (new EditorGUI.DisabledScope(!SupportsMultipleObjects(phaseAction)))
                 {
                     EditorGUILayout.PropertyField(objectsPerWave, new GUIContent("Object mỗi wave"));
