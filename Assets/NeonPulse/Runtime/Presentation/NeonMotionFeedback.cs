@@ -9,6 +9,11 @@ namespace NeonPulse
         private const int PropsPerSide = 10;
         private const float ResetZ = 58f;
         private const float DespawnZ = -8f;
+        private const float MinimumRunningSpeed = 0.01f;
+        private const float MinimumWindEmission = 36f;
+        private const float MaximumWindEmission = 72f;
+        private const float WindSpeedAtMinimumEmission = 10f;
+        private const float WindSpeedAtMaximumEmission = 30f;
 
         private readonly Transform[] sideProps = new Transform[PropsPerSide * 2];
         private readonly ParticleSystem wind;
@@ -38,7 +43,17 @@ namespace NeonPulse
             }
 
             ParticleSystem.EmissionModule emission = wind.emission;
-            emission.rateOverTime = safeSpeed >= 18f ? 52f : 0f;
+            if (safeSpeed <= MinimumRunningSpeed)
+            {
+                emission.rateOverTime = 0f;
+                return;
+            }
+
+            float normalizedSpeed = Mathf.InverseLerp(
+                WindSpeedAtMinimumEmission,
+                WindSpeedAtMaximumEmission,
+                safeSpeed);
+            emission.rateOverTime = Mathf.Lerp(MinimumWindEmission, MaximumWindEmission, normalizedSpeed);
         }
 
         private void CreateSideProps(Transform parent, RuntimeMaterialLibrary materials)

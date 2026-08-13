@@ -9,6 +9,7 @@ namespace NeonPulse
     {
         private const int RadialTextureSize = 128;
         private const float ActionIconSlotSpacing = 96f;
+        private const float ActionIconMaxSize = 148f;
 
         private TMP_FontAsset fontAsset;
         private Font sourceFont;
@@ -591,10 +592,7 @@ namespace NeonPulse
                 return false;
             }
 
-            ConfigureIconTexture(primaryActionIcon, primaryTexture,
-                action == GameplayAction.OverheadClap ||
-                action == GameplayAction.LeftLegDrawUp ||
-                action == GameplayAction.RightLegDrawUp);
+            ConfigureIconTexture(primaryActionIcon, primaryTexture);
             primaryActionSlot.anchoredPosition = hasSecondaryIcon
                 ? new Vector2(-ActionIconSlotSpacing, 0f)
                 : Vector2.zero;
@@ -607,30 +605,15 @@ namespace NeonPulse
             return true;
         }
 
-        private static void ConfigureIconTexture(RawImage icon, Texture2D texture, bool preserveFullTexture = false)
+        private static void ConfigureIconTexture(RawImage icon, Texture2D texture)
         {
             icon.texture = texture;
+            icon.uvRect = new Rect(0f, 0f, 1f, 1f);
+
             float aspectRatio = (float)texture.width / texture.height;
-            if (preserveFullTexture)
-            {
-                const float MaxIconSize = 148f;
-                icon.uvRect = new Rect(0f, 0f, 1f, 1f);
-                icon.rectTransform.sizeDelta = aspectRatio > 1f
-                    ? new Vector2(MaxIconSize, MaxIconSize / aspectRatio)
-                    : new Vector2(MaxIconSize * aspectRatio, MaxIconSize);
-                return;
-            }
-
-            icon.rectTransform.sizeDelta = new Vector2(148f, 148f);
-            if (aspectRatio > 1f)
-            {
-                float normalizedWidth = 1f / aspectRatio;
-                icon.uvRect = new Rect((1f - normalizedWidth) * 0.5f, 0f, normalizedWidth, 1f);
-                return;
-            }
-
-            float normalizedHeight = aspectRatio;
-            icon.uvRect = new Rect(0f, (1f - normalizedHeight) * 0.5f, 1f, normalizedHeight);
+            icon.rectTransform.sizeDelta = aspectRatio >= 1f
+                ? new Vector2(ActionIconMaxSize, ActionIconMaxSize / aspectRatio)
+                : new Vector2(ActionIconMaxSize * aspectRatio, ActionIconMaxSize);
         }
 
         private void CreateCountdownPanel(RuntimeMaterialLibrary materials)

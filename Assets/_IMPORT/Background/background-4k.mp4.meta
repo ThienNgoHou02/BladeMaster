@@ -11,8 +11,17 @@ VideoClipImporter:
   encodeAlpha: 0
   flipVertical: 0
   flipHorizontal: 0
-  importAudio: 1
-  targetSettings: {}
+  importAudio: 0
+  targetSettings:
+    0:
+      enableTranscoding: 1
+      codec: 1
+      resizeFormat: 2
+      aspectRatio: 0
+      customWidth: 2560
+      customHeight: 1440
+      bitrateMode: 1
+      spatialQuality: 2
   userData: 
   assetBundleName: 
   assetBundleVariant: 

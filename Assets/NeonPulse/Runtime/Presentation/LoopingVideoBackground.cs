@@ -37,6 +37,7 @@ namespace NeonPulse
             videoPlayer.waitForFirstFrame = true;
             videoPlayer.isLooping = true;
             videoPlayer.skipOnDrop = true;
+            videoPlayer.timeReference = VideoTimeReference.Freerun;
             videoPlayer.source = VideoSource.VideoClip;
             videoPlayer.clip = clip;
             videoPlayer.renderMode = VideoRenderMode.CameraFarPlane;
@@ -47,7 +48,7 @@ namespace NeonPulse
             videoPlayer.prepareCompleted += OnPrepareCompleted;
             videoPlayer.errorReceived += OnErrorReceived;
             initialized = true;
-            videoPlayer.Prepare();
+            PrepareAndPlay();
         }
 
         private void OnEnable()
@@ -57,13 +58,7 @@ namespace NeonPulse
                 return;
             }
 
-            if (videoPlayer.isPrepared)
-            {
-                videoPlayer.Play();
-                return;
-            }
-
-            videoPlayer.Prepare();
+            PrepareAndPlay();
         }
 
         private void OnDisable()
@@ -91,6 +86,17 @@ namespace NeonPulse
             {
                 preparedPlayer.Play();
             }
+        }
+
+        private void PrepareAndPlay()
+        {
+            if (videoPlayer.isPrepared)
+            {
+                videoPlayer.Play();
+                return;
+            }
+
+            videoPlayer.Prepare();
         }
 
         private void OnErrorReceived(VideoPlayer failedPlayer, string message)
