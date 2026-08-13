@@ -17,10 +17,16 @@ MonoBehaviour:
   phases:
   - action: 6
     durationSeconds: 20
-    flySpeed: 12
+    flySpeed: 15
     spawnIntervalSeconds: 2
     objectsPerWave: 1
     holdDurationSeconds: 2
+  - action: 5
+    durationSeconds: 30
+    flySpeed: 15
+    spawnIntervalSeconds: 1
+    objectsPerWave: 1
+    holdDurationSeconds: 1.2
   - action: 0
     durationSeconds: 30
     flySpeed: 10
@@ -91,11 +97,5 @@ MonoBehaviour:
     durationSeconds: 10
     flySpeed: 30
     spawnIntervalSeconds: 0.5
-    objectsPerWave: 1
-    holdDurationSeconds: 1.2
-  - action: 5
-    durationSeconds: 30
-    flySpeed: 30
-    spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2

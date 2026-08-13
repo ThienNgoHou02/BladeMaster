@@ -10,9 +10,34 @@ namespace NeonPulse
         private const int RadialTextureSize = 128;
         private const float ActionIconSlotSpacing = 96f;
         private const float ActionIconMaxSize = 148f;
+        private const float JudgementFeedbackDuration = 0.85f;
+        private const float FeedbackStartOffsetX = -35f;
+
+        private static readonly string[] PerfectFeedbackFormats =
+        {
+            "PERFECT  +{0}",
+            "AWESOME  +{0}",
+            "AMAZING  +{0}",
+            "EXCELLENT  +{0}"
+        };
+
+        private static readonly string[] GreatFeedbackFormats =
+        {
+            "GREAT  +{0}",
+            "NICE  +{0}",
+            "AWESOME  +{0}",
+            "WELL DONE  +{0}"
+        };
+
+        private static readonly string[] GoodFeedbackFormats =
+        {
+            "GOOD  +{0}",
+            "NICE  +{0}",
+            "KEEP GOING  +{0}"
+        };
 
         private TMP_FontAsset fontAsset;
-        private Font sourceFont;
+        private Font runtimeSourceFont;
         private bool ownsFontAsset;
         private TextMeshProUGUI comboText;
         private TextMeshProUGUI feedbackText;
@@ -30,6 +55,7 @@ namespace NeonPulse
         private GameObject resultPanel;
         private TextMeshProUGUI resultText;
         private float feedbackTimer;
+        private string lastFeedbackFormat;
         private float comboPulseTimer;
         private Color comboPulseColor = Color.white;
         private int lastScoreValue;
@@ -47,6 +73,7 @@ namespace NeonPulse
         private VisualSettings visualSettings;
         private Texture2D radialProgressTexture;
         private Sprite radialProgressSprite;
+        private Vector2 feedbackRestPosition;
 
         /// <summary>Creates all HUD objects and runtime font resources.</summary>
         public void Build(RuntimeMaterialLibrary materials, NeonPulseGameConfig config)
@@ -67,16 +94,17 @@ namespace NeonPulse
             scaler.matchWidthOrHeight = 0.5f;
             gameObject.AddComponent<GraphicRaycaster>();
 
-            CreateRuntimeFont();
+            CreateRuntimeFont(visualSettings.HudFont);
 
-            comboText = CreateText("Combo", transform, "0\nCOMBO\nMAX 0", 52f, TextAlignmentOptions.TopRight, Color.white);
-            comboText.lineSpacing = -18f;
-            SetRect(comboText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-210f, -52f), new Vector2(380f, 190f));
+            comboText = CreateText("Combo", transform, "<size=82>0</size>\n<size=34>COMBO</size>", 52f, TextAlignmentOptions.TopRight, Color.white);
+            comboText.lineSpacing = -10f;
+            SetRect(comboText.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-170f, -82f), new Vector2(300f, 150f));
 
-            feedbackText = CreateText("Feedback", transform, string.Empty, 58f, TextAlignmentOptions.Center, materials.CyanColor);
-            feedbackText.fontStyle = FontStyles.Bold | FontStyles.Italic;
-            feedbackText.lineSpacing = -12f;
-            SetRect(feedbackText.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(950f, 155f));
+            feedbackText = CreateText("Judgement Feedback", transform, string.Empty, 66f, TextAlignmentOptions.Left, materials.CyanColor);
+            feedbackText.fontStyle = FontStyles.Normal;
+            feedbackRestPosition = new Vector2(70f, -165f);
+            SetRect(feedbackText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), feedbackRestPosition, new Vector2(620f, 120f));
+            feedbackText.rectTransform.pivot = new Vector2(0f, 0.5f);
 
             if (showGuidance)
             {
@@ -99,7 +127,7 @@ namespace NeonPulse
                 return;
             }
 
-            comboText.SetText("{0}\nCOMBO\nMAX {1}", snapshot.Combo, snapshot.MaxCombo);
+            comboText.SetText("<size=82>{0}</size>\n<size=34>COMBO</size>", snapshot.Combo);
             lastScoreValue = snapshot.Score;
         }
 
@@ -131,19 +159,19 @@ namespace NeonPulse
             switch (grade)
             {
                 case AccuracyGrade.Perfect:
-                    feedbackText.SetText("+{0}", gainedScore);
+                    feedbackText.SetText(GetRandomFeedbackFormat(PerfectFeedbackFormats), gainedScore);
                     feedbackText.color = materials.YellowColor;
                     break;
                 case AccuracyGrade.Great:
-                    feedbackText.SetText("TRÚNG  +{0}", gainedScore);
+                    feedbackText.SetText(GetRandomFeedbackFormat(GreatFeedbackFormats), gainedScore);
                     feedbackText.color = materials.CyanColor;
                     break;
                 case AccuracyGrade.Good:
-                    feedbackText.SetText("TRÚNG  +{0}", gainedScore);
+                    feedbackText.SetText(GetRandomFeedbackFormat(GoodFeedbackFormats), gainedScore);
                     feedbackText.color = Color.white;
                     break;
                 default:
-                    feedbackText.text = "TRƯỢT NHỊP\nCOMBO BỊ NGẮT";
+                    feedbackText.text = "MISS";
                     feedbackText.color = new Color(1f, 0.12f, 0.22f, 1f);
                     break;
             }
@@ -151,8 +179,9 @@ namespace NeonPulse
             comboPulseColor = feedbackText.color;
             comboPulseTimer = 0.42f;
             feedbackText.alpha = 1f;
-            feedbackText.rectTransform.localScale = Vector3.one * 1.18f;
-            feedbackTimer = 0.65f;
+            feedbackText.rectTransform.anchoredPosition = feedbackRestPosition + new Vector2(FeedbackStartOffsetX, 0f);
+            feedbackText.rectTransform.localScale = Vector3.one * 0.82f;
+            feedbackTimer = JudgementFeedbackDuration;
         }
 
         /// <summary>Explains that an input was recognized but did not match the current beat.</summary>
@@ -166,8 +195,9 @@ namespace NeonPulse
             feedbackText.text = "CHƯA ĐÚNG NHỊP";
             feedbackText.color = new Color(1f, 0.35f, 0.2f, 1f);
             feedbackText.alpha = 1f;
-            feedbackText.rectTransform.localScale = Vector3.one;
-            feedbackTimer = 0.42f;
+            feedbackText.rectTransform.anchoredPosition = feedbackRestPosition + new Vector2(FeedbackStartOffsetX, 0f);
+            feedbackText.rectTransform.localScale = Vector3.one * 0.82f;
+            feedbackTimer = JudgementFeedbackDuration;
         }
 
         /// <summary>Shows the closest required action and fills toward its hit time.</summary>
@@ -320,8 +350,12 @@ namespace NeonPulse
                 feedbackText.text = "CHUẨN BỊ";
                 feedbackText.color = Color.white;
                 feedbackText.alpha = 1f;
+                feedbackText.rectTransform.anchoredPosition = feedbackRestPosition;
+                feedbackText.rectTransform.localScale = Vector3.one;
                 feedbackTimer = 1.2f;
             }
+
+            lastFeedbackFormat = null;
 
             HideUpcomingAction();
 
@@ -332,9 +366,14 @@ namespace NeonPulse
             if (feedbackTimer > 0f && feedbackText != null)
             {
                 feedbackTimer -= Time.unscaledDeltaTime;
-                float normalized = Mathf.Clamp01(feedbackTimer / 0.65f);
-                feedbackText.alpha = normalized;
-                feedbackText.rectTransform.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 1.18f, normalized);
+                float normalized = Mathf.Clamp01(feedbackTimer / JudgementFeedbackDuration);
+                float enterProgress = 1f - Mathf.Clamp01((normalized - 0.72f) / 0.28f);
+                float exitProgress = 1f - Mathf.Clamp01(normalized / 0.32f);
+                feedbackText.alpha = 1f - exitProgress;
+                feedbackText.rectTransform.anchoredPosition = feedbackRestPosition + new Vector2(
+                    Mathf.Lerp(FeedbackStartOffsetX, 0f, enterProgress),
+                    Mathf.Lerp(0f, 22f, exitProgress));
+                feedbackText.rectTransform.localScale = Vector3.one * Mathf.Lerp(0.82f, 1f, enterProgress);
             }
 
             if (hasNextAction && nextActionPanel != null)
@@ -364,9 +403,9 @@ namespace NeonPulse
                 Destroy(fontAsset);
             }
 
-            if (sourceFont != null)
+            if (runtimeSourceFont != null)
             {
-                Destroy(sourceFont);
+                Destroy(runtimeSourceFont);
             }
 
             if (radialProgressSprite != null)
@@ -380,15 +419,22 @@ namespace NeonPulse
             }
         }
 
-        private void CreateRuntimeFont()
+        private void CreateRuntimeFont(Font configuredFont)
         {
-            sourceFont = Font.CreateDynamicFontFromOSFont(new[] { "Arial", "Segoe UI", "Liberation Sans" }, 48);
+            Font sourceFont = configuredFont;
+            if (sourceFont == null)
+            {
+                runtimeSourceFont = Font.CreateDynamicFontFromOSFont(new[] { "Arial", "Segoe UI", "Liberation Sans" }, 48);
+                sourceFont = runtimeSourceFont;
+            }
+
             if (sourceFont != null)
             {
                 fontAsset = TMP_FontAsset.CreateFontAsset(sourceFont);
                 if (fontAsset != null)
                 {
-                    fontAsset.name = "Neon Pulse Runtime Font";
+                    fontAsset.name = configuredFont != null ? configuredFont.name + " TMP Runtime" : "Neon Pulse Runtime Font";
+                    fontAsset.atlasPopulationMode = AtlasPopulationMode.Dynamic;
                     ownsFontAsset = true;
                     return;
                 }
@@ -399,6 +445,19 @@ namespace NeonPulse
             {
                 fontAsset = TMP_Settings.defaultFontAsset;
             }
+        }
+
+        private string GetRandomFeedbackFormat(string[] formats)
+        {
+            int index = Random.Range(0, formats.Length);
+            string selectedFormat = formats[index];
+            if (formats.Length > 1 && selectedFormat == lastFeedbackFormat)
+            {
+                selectedFormat = formats[(index + 1) % formats.Length];
+            }
+
+            lastFeedbackFormat = selectedFormat;
+            return selectedFormat;
         }
 
         private TextMeshProUGUI CreateText(string objectName, Transform parent, string content, float size, TextAlignmentOptions alignment, Color color)

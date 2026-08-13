@@ -76,6 +76,7 @@ MonoBehaviour:
     failShakeAmplitude: 0.14
     failShakeDuration: 0.32
   visuals:
+    hudFont: {fileID: 12800000, guid: 999e7bb88b7876f4688f2c7b1a551dc7, type: 3}
     backgroundTexture: {fileID: 2800000, guid: e9b2bc231ffbb2a48a109cd0a786e10c, type: 3}
     showPunchHands: 0
     punchHitVfxPrefab: {fileID: 1429954232896169633, guid: 83036083a4ebcd34f98131bd3cf6f4d2, type: 3}
@@ -104,14 +105,14 @@ MonoBehaviour:
     purple: {r: 0.48, g: 0.05, b: 1, a: 1}
     yellow: {r: 1, g: 0.82, b: 0.05, a: 1}
     obstacle: {r: 1, g: 0.06, b: 0.2, a: 1}
-    neonIntensity: 3
+    neonIntensity: 4
     beatPulseIntensity: 1.4
     targetGlowScale: 1.26
     overheadClapTargetHeight: 3.8
     rhythmTileLength: 1.35
     judgementLinePulseStrength: 0.28
     screenFlashDuration: 0.12
-    screenFlashIntensity: 0.18
+    screenFlashIntensity: 0.15
     hitParticleCount: 34
     travellerPoolCapacity: 24
     rhythmTilePoolCapacity: 24

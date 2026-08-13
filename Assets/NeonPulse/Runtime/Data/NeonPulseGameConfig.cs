@@ -161,6 +161,7 @@ namespace NeonPulse
     [Serializable]
     public sealed class VisualSettings
     {
+        [SerializeField] private Font hudFont;
         [SerializeField] private Texture2D backgroundTexture;
         [SerializeField] private bool showPunchHands;
         [SerializeField] private GameObject punchHitVfxPrefab;
@@ -203,6 +204,7 @@ namespace NeonPulse
         [SerializeField, Range(4, 24)] private int hitVfxPoolCapacity = 8;
         [SerializeField, Range(0f, 1f)] private float audioVolume = 0.58f;
 
+        public Font HudFont => hudFont;
         public Texture2D BackgroundTexture => backgroundTexture;
         public bool ShowPunchHands => showPunchHands;
         public GameObject PunchHitVfxPrefab => punchHitVfxPrefab;

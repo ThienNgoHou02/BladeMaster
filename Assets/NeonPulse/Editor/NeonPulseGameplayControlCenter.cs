@@ -249,6 +249,7 @@ namespace NeonPulse.EditorTools
 
             DrawSection("MÀU, SHADER & VFX");
             SerializedProperty visuals = serializedConfig.FindProperty("visuals");
+            DrawField(visuals, "hudFont", "Font chữ HUD");
             DrawField(visuals, "backgroundTexture", "Ảnh nền gameplay");
             DrawField(visuals, "showPunchHands", "Hiện nắm đấm góc nhìn thứ nhất");
             DrawField(visuals, "punchHitVfxPrefab", "VFX khi đấm vỡ khối");
