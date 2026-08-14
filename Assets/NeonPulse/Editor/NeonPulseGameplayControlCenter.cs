@@ -345,7 +345,7 @@ namespace NeonPulse.EditorTools
             SerializedProperty phases = serializedLevel.FindProperty("phases");
             phaseList = new ReorderableList(serializedLevel, phases, true, true, true, true)
             {
-                elementHeight = 140f
+                elementHeight = 164f
             };
             phaseList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "PHASE — action quyết định tên và gameplay");
             phaseList.drawElementCallback = (rect, index, active, focused) =>
@@ -357,6 +357,7 @@ namespace NeonPulse.EditorTools
                 SerializedProperty spawnInterval = phase.FindPropertyRelative("spawnIntervalSeconds");
                 SerializedProperty objectsPerWave = phase.FindPropertyRelative("objectsPerWave");
                 SerializedProperty holdDuration = phase.FindPropertyRelative("holdDurationSeconds");
+                SerializedProperty musicClip = phase.FindPropertyRelative("musicClip");
                 rect.y += 3f;
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), action,
                     new GUIContent("Action"));
@@ -386,7 +387,10 @@ namespace NeonPulse.EditorTools
                         holdDuration, new GUIContent("Thời gian co chân tối đa n (random 1→n giây)"));
                 }
 
-                EditorGUI.LabelField(new Rect(rect.x, rect.y + (phaseAction == LevelPhaseAction.LegDrawUp ? 115f : 91f), rect.width, EditorGUIUtility.singleLineHeight),
+                float musicY = phaseAction == LevelPhaseAction.LegDrawUp ? 115f : 91f;
+                EditorGUI.PropertyField(new Rect(rect.x, rect.y + musicY, rect.width, EditorGUIUtility.singleLineHeight),
+                    musicClip, new GUIContent("Nhạc phase"));
+                EditorGUI.LabelField(new Rect(rect.x, rect.y + musicY + 24f, rect.width, EditorGUIUtility.singleLineHeight),
                     GetPhaseDescription(phaseAction), EditorStyles.miniLabel);
             };
         }
@@ -615,6 +619,7 @@ namespace NeonPulse.EditorTools
                 SerializedProperty spawnInterval = phase.FindPropertyRelative("spawnIntervalSeconds");
                 SerializedProperty objectsPerWave = phase.FindPropertyRelative("objectsPerWave");
                 SerializedProperty holdDuration = phase.FindPropertyRelative("holdDurationSeconds");
+                SerializedProperty musicClip = phase.FindPropertyRelative("musicClip");
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 EditorGUILayout.PropertyField(action, new GUIContent("Action"));
                 LevelPhaseAction phaseAction = (LevelPhaseAction)action.enumValueIndex;
@@ -632,6 +637,7 @@ namespace NeonPulse.EditorTools
                 {
                     EditorGUILayout.PropertyField(holdDuration, new GUIContent("Thời gian co chân tối đa n (random 1→n giây)"));
                 }
+                EditorGUILayout.PropertyField(musicClip, new GUIContent("Nhạc phase"));
                 if (GUILayout.Button("XÓA PHASE " + (index + 1)))
                 {
                     phases.DeleteArrayElementAtIndex(index);
@@ -652,6 +658,7 @@ namespace NeonPulse.EditorTools
                 newPhase.FindPropertyRelative("spawnIntervalSeconds").floatValue = 1f;
                 newPhase.FindPropertyRelative("objectsPerWave").intValue = 1;
                 newPhase.FindPropertyRelative("holdDurationSeconds").floatValue = 1.2f;
+                newPhase.FindPropertyRelative("musicClip").objectReferenceValue = null;
             }
 
             serializedObject.ApplyModifiedProperties();

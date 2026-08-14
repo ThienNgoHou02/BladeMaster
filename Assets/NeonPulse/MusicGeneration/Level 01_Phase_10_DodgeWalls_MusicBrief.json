@@ -1,0 +1,260 @@
+{
+    "schemaVersion": "3.0",
+    "documentType": "NeonPulseAIPhaseMusicGenerationBrief",
+    "generatedAtUtc": "2026-08-13T16:17:20.3389241Z",
+    "usage": "Generate exactly one standalone music clip for this phase. Beat index 0 is the first downbeat at 0.000s. Use actionCues as the authoritative hit/accent timeline.",
+    "phase": {
+        "levelName": "Level 01",
+        "phaseNumber": 10,
+        "phaseCount": 14,
+        "gameplayAction": "DodgeWalls",
+        "gameplayDescription": "Né tường",
+        "suggestedSection": "tension and movement section",
+        "energyLevel": 8
+    },
+    "musicDirection": {
+        "genre": "Cyberpunk EDM, synthwave, electronic workout music",
+        "mood": "Energetic, futuristic, motivational and powerful",
+        "musicalKey": "E minor",
+        "instrumentalOnly": true,
+        "musicalTreatment": "rising tension, stereo movement and impacts while keeping every beat obvious",
+        "additionalPrompt": "Use punchy drums, a clear rhythmic pulse and strong transitions between gameplay phases."
+    },
+    "timing": {
+        "bpm": 125.0,
+        "beatsPerBar": 4,
+        "timeSignature": "4/4",
+        "secondsPerBeat": 0.47999998927116396,
+        "exactDurationSeconds": 30.0,
+        "exactDurationBeats": 62.5,
+        "completeBars": 15,
+        "remainingBeats": 2.5,
+        "durationEndsOnBeat": false,
+        "durationEndsOnBar": false,
+        "firstActionBeatIndex": 6,
+        "firstActionMusicalBeatNumber": 7,
+        "firstActionSecond": 2.880000114440918,
+        "actionIntervalBeats": 3,
+        "beatAlignedActionIntervalSeconds": 1.440000057220459,
+        "actionCueCount": 19
+    },
+    "gameplay": {
+        "authoredSpawnIntervalSeconds": 1.0,
+        "authoredSpawnIntervalBeats": 2.0833001136779787,
+        "recommendedSpawnIntervalSeconds": 1.440000057220459,
+        "recommendedSpawnIntervalBeats": 3,
+        "objectsPerWave": 1,
+        "flySpeed": 20.0,
+        "travelDurationSeconds": 2.424999952316284,
+        "firstSpawnSecond": 0.45500001311302187,
+        "authoredHoldDurationSeconds": 1.2000000476837159,
+        "holdDurationBeats": 2.5,
+        "synchronizationRule": "Spawn time compensates for object travel. Player hit/action time is on a whole local beat; spawn time may be off-beat."
+    },
+    "technicalRequirements": {
+        "constantTempo": true,
+        "allowTempoChanges": false,
+        "firstDownbeatAtSecond": 0.0,
+        "allowIntroSilence": false,
+        "recommendedSampleRate": 48000,
+        "exportFormat": "WAV preferred; OGG allowed for Unity import",
+        "trimmingRule": "Return audio with no leading silence. Trim the usable clip to exactDurationSeconds without changing BPM."
+    },
+    "actionCues": [
+        {
+            "cueNumber": 1,
+            "beatIndex": 6,
+            "musicalBeatNumber": 7,
+            "bar": 2,
+            "beatInBar": 3,
+            "hitSecond": 2.880000114440918,
+            "spawnSecond": 0.45500001311302187,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 2,
+            "beatIndex": 9,
+            "musicalBeatNumber": 10,
+            "bar": 3,
+            "beatInBar": 2,
+            "hitSecond": 4.320000171661377,
+            "spawnSecond": 1.8949999809265137,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 3,
+            "beatIndex": 12,
+            "musicalBeatNumber": 13,
+            "bar": 4,
+            "beatInBar": 1,
+            "hitSecond": 5.760000228881836,
+            "spawnSecond": 3.3350000381469728,
+            "accent": "strong downbeat accent"
+        },
+        {
+            "cueNumber": 4,
+            "beatIndex": 15,
+            "musicalBeatNumber": 16,
+            "bar": 4,
+            "beatInBar": 4,
+            "hitSecond": 7.199999809265137,
+            "spawnSecond": 4.775000095367432,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 5,
+            "beatIndex": 18,
+            "musicalBeatNumber": 19,
+            "bar": 5,
+            "beatInBar": 3,
+            "hitSecond": 8.640000343322754,
+            "spawnSecond": 6.215000152587891,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 6,
+            "beatIndex": 21,
+            "musicalBeatNumber": 22,
+            "bar": 6,
+            "beatInBar": 2,
+            "hitSecond": 10.079999923706055,
+            "spawnSecond": 7.65500020980835,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 7,
+            "beatIndex": 24,
+            "musicalBeatNumber": 25,
+            "bar": 7,
+            "beatInBar": 1,
+            "hitSecond": 11.520000457763672,
+            "spawnSecond": 9.095000267028809,
+            "accent": "strong downbeat accent"
+        },
+        {
+            "cueNumber": 8,
+            "beatIndex": 27,
+            "musicalBeatNumber": 28,
+            "bar": 7,
+            "beatInBar": 4,
+            "hitSecond": 12.960000038146973,
+            "spawnSecond": 10.53499984741211,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 9,
+            "beatIndex": 30,
+            "musicalBeatNumber": 31,
+            "bar": 8,
+            "beatInBar": 3,
+            "hitSecond": 14.399999618530274,
+            "spawnSecond": 11.975000381469727,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 10,
+            "beatIndex": 33,
+            "musicalBeatNumber": 34,
+            "bar": 9,
+            "beatInBar": 2,
+            "hitSecond": 15.84000015258789,
+            "spawnSecond": 13.414999961853028,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 11,
+            "beatIndex": 36,
+            "musicalBeatNumber": 37,
+            "bar": 10,
+            "beatInBar": 1,
+            "hitSecond": 17.280000686645509,
+            "spawnSecond": 14.854999542236329,
+            "accent": "strong downbeat accent"
+        },
+        {
+            "cueNumber": 12,
+            "beatIndex": 39,
+            "musicalBeatNumber": 40,
+            "bar": 10,
+            "beatInBar": 4,
+            "hitSecond": 18.719999313354493,
+            "spawnSecond": 16.295000076293947,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 13,
+            "beatIndex": 42,
+            "musicalBeatNumber": 43,
+            "bar": 11,
+            "beatInBar": 3,
+            "hitSecond": 20.15999984741211,
+            "spawnSecond": 17.735000610351564,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 14,
+            "beatIndex": 45,
+            "musicalBeatNumber": 46,
+            "bar": 12,
+            "beatInBar": 2,
+            "hitSecond": 21.600000381469728,
+            "spawnSecond": 19.174999237060548,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 15,
+            "beatIndex": 48,
+            "musicalBeatNumber": 49,
+            "bar": 13,
+            "beatInBar": 1,
+            "hitSecond": 23.040000915527345,
+            "spawnSecond": 20.614999771118165,
+            "accent": "strong downbeat accent"
+        },
+        {
+            "cueNumber": 16,
+            "beatIndex": 51,
+            "musicalBeatNumber": 52,
+            "bar": 13,
+            "beatInBar": 4,
+            "hitSecond": 24.479999542236329,
+            "spawnSecond": 22.05500030517578,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 17,
+            "beatIndex": 54,
+            "musicalBeatNumber": 55,
+            "bar": 14,
+            "beatInBar": 3,
+            "hitSecond": 25.920000076293947,
+            "spawnSecond": 23.4950008392334,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 18,
+            "beatIndex": 57,
+            "musicalBeatNumber": 58,
+            "bar": 15,
+            "beatInBar": 2,
+            "hitSecond": 27.360000610351564,
+            "spawnSecond": 24.934999465942384,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 19,
+            "beatIndex": 60,
+            "musicalBeatNumber": 61,
+            "bar": 16,
+            "beatInBar": 1,
+            "hitSecond": 28.799999237060548,
+            "spawnSecond": 26.375,
+            "accent": "strong downbeat accent"
+        }
+    ],
+    "copyPastePrompt": "Generate one standalone instrumental gameplay music clip for phase 10/14 (action: DodgeWalls). Style: Cyberpunk EDM, synthwave, electronic workout music. Mood: Energetic, futuristic, motivational and powerful. Key: E minor. Keep exactly 125 BPM in 4/4 with no tempo drift. Start the first downbeat at 0.000s with no pickup or intro silence. Exact usable duration: 30s. Energy 8/10. Musical treatment: rising tension, stereo movement and impacts while keeping every beat obvious. Make every beat clearly audible. Add a synchronized transient/accent at these player action beats: bar 2 beat 3 [beat index 6] (2.88s), bar 3 beat 2 [beat index 9] (4.32s), bar 4 beat 1 [beat index 12] (5.76s), bar 4 beat 4 [beat index 15] (7.2s), bar 5 beat 3 [beat index 18] (8.64s), bar 6 beat 2 [beat index 21] (10.08s), bar 7 beat 1 [beat index 24] (11.52s), bar 7 beat 4 [beat index 27] (12.96s), bar 8 beat 3 [beat index 30] (14.4s), bar 9 beat 2 [beat index 33] (15.84s), bar 10 beat 1 [beat index 36] (17.28s), bar 10 beat 4 [beat index 39] (18.72s), bar 11 beat 3 [beat index 42] (20.16s), bar 12 beat 2 [beat index 45] (21.6s), bar 13 beat 1 [beat index 48] (23.04s), bar 13 beat 4 [beat index 51] (24.48s), bar 14 beat 3 [beat index 54] (25.92s), bar 15 beat 2 [beat index 57] (27.36s), bar 16 beat 1 [beat index 60] (28.8s). Do not shift, swing or humanize these cue positions. Use punchy drums, a clear rhythmic pulse and strong transitions between gameplay phases. Export without leading/trailing silence and trim exactly to the requested duration without changing BPM.",
+    "timingWarnings": [
+        "Authored spawn interval 1s equals 2.083 beats. Runtime/export use 3 beats (1.44s) so player actions land on beats.",
+        "Phase duration ends at beat 62.5, not a whole beat. Keep the requested duration; do not place an action after the last whole beat."
+    ]
+}

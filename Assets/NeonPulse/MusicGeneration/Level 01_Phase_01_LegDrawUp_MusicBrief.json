@@ -1,0 +1,130 @@
+{
+    "schemaVersion": "3.0",
+    "documentType": "NeonPulseAIPhaseMusicGenerationBrief",
+    "generatedAtUtc": "2026-08-13T16:17:20.3190331Z",
+    "usage": "Generate exactly one standalone music clip for this phase. Beat index 0 is the first downbeat at 0.000s. Use actionCues as the authoritative hit/accent timeline.",
+    "phase": {
+        "levelName": "Level 01",
+        "phaseNumber": 1,
+        "phaseCount": 14,
+        "gameplayAction": "LegDrawUp",
+        "gameplayDescription": "Co một chân lên",
+        "suggestedSection": "intro groove with immediate downbeat",
+        "energyLevel": 4
+    },
+    "musicDirection": {
+        "genre": "Cyberpunk EDM, synthwave, electronic workout music",
+        "mood": "Energetic, futuristic, motivational and powerful",
+        "musicalKey": "E minor",
+        "instrumentalOnly": true,
+        "musicalTreatment": "controlled bass pulses, grounded kick accents and sustained tension during holds",
+        "additionalPrompt": "Use punchy drums, a clear rhythmic pulse and strong transitions between gameplay phases."
+    },
+    "timing": {
+        "bpm": 125.0,
+        "beatsPerBar": 4,
+        "timeSignature": "4/4",
+        "secondsPerBeat": 0.47999998927116396,
+        "exactDurationSeconds": 20.0,
+        "exactDurationBeats": 41.66669845581055,
+        "completeBars": 10,
+        "remainingBeats": 1.666700005531311,
+        "durationEndsOnBeat": false,
+        "durationEndsOnBar": false,
+        "firstActionBeatIndex": 7,
+        "firstActionMusicalBeatNumber": 8,
+        "firstActionSecond": 3.359999895095825,
+        "actionIntervalBeats": 6,
+        "beatAlignedActionIntervalSeconds": 2.880000114440918,
+        "actionCueCount": 6
+    },
+    "gameplay": {
+        "authoredSpawnIntervalSeconds": 2.0,
+        "authoredSpawnIntervalBeats": 4.1666998863220219,
+        "recommendedSpawnIntervalSeconds": 2.880000114440918,
+        "recommendedSpawnIntervalBeats": 6,
+        "objectsPerWave": 1,
+        "flySpeed": 15.0,
+        "travelDurationSeconds": 3.233299970626831,
+        "firstSpawnSecond": 0.1266999989748001,
+        "authoredHoldDurationSeconds": 2.0,
+        "holdDurationBeats": 4.1666998863220219,
+        "synchronizationRule": "Spawn time compensates for object travel. Player hit/action time is on a whole local beat; spawn time may be off-beat."
+    },
+    "technicalRequirements": {
+        "constantTempo": true,
+        "allowTempoChanges": false,
+        "firstDownbeatAtSecond": 0.0,
+        "allowIntroSilence": false,
+        "recommendedSampleRate": 48000,
+        "exportFormat": "WAV preferred; OGG allowed for Unity import",
+        "trimmingRule": "Return audio with no leading silence. Trim the usable clip to exactDurationSeconds without changing BPM."
+    },
+    "actionCues": [
+        {
+            "cueNumber": 1,
+            "beatIndex": 7,
+            "musicalBeatNumber": 8,
+            "bar": 2,
+            "beatInBar": 4,
+            "hitSecond": 3.359999895095825,
+            "spawnSecond": 0.1266999989748001,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 2,
+            "beatIndex": 13,
+            "musicalBeatNumber": 14,
+            "bar": 4,
+            "beatInBar": 2,
+            "hitSecond": 6.239999771118164,
+            "spawnSecond": 3.006700038909912,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 3,
+            "beatIndex": 19,
+            "musicalBeatNumber": 20,
+            "bar": 5,
+            "beatInBar": 4,
+            "hitSecond": 9.119999885559082,
+            "spawnSecond": 5.88670015335083,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 4,
+            "beatIndex": 25,
+            "musicalBeatNumber": 26,
+            "bar": 7,
+            "beatInBar": 2,
+            "hitSecond": 12.0,
+            "spawnSecond": 8.76669979095459,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 5,
+            "beatIndex": 31,
+            "musicalBeatNumber": 32,
+            "bar": 8,
+            "beatInBar": 4,
+            "hitSecond": 14.880000114440918,
+            "spawnSecond": 11.646699905395508,
+            "accent": "clear rhythmic accent"
+        },
+        {
+            "cueNumber": 6,
+            "beatIndex": 37,
+            "musicalBeatNumber": 38,
+            "bar": 10,
+            "beatInBar": 2,
+            "hitSecond": 17.760000228881837,
+            "spawnSecond": 14.526700019836426,
+            "accent": "clear rhythmic accent"
+        }
+    ],
+    "copyPastePrompt": "Generate one standalone instrumental gameplay music clip for phase 1/14 (action: LegDrawUp). Style: Cyberpunk EDM, synthwave, electronic workout music. Mood: Energetic, futuristic, motivational and powerful. Key: E minor. Keep exactly 125 BPM in 4/4 with no tempo drift. Start the first downbeat at 0.000s with no pickup or intro silence. Exact usable duration: 20s. Energy 4/10. Musical treatment: controlled bass pulses, grounded kick accents and sustained tension during holds. Make every beat clearly audible. Add a synchronized transient/accent at these player action beats: bar 2 beat 4 [beat index 7] (3.36s), bar 4 beat 2 [beat index 13] (6.24s), bar 5 beat 4 [beat index 19] (9.12s), bar 7 beat 2 [beat index 25] (12s), bar 8 beat 4 [beat index 31] (14.88s), bar 10 beat 2 [beat index 37] (17.76s). Do not shift, swing or humanize these cue positions. Use punchy drums, a clear rhythmic pulse and strong transitions between gameplay phases. Export without leading/trailing silence and trim exactly to the requested duration without changing BPM.",
+    "timingWarnings": [
+        "Authored spawn interval 2s equals 4.167 beats. Runtime/export use 6 beats (2.88s) so player actions land on beats.",
+        "Phase duration ends at beat 41.667, not a whole beat. Keep the requested duration; do not place an action after the last whole beat."
+    ]
+}

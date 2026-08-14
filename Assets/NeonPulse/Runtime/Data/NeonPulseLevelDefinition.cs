@@ -48,6 +48,7 @@ namespace NeonPulse
         [SerializeField, Min(0.1f)] private float spawnIntervalSeconds = DefaultSpawnIntervalSeconds;
         [SerializeField, Range(1, 2)] private int objectsPerWave = 1;
         [SerializeField, Min(1f)] private float holdDurationSeconds = 1.2f;
+        [SerializeField] private AudioClip musicClip;
 
         public string DisplayName => GetDisplayName(action);
         public LevelPhaseAction Action => action;
@@ -58,6 +59,7 @@ namespace NeonPulse
             : DefaultSpawnIntervalSeconds;
         public int ObjectsPerWave => Mathf.Clamp(objectsPerWave, 1, 2);
         public float HoldDurationSeconds => Mathf.Max(1f, holdDurationSeconds);
+        public AudioClip MusicClip => musicClip;
 
         public NeonPulseLevelPhase()
         {
@@ -113,6 +115,26 @@ namespace NeonPulse
         public float PhaseTransitionRestSeconds => phaseTransitionRestSeconds;
         public MusicGenerationSettings MusicGeneration => musicGeneration;
         public IReadOnlyList<NeonPulseLevelPhase> Phases => phases;
+        public bool HasAuthoredPhaseMusic
+        {
+            get
+            {
+                if (phases == null)
+                {
+                    return false;
+                }
+
+                for (int index = 0; index < phases.Count; index++)
+                {
+                    if (phases[index] != null && phases[index].MusicClip != null)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
 
         public bool ValidateDefinition(out string message)
         {

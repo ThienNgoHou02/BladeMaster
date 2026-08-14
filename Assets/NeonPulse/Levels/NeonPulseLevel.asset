@@ -29,81 +29,95 @@ MonoBehaviour:
     spawnIntervalSeconds: 2
     objectsPerWave: 1
     holdDurationSeconds: 2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 5
     durationSeconds: 30
     flySpeed: 15
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 0
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 1
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 2
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 3
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 0
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 1
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 2
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 3
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 0
     durationSeconds: 30
     flySpeed: 30
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 1
     durationSeconds: 30
     flySpeed: 30
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 2
     durationSeconds: 30
     flySpeed: 30
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
   - action: 4
     durationSeconds: 10
     flySpeed: 30
     spawnIntervalSeconds: 0.5
     objectsPerWave: 1
     holdDurationSeconds: 1.2
+    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}

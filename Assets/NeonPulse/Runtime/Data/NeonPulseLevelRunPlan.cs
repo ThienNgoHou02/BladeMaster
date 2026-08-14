@@ -38,6 +38,7 @@ namespace NeonPulse
         public IReadOnlyList<PlannedRhythmTileEvent> RhythmTileEvents => rhythmTileEvents;
         public float Duration { get; private set; }
         public int PhaseCount => phases.Count;
+        public bool HasAuthoredPhaseMusic { get; private set; }
 
         public static NeonPulseLevelRunPlan Build(NeonPulseLevelDefinition level, NeonPulseGameConfig config, ref uint randomState)
         {
@@ -59,6 +60,7 @@ namespace NeonPulse
                 }
 
                 plan.phases.Add(phase);
+                plan.HasAuthoredPhaseMusic |= phase.MusicClip != null;
                 plan.phaseStartTimes.Add(cursor);
                 float endTime = cursor + phase.DurationSeconds;
                 plan.phaseEndTimes.Add(endTime);
