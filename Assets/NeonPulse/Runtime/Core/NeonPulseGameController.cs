@@ -11,6 +11,7 @@ namespace NeonPulse
         private const float RhythmTileVfxSurfaceY = 0.42f;
         private const float CombatVfxFrontOffset = 0.65f;
         private const float DualTargetOffsetX = 1.25f;
+        private const float PhaseMusicScheduleLeadSeconds = 0.75f;
 
         [Header("Background")]
         [SerializeField] private VideoClip backgroundVideo;
@@ -38,11 +39,12 @@ namespace NeonPulse
         private NeonHud hud;
         private RhythmScore score;
         private AudioSource audioSource;
+        private AudioSource secondaryAudioSource;
         private AudioClip proceduralClip;
         private double dspStartTime;
         private float songDuration;
         private NeonPulseLevelRunPlan runPlan;
-        private int playingMusicPhaseIndex = -1;
+        private int nextMusicPhaseToSchedule;
         private int nextPunchEventIndex;
         private int nextObstacleEventIndex;
         private int nextRhythmTileIndex;
@@ -109,7 +111,12 @@ namespace NeonPulse
             audioSource.loop = false;
             audioSource.volume = config.Visuals.AudioVolume;
             audioSource.spatialBlend = 0f;
-            if (config.LevelDefinition == null || !config.LevelDefinition.HasAuthoredPhaseMusic)
+            secondaryAudioSource = gameObject.AddComponent<AudioSource>();
+            secondaryAudioSource.playOnAwake = false;
+            secondaryAudioSource.loop = false;
+            secondaryAudioSource.volume = config.Visuals.AudioVolume;
+            secondaryAudioSource.spatialBlend = 0f;
+            if (config.LevelDefinition == null || !config.LevelDefinition.HasAnyAuthoredMusic)
             {
                 proceduralClip = RhythmAudioSynth.Create(config.Rhythm.Bpm, GetAudioBeatCount());
                 audioSource.clip = proceduralClip;
@@ -195,6 +202,11 @@ namespace NeonPulse
                 audioSource.Stop();
             }
 
+            if (secondaryAudioSource != null)
+            {
+                secondaryAudioSource.Stop();
+            }
+
             if (proceduralClip != null)
             {
                 Destroy(proceduralClip);
@@ -228,14 +240,30 @@ namespace NeonPulse
             score.Reset();
             hud.ResetRun();
 
+            if (config.LevelDefinition != null)
+            {
+                for (int index = 0; index < config.LevelDefinition.Phases.Count; index++)
+                {
+                    NeonPulseLevelPhase phase = config.LevelDefinition.Phases[index];
+                    if (phase != null && phase.HasMusicTrack && !phase.HasAnalyzedMusic)
+                    {
+                        Debug.LogError("Phase " + (index + 1) +
+                                       " music has no current beat map. Click PHÂN TÍCH BEAT on that phase.");
+                    }
+                }
+            }
+
             runPlan = NeonPulseLevelRunPlan.Build(config.LevelDefinition, config, ref spawnRandomState);
             songDuration = runPlan.Duration;
 
             audioSource.Stop();
             audioSource.loop = false;
             audioSource.time = 0f;
+            secondaryAudioSource.Stop();
+            secondaryAudioSource.loop = false;
+            secondaryAudioSource.time = 0f;
             dspStartTime = AudioSettings.dspTime + config.Rhythm.CountdownDuration;
-            playingMusicPhaseIndex = -1;
+            nextMusicPhaseToSchedule = 0;
 
             if (runPlan.HasAuthoredPhaseMusic)
             {
@@ -692,7 +720,8 @@ namespace NeonPulse
 
             runFinished = true;
             audioSource.Stop();
-            playingMusicPhaseIndex = -1;
+            secondaryAudioSource.Stop();
+            nextMusicPhaseToSchedule = runPlan != null ? runPlan.PhaseCount : 0;
             ReturnAllTravellers();
             hud.HideUpcomingAction();
             hud.ShowResults(score.Snapshot);
@@ -764,59 +793,84 @@ namespace NeonPulse
 
         private void ScheduleFirstPhaseMusic()
         {
-            if (!runPlan.TryGetPhase(0f, out NeonPulseLevelPhase phase, out _) || phase.MusicClip == null)
+            if (runPlan == null || runPlan.PhaseCount == 0)
             {
                 return;
             }
 
-            ConfigurePhaseMusic(phase, 0f);
-            playingMusicPhaseIndex = runPlan.GetPhaseIndex(0f);
-            audioSource.PlayScheduled(dspStartTime);
+            SchedulePhaseMusic(0);
+            nextMusicPhaseToSchedule = 1;
         }
 
         private void UpdatePhaseMusic(float songTime)
         {
-            if (runPlan == null || !runPlan.HasAuthoredPhaseMusic || songTime < 0f)
+            if (runPlan == null || !runPlan.HasAuthoredPhaseMusic)
             {
                 return;
             }
 
-            if (!runPlan.TryGetPhase(songTime, out NeonPulseLevelPhase phase, out float normalizedProgress))
+            while (nextMusicPhaseToSchedule < runPlan.PhaseCount)
             {
-                if (playingMusicPhaseIndex >= 0)
+                if (!runPlan.TryGetPhaseTiming(
+                        nextMusicPhaseToSchedule,
+                        out _,
+                        out float phaseStartTime,
+                        out _))
                 {
-                    audioSource.Stop();
-                    playingMusicPhaseIndex = -1;
+                    nextMusicPhaseToSchedule++;
+                    continue;
                 }
 
-                return;
-            }
+                if (phaseStartTime - songTime > PhaseMusicScheduleLeadSeconds)
+                {
+                    break;
+                }
 
-            int phaseIndex = runPlan.GetPhaseIndex(songTime);
-            if (phaseIndex == playingMusicPhaseIndex)
-            {
-                return;
+                SchedulePhaseMusic(nextMusicPhaseToSchedule);
+                nextMusicPhaseToSchedule++;
             }
-
-            audioSource.Stop();
-            playingMusicPhaseIndex = phaseIndex;
-            if (phase.MusicClip == null)
-            {
-                return;
-            }
-
-            ConfigurePhaseMusic(phase, normalizedProgress * phase.DurationSeconds);
-            audioSource.Play();
         }
 
-        private void ConfigurePhaseMusic(NeonPulseLevelPhase phase, float phaseLocalTime)
+        private void SchedulePhaseMusic(int phaseIndex)
         {
-            AudioClip clip = phase.MusicClip;
-            audioSource.clip = clip;
-            audioSource.loop = clip.length < phase.DurationSeconds;
-            audioSource.time = audioSource.loop
-                ? Mathf.Repeat(phaseLocalTime, clip.length)
-                : Mathf.Min(phaseLocalTime, Mathf.Max(0f, clip.length - 0.01f));
+            if (!runPlan.TryGetPhaseTiming(
+                    phaseIndex,
+                    out NeonPulseLevelPhase phase,
+                    out float phaseStartTime,
+                    out float phaseEndTime) ||
+                phase.MusicClip == null)
+            {
+                return;
+            }
+
+            AudioSource source = (phaseIndex & 1) == 0 ? audioSource : secondaryAudioSource;
+            float phaseDuration = Mathf.Max(0.01f, phaseEndTime - phaseStartTime);
+            source.Stop();
+            source.clip = phase.MusicClip;
+            source.loop = phase.MusicClip.length + 0.01f < phaseDuration;
+            source.time = 0f;
+            double scheduledStartTime = dspStartTime + phaseStartTime;
+            double scheduledEndTime = dspStartTime + phaseEndTime;
+            double currentDspTime = AudioSettings.dspTime;
+            if (scheduledEndTime <= currentDspTime + 0.02d)
+            {
+                return;
+            }
+
+            if (scheduledStartTime > currentDspTime + 0.02d)
+            {
+                source.PlayScheduled(scheduledStartTime);
+            }
+            else
+            {
+                float elapsed = Mathf.Max(0f, (float)(currentDspTime - scheduledStartTime));
+                source.time = source.loop
+                    ? Mathf.Repeat(elapsed, phase.MusicClip.length)
+                    : Mathf.Min(elapsed, Mathf.Max(0f, phase.MusicClip.length - 0.01f));
+                source.PlayScheduled(currentDspTime + 0.02d);
+            }
+
+            source.SetScheduledEndTime(scheduledEndTime);
         }
 
         private int GetAudioBeatCount()

@@ -29,6 +29,7 @@ namespace NeonPulse
         private readonly List<PlannedRhythmTileEvent> rhythmTileEvents = new List<PlannedRhythmTileEvent>(48);
         private readonly List<float> phaseStartTimes = new List<float>(8);
         private readonly List<float> phaseEndTimes = new List<float>(8);
+        private readonly List<float> musicBeatTimes = new List<float>(256);
         private readonly List<NeonPulseLevelPhase> phases = new List<NeonPulseLevelPhase>(8);
         private readonly List<LevelPhaseAction> randomMixedActions = new List<LevelPhaseAction>(5);
         private float legacyFlySpeed;
@@ -60,15 +61,38 @@ namespace NeonPulse
                 }
 
                 plan.phases.Add(phase);
-                plan.HasAuthoredPhaseMusic |= phase.MusicClip != null;
+                bool hasMusicTrack = phase.HasMusicTrack;
+                bool useMusicBeatMap = phase.HasAnalyzedMusic;
+                plan.HasAuthoredPhaseMusic |= hasMusicTrack;
                 plan.phaseStartTimes.Add(cursor);
-                float endTime = cursor + phase.DurationSeconds;
+                float phaseDuration = hasMusicTrack && phase.MusicBeatMap.UseMusicLengthAsPhaseDuration
+                    ? phase.MusicClip.length
+                    : phase.DurationSeconds;
+                float endTime = cursor + Mathf.Max(0.01f, phaseDuration);
                 plan.phaseEndTimes.Add(endTime);
-                plan.AddRandomPhaseEvents(phase, cursor, endTime, config, ref randomState);
+                if (useMusicBeatMap)
+                {
+                    plan.AddMusicSyncedPhaseEvents(
+                        phase.MusicBeatMap,
+                        phase,
+                        cursor,
+                        endTime,
+                        config,
+                        ref randomState);
+                    plan.CopyMusicBeatTimes(phase.MusicBeatMap, cursor, endTime);
+                }
+                else if (!hasMusicTrack)
+                {
+                    plan.AddRandomPhaseEvents(phase, cursor, endTime, config, ref randomState);
+                }
+
                 cursor = endTime + (index < level.Phases.Count - 1 ? level.PhaseTransitionRestSeconds : 0f);
             }
 
             plan.Duration = cursor;
+            plan.targetEvents.Sort(CompareGameplaySpawnTime);
+            plan.obstacleEvents.Sort(CompareGameplaySpawnTime);
+            plan.rhythmTileEvents.Sort(CompareRhythmTileSpawnTime);
             return plan;
         }
 
@@ -88,6 +112,18 @@ namespace NeonPulse
         /// <summary>Returns a phase-local beat phase so visual feedback follows independently generated phase clips.</summary>
         public float GetBeatPhase(float time, float secondsPerBeat)
         {
+            if (musicBeatTimes.Count >= 2)
+            {
+                int phaseIndex = GetPhaseIndex(time);
+                if (phaseIndex < 0 || phaseIndex >= phaseStartTimes.Count ||
+                    time < phaseStartTimes[phaseIndex] || time > phaseEndTimes[phaseIndex])
+                {
+                    return 1f;
+                }
+
+                return GetAnalyzedBeatPhase(time, phaseStartTimes[phaseIndex], phaseEndTimes[phaseIndex]);
+            }
+
             float safeSecondsPerBeat = Mathf.Max(0.0001f, secondsPerBeat);
             if (phases.Count == 0)
             {
@@ -102,6 +138,37 @@ namespace NeonPulse
             }
 
             return Mathf.Repeat((time - phaseStartTimes[index]) / safeSecondsPerBeat, 1f);
+        }
+
+        private float GetAnalyzedBeatPhase(float time, float phaseStartTime, float phaseEndTime)
+        {
+            if (time < musicBeatTimes[0] || time > musicBeatTimes[musicBeatTimes.Count - 1])
+            {
+                return 1f;
+            }
+
+            int low = 0;
+            int high = musicBeatTimes.Count - 1;
+            while (low + 1 < high)
+            {
+                int middle = (low + high) >> 1;
+                if (musicBeatTimes[middle] <= time)
+                {
+                    low = middle;
+                }
+                else
+                {
+                    high = middle;
+                }
+            }
+
+            if (musicBeatTimes[low] < phaseStartTime || musicBeatTimes[high] > phaseEndTime)
+            {
+                return 1f;
+            }
+
+            float interval = Mathf.Max(0.0001f, musicBeatTimes[high] - musicBeatTimes[low]);
+            return Mathf.Clamp01((time - musicBeatTimes[low]) / interval);
         }
 
         /// <summary>Returns the authored object speed for the active phase, or zero during rests.</summary>
@@ -131,6 +198,26 @@ namespace NeonPulse
             float duration = Mathf.Max(0.01f, phaseEndTimes[index] - phaseStartTimes[index]);
             normalizedProgress = Mathf.Clamp01((time - phaseStartTimes[index]) / duration);
             return time >= phaseStartTimes[index] && time <= phaseEndTimes[index];
+        }
+
+        public bool TryGetPhaseTiming(
+            int phaseIndex,
+            out NeonPulseLevelPhase phase,
+            out float startTime,
+            out float endTime)
+        {
+            if (phaseIndex < 0 || phaseIndex >= phases.Count)
+            {
+                phase = null;
+                startTime = 0f;
+                endTime = 0f;
+                return false;
+            }
+
+            phase = phases[phaseIndex];
+            startTime = phaseStartTimes[phaseIndex];
+            endTime = phaseEndTimes[phaseIndex];
+            return true;
         }
 
         private void AddRandomPhaseEvents(
@@ -181,6 +268,97 @@ namespace NeonPulse
                 int intervalBeats = NeonPulsePhaseBeatTiming.GetActionIntervalBeats(phase, action, config.Rhythm);
                 localTargetBeat += intervalBeats;
                 targetTime = phaseStartTime + localTargetBeat * secondsPerBeat;
+            }
+        }
+
+        private void AddMusicSyncedPhaseEvents(
+            MusicBeatMap beatMap,
+            NeonPulseLevelPhase phase,
+            float phaseStartTime,
+            float phaseEndTime,
+            NeonPulseGameConfig config,
+            ref uint randomState)
+        {
+            IReadOnlyList<DetectedMusicBeat> beats = beatMap.DetectedBeats;
+            float timingOffset = beatMap.AnalysisSettings.TimingOffsetSeconds;
+            float travelDuration = NeonPulsePhaseBeatTiming.GetTravelDurationSeconds(phase, config.Rhythm);
+            float nextAllowedTargetTime = phaseStartTime;
+
+            for (int index = 0; index < beats.Count; index++)
+            {
+                float targetTime = phaseStartTime + beats[index].Time + timingOffset;
+                if (targetTime < phaseStartTime || targetTime + 0.0001f < nextAllowedTargetTime)
+                {
+                    continue;
+                }
+
+                if (targetTime > phaseEndTime)
+                {
+                    break;
+                }
+
+                LevelPhaseAction action = ResolveSpawnAction(phase.Action, ref randomState);
+                if (action == LevelPhaseAction.LegDrawUp &&
+                    targetTime + phase.HoldDurationSeconds > phaseEndTime)
+                {
+                    continue;
+                }
+
+                float spawnTime = targetTime - travelDuration;
+                switch (action)
+                {
+                    case LevelPhaseAction.RhythmTiles:
+                        AddRhythmTilePair(targetTime, spawnTime, ref randomState);
+                        break;
+                    case LevelPhaseAction.PunchObjects:
+                        AddTargetWave(phase.ObjectsPerWave, targetTime, spawnTime, false, ref randomState);
+                        break;
+                    case LevelPhaseAction.SlashObjects:
+                        AddTargetWave(phase.ObjectsPerWave, targetTime, spawnTime, true, ref randomState);
+                        break;
+                    case LevelPhaseAction.DodgeWalls:
+                        AddDodgeWall(targetTime, spawnTime, ref randomState);
+                        break;
+                    case LevelPhaseAction.OverheadClap:
+                        AddOverheadClapTarget(targetTime, spawnTime, ref randomState);
+                        break;
+                    case LevelPhaseAction.LegDrawUp:
+                        AddLegDrawUpTile(targetTime, spawnTime, phase.HoldDurationSeconds, ref randomState);
+                        break;
+                }
+
+                nextAllowedTargetTime = targetTime + GetMinimumMusicBeatSpacing(phase, action, config.Rhythm);
+            }
+        }
+
+        private static float GetMinimumMusicBeatSpacing(
+            NeonPulseLevelPhase phase,
+            LevelPhaseAction action,
+            RhythmSettings rhythm)
+        {
+            float spacing = phase.SpawnIntervalSeconds;
+            if (action != LevelPhaseAction.DodgeWalls && action != LevelPhaseAction.LegDrawUp)
+            {
+                return spacing;
+            }
+
+            float holdDuration = action == LevelPhaseAction.LegDrawUp
+                ? phase.HoldDurationSeconds
+                : rhythm.HoldWindowTrail;
+            return Mathf.Max(spacing, rhythm.HoldWindowLead + holdDuration + 0.12f);
+        }
+
+        private void CopyMusicBeatTimes(MusicBeatMap beatMap, float phaseStartTime, float phaseEndTime)
+        {
+            IReadOnlyList<DetectedMusicBeat> beats = beatMap.DetectedBeats;
+            float offset = beatMap.AnalysisSettings.TimingOffsetSeconds;
+            for (int index = 0; index < beats.Count; index++)
+            {
+                float time = phaseStartTime + beats[index].Time + offset;
+                if (time >= phaseStartTime && time <= phaseEndTime)
+                {
+                    musicBeatTimes.Add(time);
+                }
             }
         }
 
@@ -366,6 +544,16 @@ namespace NeonPulse
         private static RhythmTileColor RandomTileColor(ref uint state)
         {
             return (RhythmTileColor)NextRandomInt(ref state, (int)RhythmTileColor.Cyan, (int)RhythmTileColor.Purple + 1);
+        }
+
+        private static int CompareGameplaySpawnTime(PlannedGameplayEvent left, PlannedGameplayEvent right)
+        {
+            return left.SpawnTime.CompareTo(right.SpawnTime);
+        }
+
+        private static int CompareRhythmTileSpawnTime(PlannedRhythmTileEvent left, PlannedRhythmTileEvent right)
+        {
+            return left.SpawnTime.CompareTo(right.SpawnTime);
         }
 
         private static int NextRandomInt(ref uint state, int minimumInclusive, int maximumExclusive)

@@ -20,7 +20,8 @@ MonoBehaviour:
     mood: Energetic, futuristic, motivational and powerful
     musicalKey: E minor
     maximumSegmentDurationSeconds: 30
-    additionalPrompt: Use punchy drums, a clear rhythmic pulse and strong transitions between gameplay phases.
+    additionalPrompt: Use punchy drums, a clear rhythmic pulse and strong transitions
+      between gameplay phases.
     instrumentalOnly: 1
   phases:
   - action: 6
@@ -29,95 +30,2657 @@ MonoBehaviour:
     spawnIntervalSeconds: 2
     objectsPerWave: 1
     holdDurationSeconds: 2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 5
     durationSeconds: 30
     flySpeed: 15
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 0
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 1
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 2
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 3
     durationSeconds: 30
     flySpeed: 10
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 0
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 1
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 2
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 3
     durationSeconds: 30
     flySpeed: 20
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 0
     durationSeconds: 30
     flySpeed: 30
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 1
     durationSeconds: 30
     flySpeed: 30
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 2
     durationSeconds: 30
     flySpeed: 30
     spawnIntervalSeconds: 1
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2
   - action: 4
     durationSeconds: 10
     flySpeed: 30
     spawnIntervalSeconds: 0.5
     objectsPerWave: 1
     holdDurationSeconds: 1.2
-    musicClip: {fileID: 8300000, guid: 03758dfcdae4c69489bfc4920a5a0257, type: 3}
+    legacyMusicClip: {fileID: 0}
+    musicBeatMap:
+      musicClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      useMusicLengthAsPhaseDuration: 1
+      analysisSettings:
+        minimumBpm: 85
+        maximumBpm: 180
+        timingOffsetSeconds: 0
+      detectedBeats:
+      - Time: 0.5688889
+        Strength: 0.19294493
+      - Time: 1.2770975
+        Strength: 0.99266076
+      - Time: 1.9736961
+        Strength: 0.8145898
+      - Time: 2.635465
+        Strength: 0.018323386
+      - Time: 3.3320634
+        Strength: 0.017819965
+      - Time: 3.9706123
+        Strength: 0
+      - Time: 4.667211
+        Strength: 0
+      - Time: 5.3638096
+        Strength: 0
+      - Time: 6.1068482
+        Strength: 0.15382214
+      - Time: 6.803447
+        Strength: 0.9827304
+      - Time: 7.5000453
+        Strength: 0.8117517
+      - Time: 8.173424
+        Strength: 0.0138860205
+      - Time: 8.870023
+        Strength: 0.013307913
+      - Time: 9.543402
+        Strength: 0
+      - Time: 10.24
+        Strength: 0
+      - Time: 10.936599
+        Strength: 0
+      - Time: 11.644807
+        Strength: 0.176266
+      - Time: 12.341406
+        Strength: 0.84885263
+      - Time: 13.038005
+        Strength: 0.7872719
+      - Time: 13.722993
+        Strength: 0
+      - Time: 14.419592
+        Strength: 0
+      - Time: 15.116191
+        Strength: 0
+      - Time: 15.812789
+        Strength: 0
+      - Time: 16.509388
+        Strength: 0
+      - Time: 17.205986
+        Strength: 0.018017795
+      - Time: 17.902586
+        Strength: 0
+      - Time: 18.599184
+        Strength: 0.74316955
+      - Time: 19.295782
+        Strength: 0.0044509815
+      - Time: 20.0156
+        Strength: 0.014038929
+      - Time: 20.68898
+        Strength: 0
+      - Time: 21.385578
+        Strength: 0
+      - Time: 22.244717
+        Strength: 0.5334142
+      - Time: 22.941315
+        Strength: 0.014218827
+      - Time: 23.637915
+        Strength: 0.034489244
+      - Time: 24.171972
+        Strength: 0.34165016
+      - Time: 25.0195
+        Strength: 0.31280404
+      - Time: 25.70449
+        Strength: 0.08267004
+      - Time: 26.412699
+        Strength: 0.70584095
+      - Time: 26.958366
+        Strength: 0.2375529
+      - Time: 27.805895
+        Strength: 0.70083666
+      - Time: 28.351564
+        Strength: 0.2862818
+      - Time: 29.187483
+        Strength: 0.6639348
+      - Time: 29.744762
+        Strength: 0.14934713
+      - Time: 30.58068
+        Strength: 0.65117645
+      - Time: 31.161179
+        Strength: 0.17519598
+      - Time: 31.962267
+        Strength: 0.7035503
+      - Time: 32.531155
+        Strength: 0.022867775
+      - Time: 33.367073
+        Strength: 0.6829012
+      - Time: 33.924355
+        Strength: 0
+      - Time: 34.620953
+        Strength: 0
+      - Time: 35.31755
+        Strength: 0.028436294
+      - Time: 36.01415
+        Strength: 0
+      - Time: 36.710747
+        Strength: 0
+      - Time: 37.488617
+        Strength: 0.07935348
+      - Time: 38.185215
+        Strength: 0.8197778
+      - Time: 38.881813
+        Strength: 0.7226809
+      - Time: 39.590023
+        Strength: 0.13275445
+      - Time: 40.251793
+        Strength: 0.18616354
+      - Time: 40.89034
+        Strength: 0
+      - Time: 41.610157
+        Strength: 0.0014519937
+      - Time: 42.28354
+        Strength: 0
+      - Time: 43.026577
+        Strength: 0.086565584
+      - Time: 43.723175
+        Strength: 0.81393456
+      - Time: 44.419773
+        Strength: 0.6741081
+      - Time: 45.127983
+        Strength: 0.13629918
+      - Time: 45.78975
+        Strength: 0.057830967
+      - Time: 46.46313
+        Strength: 0
+      - Time: 47.15973
+        Strength: 0
+      - Time: 47.856327
+        Strength: 0
+      - Time: 48.564537
+        Strength: 0.041322894
+      - Time: 49.261135
+        Strength: 0.7810236
+      - Time: 49.957733
+        Strength: 0.9145878
+      - Time: 50.64272
+        Strength: 0
+      - Time: 51.33932
+        Strength: 0
+      - Time: 52.03592
+        Strength: 0
+      - Time: 52.732517
+        Strength: 0.65054524
+      - Time: 53.429115
+        Strength: 0
+      - Time: 54.125713
+        Strength: 0.31379986
+      - Time: 54.82231
+        Strength: 0.3155441
+      - Time: 55.61179
+        Strength: 0.32274503
+      - Time: 56.30839
+        Strength: 0.14397123
+      - Time: 56.91211
+        Strength: 0
+      - Time: 57.608707
+        Strength: 0
+      - Time: 58.305305
+        Strength: 0
+      - Time: 59.001904
+        Strength: 0
+      estimatedBpm: 86.13281
+      analyzedClip: {fileID: 8300000, guid: 0a103df7b15eeee489754480cfccef37, type: 3}
+      analyzedSampleCount: 2612736
+      analyzedFrequency: 44100
+      analyzedChannels: 2

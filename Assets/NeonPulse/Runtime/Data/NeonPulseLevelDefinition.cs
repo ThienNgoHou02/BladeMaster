@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NeonPulse
 {
@@ -48,7 +49,9 @@ namespace NeonPulse
         [SerializeField, Min(0.1f)] private float spawnIntervalSeconds = DefaultSpawnIntervalSeconds;
         [SerializeField, Range(1, 2)] private int objectsPerWave = 1;
         [SerializeField, Min(1f)] private float holdDurationSeconds = 1.2f;
-        [SerializeField] private AudioClip musicClip;
+        [FormerlySerializedAs("musicClip")]
+        [SerializeField, HideInInspector] private AudioClip legacyMusicClip;
+        [SerializeField] private MusicBeatMap musicBeatMap = new MusicBeatMap();
 
         public string DisplayName => GetDisplayName(action);
         public LevelPhaseAction Action => action;
@@ -59,7 +62,12 @@ namespace NeonPulse
             : DefaultSpawnIntervalSeconds;
         public int ObjectsPerWave => Mathf.Clamp(objectsPerWave, 1, 2);
         public float HoldDurationSeconds => Mathf.Max(1f, holdDurationSeconds);
-        public AudioClip MusicClip => musicClip;
+        public MusicBeatMap MusicBeatMap => musicBeatMap;
+        public AudioClip MusicClip => musicBeatMap != null && musicBeatMap.MusicClip != null
+            ? musicBeatMap.MusicClip
+            : legacyMusicClip;
+        public bool HasMusicTrack => MusicClip != null;
+        public bool HasAnalyzedMusic => musicBeatMap != null && musicBeatMap.HasCurrentAnalysis;
 
         public NeonPulseLevelPhase()
         {
@@ -78,6 +86,24 @@ namespace NeonPulse
             spawnIntervalSeconds = spawnInterval;
             objectsPerWave = waveSize;
         }
+
+#if UNITY_EDITOR
+        public void MigrateLegacyMusicClip()
+        {
+            if (legacyMusicClip == null)
+            {
+                return;
+            }
+
+            musicBeatMap = musicBeatMap ?? new MusicBeatMap();
+            if (musicBeatMap.MusicClip == null)
+            {
+                musicBeatMap.SetMusicClip(legacyMusicClip);
+            }
+
+            legacyMusicClip = null;
+        }
+#endif
 
         public static string GetDisplayName(LevelPhaseAction value)
         {
@@ -136,6 +162,8 @@ namespace NeonPulse
             }
         }
 
+        public bool HasAnyAuthoredMusic => HasAuthoredPhaseMusic;
+
         public bool ValidateDefinition(out string message)
         {
             if (phases == null || phases.Count == 0)
@@ -173,8 +201,40 @@ namespace NeonPulse
                 return false;
             }
 
-            message = "Level hợp lệ. Object sẽ được random lại ở mỗi lượt chơi.";
+            for (int index = 0; index < phases.Count; index++)
+            {
+                NeonPulseLevelPhase phase = phases[index];
+                if (phase == null || !phase.HasMusicTrack)
+                {
+                    message = "Phase " + (index + 1) + " chưa có file nhạc.";
+                    return false;
+                }
+
+                if (!phase.HasAnalyzedMusic)
+                {
+                    message = "Nhạc của phase " + (index + 1) +
+                              " chưa có beat map hoặc đã thay đổi. Hãy bấm PHÂN TÍCH BEAT.";
+                    return false;
+                }
+            }
+
+            message = "Level hợp lệ. Mỗi phase sẽ phát clip riêng và spawn theo beat map của clip đó.";
             return true;
         }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (phases == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < phases.Count; index++)
+            {
+                phases[index]?.MigrateLegacyMusicClip();
+            }
+        }
+#endif
     }
 }

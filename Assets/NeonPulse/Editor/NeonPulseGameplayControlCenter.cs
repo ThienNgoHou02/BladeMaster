@@ -132,13 +132,10 @@ namespace NeonPulse.EditorTools
 
             if (serializedLevel == null)
             {
-                EditorGUILayout.HelpBox("Kéo một file NeonPulseLevel vào ô trên hoặc tạo Level mẫu. Mỗi phase chỉnh riêng tốc độ bay, nhịp spawn và số object mỗi wave.", MessageType.Info);
+                EditorGUILayout.HelpBox("Kéo một file NeonPulseLevel vào ô trên hoặc tạo Level mẫu.", MessageType.Info);
                 return;
             }
 
-            EditorGUILayout.HelpBox(
-                "Khoảng spawn là giá trị mong muốn và được tự quy đổi sang số beat nguyên gần nhất theo BPM. Với action giữ tư thế, hệ thống tự tăng số beat nếu cần để tránh chồng input.",
-                MessageType.Info);
             serializedLevel.UpdateIfRequiredOrScript();
             EditorGUILayout.PropertyField(serializedLevel.FindProperty("levelName"), new GUIContent("Tên Level"));
             EditorGUILayout.PropertyField(serializedLevel.FindProperty("phaseTransitionRestSeconds"), new GUIContent("Nghỉ khi chuyển phase (giây)"));
@@ -345,7 +342,7 @@ namespace NeonPulse.EditorTools
             SerializedProperty phases = serializedLevel.FindProperty("phases");
             phaseList = new ReorderableList(serializedLevel, phases, true, true, true, true)
             {
-                elementHeight = 164f
+                elementHeight = 286f
             };
             phaseList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "PHASE — action quyết định tên và gameplay");
             phaseList.drawElementCallback = (rect, index, active, focused) =>
@@ -357,7 +354,7 @@ namespace NeonPulse.EditorTools
                 SerializedProperty spawnInterval = phase.FindPropertyRelative("spawnIntervalSeconds");
                 SerializedProperty objectsPerWave = phase.FindPropertyRelative("objectsPerWave");
                 SerializedProperty holdDuration = phase.FindPropertyRelative("holdDurationSeconds");
-                SerializedProperty musicClip = phase.FindPropertyRelative("musicClip");
+                SerializedProperty musicBeatMap = phase.FindPropertyRelative("musicBeatMap");
                 rect.y += 3f;
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), action,
                     new GUIContent("Action"));
@@ -372,8 +369,8 @@ namespace NeonPulse.EditorTools
                     flySpeed, new GUIContent(GetSpeedLabel(phaseAction)));
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y + 67f, rect.width * 0.49f, EditorGUIUtility.singleLineHeight),
                     spawnInterval, new GUIContent(
-                        "Khoảng spawn mong muốn (giây)",
-                        "Runtime và exporter sẽ quy đổi sang số beat nguyên gần nhất."));
+                        "Giãn cách gameplay tối thiểu",
+                        "Object vẫn hit đúng beat; giá trị này chỉ bỏ qua các beat quá gần nhau."));
 
                 using (new EditorGUI.DisabledScope(!SupportsMultipleObjects(phaseAction)))
                 {
@@ -388,10 +385,28 @@ namespace NeonPulse.EditorTools
                 }
 
                 float musicY = phaseAction == LevelPhaseAction.LegDrawUp ? 115f : 91f;
-                EditorGUI.PropertyField(new Rect(rect.x, rect.y + musicY, rect.width, EditorGUIUtility.singleLineHeight),
-                    musicClip, new GUIContent("Nhạc phase"));
-                EditorGUI.LabelField(new Rect(rect.x, rect.y + musicY + 24f, rect.width, EditorGUIUtility.singleLineHeight),
+                DrawPhaseMusicFields(
+                    new Rect(rect.x, rect.y + musicY, rect.width, 142f),
+                    musicBeatMap,
+                    serializedLevel,
+                    serializedLevel.targetObject as NeonPulseLevelDefinition,
+                    index);
+                EditorGUI.LabelField(new Rect(rect.x, rect.y + musicY + 146f, rect.width, EditorGUIUtility.singleLineHeight),
                     GetPhaseDescription(phaseAction), EditorStyles.miniLabel);
+            };
+            phaseList.onAddCallback = list =>
+            {
+                int newIndex = phases.arraySize;
+                phases.InsertArrayElementAtIndex(newIndex);
+                SerializedProperty newPhase = phases.GetArrayElementAtIndex(newIndex);
+                newPhase.FindPropertyRelative("action").enumValueIndex = (int)LevelPhaseAction.PunchObjects;
+                newPhase.FindPropertyRelative("durationSeconds").floatValue = 12f;
+                newPhase.FindPropertyRelative("flySpeed").floatValue = 12f;
+                newPhase.FindPropertyRelative("spawnIntervalSeconds").floatValue = 1f;
+                newPhase.FindPropertyRelative("objectsPerWave").intValue = 1;
+                newPhase.FindPropertyRelative("holdDurationSeconds").floatValue = 1.2f;
+                newPhase.FindPropertyRelative("legacyMusicClip").objectReferenceValue = null;
+                ClearSerializedBeatMap(newPhase.FindPropertyRelative("musicBeatMap"));
             };
         }
 
@@ -442,6 +457,75 @@ namespace NeonPulse.EditorTools
             return action == LevelPhaseAction.PunchObjects ||
                    action == LevelPhaseAction.SlashObjects ||
                    action == LevelPhaseAction.RandomMixed;
+        }
+
+        private static void DrawPhaseMusicFields(
+            Rect rect,
+            SerializedProperty beatMap,
+            SerializedObject levelObject,
+            NeonPulseLevelDefinition level,
+            int phaseIndex)
+        {
+            float line = EditorGUIUtility.singleLineHeight;
+            EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, line),
+                beatMap.FindPropertyRelative("musicClip"), new GUIContent("Nhạc của phase"));
+            EditorGUI.PropertyField(new Rect(rect.x, rect.y + 22f, rect.width, line),
+                beatMap.FindPropertyRelative("useMusicLengthAsPhaseDuration"),
+                new GUIContent("Dùng độ dài clip làm thời lượng phase"));
+            SerializedProperty settings = beatMap.FindPropertyRelative("analysisSettings");
+            float halfWidth = rect.width * 0.49f;
+            EditorGUI.PropertyField(new Rect(rect.x, rect.y + 44f, halfWidth, line),
+                settings.FindPropertyRelative("minimumBpm"), new GUIContent("BPM thấp nhất"));
+            EditorGUI.PropertyField(new Rect(rect.x + rect.width * 0.51f, rect.y + 44f, halfWidth, line),
+                settings.FindPropertyRelative("maximumBpm"), new GUIContent("BPM cao nhất"));
+            EditorGUI.PropertyField(new Rect(rect.x, rect.y + 66f, rect.width, line),
+                settings.FindPropertyRelative("timingOffsetSeconds"), new GUIContent("Bù timing (giây)"));
+
+            MusicBeatMap runtimeBeatMap = level != null && phaseIndex < level.Phases.Count
+                ? level.Phases[phaseIndex]?.MusicBeatMap
+                : null;
+            bool hasClip = runtimeBeatMap != null && runtimeBeatMap.MusicClip != null;
+            bool analysisCurrent = runtimeBeatMap != null && runtimeBeatMap.HasCurrentAnalysis;
+            string status = analysisCurrent
+                ? runtimeBeatMap.DetectedBeats.Count + " beat · BPM ≈ " + runtimeBeatMap.EstimatedBpm.ToString("0.0")
+                : hasClip ? "Chưa phân tích beat" : "Chưa có nhạc";
+            EditorGUI.LabelField(new Rect(rect.x, rect.y + 88f, rect.width, line), status, EditorStyles.miniLabel);
+
+            using (new EditorGUI.DisabledScope(!hasClip))
+            {
+                if (GUI.Button(new Rect(rect.x, rect.y + 110f, halfWidth, 24f), "PHÂN TÍCH BEAT"))
+                {
+                    levelObject.ApplyModifiedProperties();
+                    runtimeBeatMap = level != null && phaseIndex < level.Phases.Count
+                        ? level.Phases[phaseIndex]?.MusicBeatMap
+                        : null;
+                    NeonPulseBeatAnalyzer.AnalyzeAndApply(level, runtimeBeatMap, phaseIndex);
+                    levelObject.UpdateIfRequiredOrScript();
+                }
+            }
+
+            using (new EditorGUI.DisabledScope(!analysisCurrent))
+            {
+                if (GUI.Button(
+                        new Rect(rect.x + rect.width * 0.51f, rect.y + 110f, halfWidth, 24f),
+                        "XÓA BEAT MAP"))
+                {
+                    NeonPulseBeatAnalyzer.ClearAnalysis(level, runtimeBeatMap);
+                    levelObject.UpdateIfRequiredOrScript();
+                }
+            }
+        }
+
+        private static void ClearSerializedBeatMap(SerializedProperty beatMap)
+        {
+            beatMap.FindPropertyRelative("musicClip").objectReferenceValue = null;
+            beatMap.FindPropertyRelative("useMusicLengthAsPhaseDuration").boolValue = true;
+            beatMap.FindPropertyRelative("detectedBeats").arraySize = 0;
+            beatMap.FindPropertyRelative("estimatedBpm").floatValue = 0f;
+            beatMap.FindPropertyRelative("analyzedClip").objectReferenceValue = null;
+            beatMap.FindPropertyRelative("analyzedSampleCount").intValue = 0;
+            beatMap.FindPropertyRelative("analyzedFrequency").intValue = 0;
+            beatMap.FindPropertyRelative("analyzedChannels").intValue = 0;
         }
 
         private void CreateLevelAsset()
@@ -619,7 +703,7 @@ namespace NeonPulse.EditorTools
                 SerializedProperty spawnInterval = phase.FindPropertyRelative("spawnIntervalSeconds");
                 SerializedProperty objectsPerWave = phase.FindPropertyRelative("objectsPerWave");
                 SerializedProperty holdDuration = phase.FindPropertyRelative("holdDurationSeconds");
-                SerializedProperty musicClip = phase.FindPropertyRelative("musicClip");
+                SerializedProperty musicBeatMap = phase.FindPropertyRelative("musicBeatMap");
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 EditorGUILayout.PropertyField(action, new GUIContent("Action"));
                 LevelPhaseAction phaseAction = (LevelPhaseAction)action.enumValueIndex;
@@ -627,8 +711,8 @@ namespace NeonPulse.EditorTools
                 EditorGUILayout.PropertyField(duration, new GUIContent(GetDurationLabel(phaseAction)));
                 EditorGUILayout.PropertyField(speed, new GUIContent(GetSpeedLabel(phaseAction)));
                 EditorGUILayout.PropertyField(spawnInterval, new GUIContent(
-                    "Khoảng spawn mong muốn (giây)",
-                    "Runtime và exporter sẽ quy đổi sang số beat nguyên gần nhất."));
+                    "Giãn cách gameplay tối thiểu",
+                    "Object vẫn hit đúng beat; giá trị này chỉ bỏ qua các beat quá gần nhau."));
                 using (new EditorGUI.DisabledScope(!SupportsMultipleObjects(phaseAction)))
                 {
                     EditorGUILayout.PropertyField(objectsPerWave, new GUIContent("Object mỗi wave"));
@@ -637,7 +721,7 @@ namespace NeonPulse.EditorTools
                 {
                     EditorGUILayout.PropertyField(holdDuration, new GUIContent("Thời gian co chân tối đa n (random 1→n giây)"));
                 }
-                EditorGUILayout.PropertyField(musicClip, new GUIContent("Nhạc phase"));
+                DrawPhaseMusicBeatMap(serializedObject, target as NeonPulseLevelDefinition, musicBeatMap, index);
                 if (GUILayout.Button("XÓA PHASE " + (index + 1)))
                 {
                     phases.DeleteArrayElementAtIndex(index);
@@ -658,7 +742,16 @@ namespace NeonPulse.EditorTools
                 newPhase.FindPropertyRelative("spawnIntervalSeconds").floatValue = 1f;
                 newPhase.FindPropertyRelative("objectsPerWave").intValue = 1;
                 newPhase.FindPropertyRelative("holdDurationSeconds").floatValue = 1.2f;
-                newPhase.FindPropertyRelative("musicClip").objectReferenceValue = null;
+                newPhase.FindPropertyRelative("legacyMusicClip").objectReferenceValue = null;
+                SerializedProperty newBeatMap = newPhase.FindPropertyRelative("musicBeatMap");
+                newBeatMap.FindPropertyRelative("musicClip").objectReferenceValue = null;
+                newBeatMap.FindPropertyRelative("useMusicLengthAsPhaseDuration").boolValue = true;
+                newBeatMap.FindPropertyRelative("detectedBeats").arraySize = 0;
+                newBeatMap.FindPropertyRelative("estimatedBpm").floatValue = 0f;
+                newBeatMap.FindPropertyRelative("analyzedClip").objectReferenceValue = null;
+                newBeatMap.FindPropertyRelative("analyzedSampleCount").intValue = 0;
+                newBeatMap.FindPropertyRelative("analyzedFrequency").intValue = 0;
+                newBeatMap.FindPropertyRelative("analyzedChannels").intValue = 0;
             }
 
             serializedObject.ApplyModifiedProperties();
@@ -666,6 +759,54 @@ namespace NeonPulse.EditorTools
             if (GUILayout.Button("MỞ GAMEPLAY CONTROL CENTER"))
             {
                 NeonPulseGameplayControlCenter.OpenWindow();
+            }
+        }
+
+        private static void DrawPhaseMusicBeatMap(
+            SerializedObject levelObject,
+            NeonPulseLevelDefinition level,
+            SerializedProperty beatMap,
+            int phaseIndex)
+        {
+            EditorGUILayout.Space(4f);
+            EditorGUILayout.LabelField("NHẠC & BEAT MAP PHASE", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(beatMap.FindPropertyRelative("musicClip"), new GUIContent("Nhạc của phase"));
+            EditorGUILayout.PropertyField(beatMap.FindPropertyRelative("useMusicLengthAsPhaseDuration"),
+                new GUIContent("Dùng độ dài clip làm thời lượng phase"));
+            SerializedProperty settings = beatMap.FindPropertyRelative("analysisSettings");
+            EditorGUILayout.PropertyField(settings.FindPropertyRelative("minimumBpm"), new GUIContent("BPM thấp nhất"));
+            EditorGUILayout.PropertyField(settings.FindPropertyRelative("maximumBpm"), new GUIContent("BPM cao nhất"));
+            EditorGUILayout.PropertyField(settings.FindPropertyRelative("timingOffsetSeconds"), new GUIContent("Bù timing (giây)"));
+            levelObject.ApplyModifiedProperties();
+
+            MusicBeatMap runtimeBeatMap = level != null && phaseIndex < level.Phases.Count
+                ? level.Phases[phaseIndex]?.MusicBeatMap
+                : null;
+            bool hasClip = runtimeBeatMap != null && runtimeBeatMap.MusicClip != null;
+            bool analysisCurrent = runtimeBeatMap != null && runtimeBeatMap.HasCurrentAnalysis;
+            if (hasClip)
+            {
+                EditorGUILayout.HelpBox(
+                    analysisCurrent
+                        ? "Sẵn sàng: " + runtimeBeatMap.DetectedBeats.Count + " beat, BPM ≈ " +
+                          runtimeBeatMap.EstimatedBpm.ToString("0.0")
+                        : "Hãy bấm PHÂN TÍCH BEAT sau khi chọn nhạc.",
+                    analysisCurrent ? MessageType.Info : MessageType.Warning);
+            }
+
+            using (new EditorGUI.DisabledScope(!hasClip))
+            {
+                if (GUILayout.Button("PHÂN TÍCH BEAT", GUILayout.Height(32f)))
+                {
+                    NeonPulseBeatAnalyzer.AnalyzeAndApply(level, runtimeBeatMap, phaseIndex);
+                    levelObject.UpdateIfRequiredOrScript();
+                }
+            }
+
+            if (analysisCurrent && GUILayout.Button("XÓA BEAT MAP"))
+            {
+                NeonPulseBeatAnalyzer.ClearAnalysis(level, runtimeBeatMap);
+                levelObject.UpdateIfRequiredOrScript();
             }
         }
 
