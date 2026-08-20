@@ -12,14 +12,18 @@ namespace NeonPulse
 
         private readonly float neonIntensity;
         private readonly float beatPulseIntensity;
+        private static readonly int IntensityPropertyId = Shader.PropertyToID("_Intensity");
 
         public Material Cyan { get; }
         public Material Magenta { get; }
         public Material Purple { get; }
         public Material Yellow { get; }
         public Material Dark { get; }
+        public Material Skyline { get; }
+        public Material TrackAccent { get; }
         public Material Obstacle { get; }
         public Material ObstacleGlow { get; }
+        public Material ImpactGlow { get; }
         public Material White { get; }
         public Material Footprint { get; }
         public Material JudgementTile { get; }
@@ -53,8 +57,11 @@ namespace NeonPulse
             Purple = CreateEmissive("Neon Purple", PurpleColor, neonIntensity * 0.82f);
             Yellow = CreateEmissive("Neon Yellow", YellowColor, neonIntensity * 1.1f);
             Dark = CreateEmissive("Track Black", new Color(0.006f, 0.008f, 0.02f, 1f), 0.02f);
+            Skyline = CreateEmissive("Skyline", new Color(0.012f, 0.018f, 0.055f, 1f), 0.22f);
+            TrackAccent = CreateEmissive("Track Accent", new Color(0.08f, 0.025f, 0.2f, 1f), neonIntensity * 0.28f);
             Obstacle = CreateEmissive("Obstacle Red", safeSettings.Obstacle, neonIntensity * 0.68f);
             ObstacleGlow = CreateGlow("Obstacle Aura", safeSettings.Obstacle);
+            ImpactGlow = CreateTrailGlow("Impact Glow", Color.white);
             White = CreateParticle("Feedback White");
             Footprint = CreateEmissive("Footprint White", Color.white, neonIntensity * 1.35f);
             JudgementTile = CreateGlow("Judgement Tile", new Color(0.42f, 0.55f, 0.7f, 1f), 0.2f);
@@ -82,6 +89,10 @@ namespace NeonPulse
             SetEmission(Magenta, MagentaColor, neonIntensity + pulse * beatPulseIntensity);
             SetEmission(Purple, PurpleColor, neonIntensity * 0.82f + pulse * beatPulseIntensity * 0.8f);
             SetEmission(Yellow, YellowColor, neonIntensity * 1.1f + pulse * beatPulseIntensity * 1.15f);
+            if (ImpactGlow != null && ImpactGlow.HasProperty(IntensityPropertyId))
+            {
+                ImpactGlow.SetFloat(IntensityPropertyId, 1.45f + pulse * 0.85f);
+            }
         }
 
         /// <summary>Destroys all generated material instances.</summary>
@@ -92,8 +103,11 @@ namespace NeonPulse
             DestroyMaterial(Purple);
             DestroyMaterial(Yellow);
             DestroyMaterial(Dark);
+            DestroyMaterial(Skyline);
+            DestroyMaterial(TrackAccent);
             DestroyMaterial(Obstacle);
             DestroyMaterial(ObstacleGlow);
+            DestroyMaterial(ImpactGlow);
             DestroyMaterial(White);
             DestroyMaterial(Footprint);
             DestroyMaterial(JudgementTile);
@@ -207,6 +221,26 @@ namespace NeonPulse
             {
                 name = materialName,
                 color = Color.white
+            };
+        }
+
+        private static Material CreateTrailGlow(string materialName, Color color)
+        {
+            Shader shader = Resources.Load<Shader>("NeonPulseTrail");
+            if (shader == null)
+            {
+                shader = Shader.Find("NeonPulse/Trail Glow");
+            }
+
+            if (shader == null)
+            {
+                shader = Shader.Find("Hidden/InternalErrorShader");
+            }
+
+            return new Material(shader)
+            {
+                name = materialName,
+                color = color
             };
         }
 

@@ -114,6 +114,7 @@ namespace NeonPulse
             {
                 float x = -2.7f + lane * 1.8f;
                 CreateCube(parent, "Lane " + (lane + 1), new Vector3(x, -0.12f, 26f), new Vector3(1.7f, 0.18f, 58f), materials.Dark);
+                CreateCube(parent, "Lane Energy Strip " + (lane + 1), new Vector3(x, -0.015f, 26f), new Vector3(0.24f, 0.018f, 58f), materials.TrackAccent);
             }
 
             for (int divider = 0; divider <= 4; divider++)
@@ -297,8 +298,17 @@ namespace NeonPulse
                 rotationOverLifetime.enabled = true;
                 rotationOverLifetime.z = new ParticleSystem.MinMaxCurve(-4f, 4f);
 
+                ParticleSystem.NoiseModule noise = system.noise;
+                noise.enabled = true;
+                noise.quality = ParticleSystemNoiseQuality.Low;
+                noise.strength = new ParticleSystem.MinMaxCurve(0.18f, 0.42f);
+                noise.frequency = 0.75f;
+                noise.scrollSpeed = 0.25f;
+
                 ParticleSystemRenderer renderer = effectObject.GetComponent<ParticleSystemRenderer>();
-                renderer.renderMode = ParticleSystemRenderMode.Billboard;
+                renderer.renderMode = ParticleSystemRenderMode.Stretch;
+                renderer.lengthScale = 2.4f;
+                renderer.velocityScale = 0.16f;
                 renderer.sharedMaterial = particleMaterial;
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 systems[i] = system;

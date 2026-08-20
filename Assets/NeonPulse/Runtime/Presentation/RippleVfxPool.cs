@@ -17,7 +17,7 @@ namespace NeonPulse
             root.transform.SetParent(parent, false);
             for (int index = 0; index < ripples.Length; index++)
             {
-                ripples[index] = new Ripple(index, root.transform, materials.Footprint);
+                ripples[index] = new Ripple(index, root.transform, materials.ImpactGlow);
             }
         }
 
@@ -47,7 +47,7 @@ namespace NeonPulse
         private sealed class Ripple
         {
             // A denser ring avoids visible polygon corners on mobile-sized screens.
-            private const int SegmentCount = 64;
+            private const int SegmentCount = 48;
             private const float Duration = 0.52f;
 
             private readonly GameObject root;
@@ -88,6 +88,9 @@ namespace NeonPulse
                 elapsed = 0f;
                 active = true;
                 root.SetActive(true);
+                outerRing.transform.localScale = Vector3.one;
+                middleRing.transform.localScale = Vector3.one;
+                innerRing.transform.localScale = Vector3.one;
                 SetAlpha(innerRing, 0f);
                 SetAlpha(middleRing, 0f);
                 SetAlpha(outerRing, 0f);
@@ -127,7 +130,7 @@ namespace NeonPulse
                 ring.loop = true;
                 ring.positionCount = SegmentCount;
                 ring.widthMultiplier = width;
-                ring.material = material;
+                ring.sharedMaterial = material;
                 ring.alignment = LineAlignment.TransformZ;
                 ring.textureMode = LineTextureMode.Stretch;
                 ring.shadowCastingMode = ShadowCastingMode.Off;

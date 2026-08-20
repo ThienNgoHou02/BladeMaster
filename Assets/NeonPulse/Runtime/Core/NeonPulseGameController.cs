@@ -27,6 +27,7 @@ namespace NeonPulse
         private BeatTravellerPool obstaclePool;
         private RhythmLaneTilePool rhythmTilePool;
         private HitBurstPool hitBursts;
+        private RippleVfxPool impactRipples;
         private SlashDebrisPool slashDebris;
         private PrefabParticleVfxPool punchHitVfx;
         private PrefabParticleVfxPool overheadClapHitVfx;
@@ -75,6 +76,7 @@ namespace NeonPulse
             obstaclePool = new BeatTravellerPool(obstaclePoolCapacity, transform, materials, config, "Obstacle Door Pool");
             rhythmTilePool = new RhythmLaneTilePool(config.Visuals.RhythmTilePoolCapacity, transform, materials, config);
             hitBursts = new HitBurstPool(config.Visuals.HitVfxPoolCapacity, transform, materials.White, config.Visuals.HitParticleCount);
+            impactRipples = new RippleVfxPool(config.Visuals.HitVfxPoolCapacity * 2, transform, materials);
             slashDebris = new SlashDebrisPool(config.Visuals.HitVfxPoolCapacity, transform, materials);
             punchHitVfx = new PrefabParticleVfxPool(
                 config.Visuals.HitVfxPoolCapacity,
@@ -140,6 +142,7 @@ namespace NeonPulse
             }
 
             slashDebris?.Tick(Time.deltaTime);
+            impactRipples?.Tick(Time.deltaTime);
             screenFlash?.Tick(Time.unscaledDeltaTime);
 
             float songTime = (float)(AudioSettings.dspTime - dspStartTime);
@@ -224,6 +227,7 @@ namespace NeonPulse
         {
             ReturnAllTravellers();
             slashDebris?.Clear();
+            impactRipples?.Clear();
             punchHitVfx?.Clear();
             overheadClapHitVfx?.Clear();
             slashHitVfx?.Clear();
@@ -920,6 +924,7 @@ namespace NeonPulse
                     judgementPosition.x,
                     RhythmTileVfxSurfaceY,
                     judgementPosition.z);
+                impactRipples?.Play(rhythmVfxPosition, color, true);
                 rhythmTileHitVfx?.Play(rhythmVfxPosition, Quaternion.identity);
                 playerVisuals?.TriggerRhythmTileImpactShake();
                 screenFlash?.Play(color, 0.6f);
@@ -932,8 +937,19 @@ namespace NeonPulse
                 if (action == GameplayAction.LeftPunch || action == GameplayAction.RightPunch ||
                     action == GameplayAction.BothPunch || action == GameplayAction.OverheadClap)
                 {
+                    impactRipples?.Play(
+                        new Vector3(judgementPosition.x, judgementPosition.y, judgementPosition.z - CombatVfxFrontOffset),
+                        color,
+                        false);
                     PlayCombatHitVfx(action);
                     screenFlash?.Play(color);
+                }
+                else
+                {
+                    impactRipples?.Play(
+                        new Vector3(judgementPosition.x, JudgementStepSurfaceY, config.Rhythm.HitZ),
+                        color,
+                        true);
                 }
 
                 hitBursts.Play(new Vector3(judgementPosition.x, JudgementStepSurfaceY, config.Rhythm.HitZ), color);
